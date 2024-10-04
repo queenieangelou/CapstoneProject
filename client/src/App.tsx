@@ -1,12 +1,3 @@
-import { Refine, AuthProvider } from '@pankod/refine-core';
-import {
-  notificationProvider,
-  RefineSnackbarProvider,
-  CssBaseline,
-  GlobalStyles,
-  ReadyPage,
-  ErrorComponent,
-} from '@pankod/refine-mui';
 import {
   AccountCircleOutlined,
   ChatBubbleOutline,
@@ -14,25 +5,34 @@ import {
   StarOutlineRounded,
   VillaOutlined,
 } from '@mui/icons-material';
-import dataProvider from '@pankod/refine-simple-rest';
+import { AuthProvider, Refine } from '@pankod/refine-core';
+import {
+  CssBaseline,
+  ErrorComponent,
+  GlobalStyles,
+  notificationProvider,
+  ReadyPage,
+  RefineSnackbarProvider,
+} from '@pankod/refine-mui';
 import routerProvider from '@pankod/refine-react-router-v6';
+import dataProvider from '@pankod/refine-simple-rest';
 import axios, { AxiosRequestConfig } from 'axios';
 
-import { Title, Sider, Layout, Header } from 'components/layout';
+import { Header, Layout, Sider, Title } from 'components/layout';
 import { ColorModeContextProvider } from 'contexts';
 import { CredentialResponse } from 'interfaces/google';
 import { parseJwt } from 'utils/parse-jwt';
 
 import {
-  Home,
+  AgentProfile,
   Agents,
+  AllProperties,
+  CreateProperty,
+  EditProperty,
+  Home,
   Login,
   MyProfile,
   PropertyDetails,
-  AllProperties,
-  CreateProperty,
-  AgentProfile,
-  EditProperty,
 } from 'pages';
 
 const axiosInstance = axios.create();
@@ -56,7 +56,7 @@ const App = () => {
 
       // Save user to MongoDB
       if (profileObj) {
-        const response = await fetch('https://yariga.up.railway.app/api/v1/users', {
+        const response = await fetch('http://localhost:8080/api/v1/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -122,7 +122,7 @@ const App = () => {
       <GlobalStyles styles={{ html: { WebkitFontSmoothing: 'auto' } }} />
       <RefineSnackbarProvider>
         <Refine
-          dataProvider={dataProvider('https://yariga.up.railway.app/api/v1')}
+          dataProvider={dataProvider('http://localhost:8080/api/v1')}
           notificationProvider={notificationProvider}
           ReadyPage={ReadyPage}
           catchAll={<ErrorComponent />}
