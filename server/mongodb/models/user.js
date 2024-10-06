@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
+    unique: true,  // Ensures that the email is unique
   },
   avatar: {
     type: String,
@@ -17,8 +18,12 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Property',
   }],
+  isAllowed: {  // Add this field to the schema
+    type: Boolean,
+    default: false,  // Default value for new users
+  },
 });
 
-const userModel = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
 
-export default userModel;
+export default User;

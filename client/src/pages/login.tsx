@@ -1,89 +1,75 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable react/no-unstable-nested-components */
 import { useEffect, useRef } from 'react';
 import { useLogin } from '@pankod/refine-core';
 import { Container, Box } from '@pankod/refine-mui';
-
+import axios from 'axios'; // Import axios for API requests
 import { CredentialResponse } from 'interfaces/google';
-// import { parseJwt } from 'utils/parse-jwt';
 import { yariga } from '../assets';
 
-export const Login: React.FC = () => {
-  const { mutate: login } = useLogin<CredentialResponse>();
-  // const { mutateAsync: create } = useCreate();
+const GoogleButton: React.FC<{ onLogin: (res: CredentialResponse) => void }> = ({ onLogin }) => {
+  const divRef = useRef<HTMLDivElement>(null);
 
-  const GoogleButton = (): JSX.Element => {
-    const divRef = useRef<HTMLDivElement>(null);
+  // In the useEffect:
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.google || !divRef.current) {
+      return;
+    }
 
-    useEffect(() => {
-      if (typeof window === 'undefined' || !window.google || !divRef.current) {
-        return;
-      }
+    try {
+      window.google.accounts.id.initialize({
+        ux_mode: 'popup',
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        callback: async (res: CredentialResponse) => {
+          if (res.credential) {
+            // Decode JWT to get user info
+            const profileObj = JSON.parse(atob(res.credential.split('.')[1]));
 
-      try {
-        window.google.accounts.id.initialize({
-          ux_mode: 'popup',
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-          callback: async (res: CredentialResponse) => {
-            if (res.credential) {
-              login(res);
+            // Modify axios request to point to the correct backend URL
+            const userResponse = await axios.get(`http://localhost:8080/api/v1/users?email=${profileObj.email}`);
 
-              // CHANGE: add user to MongoDB
-              // const profileObj = res.credential ? parseJwt(res.credential) : null;
-              // if (profileObj) {
-              //   const { data } = await create({
-              //     resource: 'api/v1/users',
-              //     values: {
-              //       name: profileObj.name,
-              //       email: profileObj.email,
-              //       avatar: profileObj.picture,
-              //     },
-              //   });
-
-              //   console.log('data', data);
-              // }
+            if (userResponse.data && userResponse.data.isAllowed) {
+              // User is allowed to log in
+              onLogin(res);
+            } else {
+              alert('You are not allowed to log in.');
             }
-          },
-        });
-        window.google.accounts.id.renderButton(divRef.current, {
-          theme: 'filled_blue',
-          size: 'medium',
-          type: 'standard',
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    }, []); // you can also add your client id as dependency here
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(divRef.current, {
+        theme: 'filled_blue',
+        size: 'medium',
+        type: 'standard',
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [onLogin]);
 
-    return <div ref={divRef} />;
-  };
+  return <div ref={divRef} />;
+};
+
+export const Login: React.FC = () => {
+  const { mutate: login } = useLogin();
 
   return (
-    <Box
-      component="div"
-      sx={{ backgroundColor: '#FCFCFC' }}
-    >
-      <Container
-        component="main"
-        maxWidth="xs"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          height: '100vh',
-        }}
+    <Box component="div" sx={{ backgroundColor: '#FCFCFC' }}>
+      <Container component="main" maxWidth="xs" sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        height: '100vh',
+      }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
         >
           <img src={yariga} alt="Yariga Logo" />
           <Box mt={4}>
-            <GoogleButton />
+            <GoogleButton onLogin={login} />
           </Box>
         </Box>
       </Container>
