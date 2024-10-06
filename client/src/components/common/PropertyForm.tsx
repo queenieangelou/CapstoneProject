@@ -4,7 +4,7 @@ import { Box, Typography, FormControl, FormHelperText, TextField, TextareaAutosi
 import { FormProps } from 'interfaces/common';
 import CustomButton from './CustomButton';
 
-const Form = ({ type, register, handleSubmit, handleImageChange, formLoading, onFinishHandler, propertyImage }: FormProps) => (
+const PropertyForm = ({ type, register, handleSubmit, handleImageChange, formLoading, onFinishHandler, propertyImage }: FormProps) => (
   <Box>
     <Typography fontSize={25} fontWeight={700} color="#11142D">{type} a Property</Typography>
 
@@ -128,4 +128,4 @@ const Form = ({ type, register, handleSubmit, handleImageChange, formLoading, on
   </Box>
 );
 
-export default Form;
+export default PropertyForm;

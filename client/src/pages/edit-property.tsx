@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { useGetIdentity } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
-import Form from 'components/common/Form';
+import Form from 'components/common/PropertyForm';
+import { useState } from 'react';
 
 const CreateProperty = () => {
   const { data: user } = useGetIdentity();

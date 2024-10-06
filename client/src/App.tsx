@@ -27,13 +27,17 @@ import {
   AgentProfile,
   Agents,
   AllProperties,
+  CreateProcurement,
   CreateProperty,
+  EditProcurement,
   EditProperty,
   Home,
   Login,
   MyProfile,
+  ProcurementDetails,
   PropertyDetails,
 } from 'pages';
+import AllProcurements from 'pages/all-procurements';
 
 const axiosInstance = axios.create();
 axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
@@ -133,6 +137,14 @@ const App = () => {
               show: PropertyDetails,
               create: CreateProperty,
               edit: EditProperty,
+              icon: <VillaOutlined />,
+            },
+            {
+              name: 'procurements', // LINK
+              list: AllProcurements,
+              show: ProcurementDetails,
+              create: CreateProcurement,
+              edit: EditProcurement,
               icon: <VillaOutlined />,
             },
             {

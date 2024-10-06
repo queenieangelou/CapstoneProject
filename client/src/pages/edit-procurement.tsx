@@ -1,13 +1,11 @@
 import { useGetIdentity } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
-import { useNavigate } from '@pankod/refine-react-router-v6';
 import Form from 'components/common/PropertyForm';
 import { useState } from 'react';
 
-const CreateProperty = () => {
-  const navigate = useNavigate();
+const CreateProcurement = () => {
   const { data: user } = useGetIdentity();
-  const [propertyImage, setPropertyImage] = useState({ name: '', url: '' });
+  const [procurementImage, setProcurementImage] = useState({ name: '', url: '' });
   const { refineCore: { onFinish, formLoading }, register, handleSubmit } = useForm();
 
   const handleImageChange = (file: File) => {
@@ -17,29 +15,27 @@ const CreateProperty = () => {
       fileReader.readAsDataURL(readFile);
     });
 
-    reader(file).then((result: string) => setPropertyImage({ name: file?.name, url: result }));
+    reader(file).then((result: string) => setProcurementImage({ name: file?.name, url: result }));
   };
 
   const onFinishHandler = async (data: FieldValues) => {
-    if (!propertyImage.name) return alert('Please upload a property image');
+    if (!procurementImage.name) return alert('Please upload a procurement image');
 
-    await onFinish({ ...data, photo: propertyImage.url, email: user.email });
-
-    navigate('/properties');
+    await onFinish({ ...data, photo: procurementImage.url, email: user.email });
   };
 
   return (
     <Form
-      type="Create"
+      type="Edit"
       register={register}
       onFinish={onFinish}
       formLoading={formLoading}
       handleSubmit={handleSubmit}
       handleImageChange={handleImageChange}
       onFinishHandler={onFinishHandler}
-      propertyImage={propertyImage}
+      procurementImage={procurementImage}
     />
   );
 };
 
-export default CreateProperty;
+export default CreateProcurement;

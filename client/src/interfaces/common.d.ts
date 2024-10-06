@@ -35,5 +35,6 @@ export interface FormProps {
     handleSubmit: FormEventHandler<HTMLFormElement> | undefined,
     handleImageChange: (file) => void,
     onFinishHandler: (data: FieldValues) => Promise<void>,
-    propertyImage: { name: string, url: string },
+    propertyImage?: { name: string, url: string },
+    procurementImage?: { name: string, url: string },
 }

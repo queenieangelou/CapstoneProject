@@ -98,6 +98,7 @@ const createProperty = async (req, res) => {
 
     // Commit the transaction
     await session.commitTransaction();
+    session.endSession(); // End the session
 
     // Send response
     res.status(200).json({ message: 'Property created successfully' });
@@ -141,22 +142,26 @@ const deleteProperty = async (req, res) => {
   try {
     const { id } = req.params;
 
-    toDeleteProperty = await Property.findById({ _id: id }).populate('creator');
+    // Fetch the property to be deleted
+    toDeleteProperty = await Property.findById(id).populate('creator');
     if (!toDeleteProperty) {
-      throw new Error('Property not found');
+      return res.status(404).json({ message: 'Property not found' }); // Return 404 for not found
     }
 
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    toDeleteProperty.remove({ session });
-    toDeleteProperty.creator.allProperties.pull(toDeleteProperty);
+    // Remove the property and update the creator
+    await toDeleteProperty.remove({ session });
+    toDeleteProperty.creator.allProperties.pull(toDeleteProperty._id); // Ensure you use _id here
 
     await toDeleteProperty.creator.save({ session });
     await session.commitTransaction();
+    session.endSession(); // End the session
 
     res.status(200).json({ message: 'Property deleted successfully' });
   } catch (err) {
+    console.error(err); // Log the error for debugging
     res.status(500).json({ message: 'Failed to delete property, please try again later' });
   }
 };
