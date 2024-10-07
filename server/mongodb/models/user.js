@@ -25,7 +25,13 @@ const UserSchema = new mongoose.Schema({
   isAdmin: {
     type: Boolean,
     default: false,
-  }
+  },
+  allProcurements: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Procurement',
+    default: []
+  },
+
 });
 
 const User = mongoose.model('User', UserSchema);

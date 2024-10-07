@@ -2,12 +2,12 @@ import React, { useMemo } from 'react';
 import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid';
 import { Add } from '@mui/icons-material';
 import { Box, MenuItem, Select, Stack, TextField, Typography, Paper } from '@mui/material';
-import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
+import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete } from '@pankod/refine-core';
 import CustomButton from 'components/common/CustomButton';
 
 const AllProcurements = () => {
-  const { mutate } = useDelete(); // Correct hook usage
+  const { mutate } = useDelete();
   const navigate = useNavigate();
   
   const {
@@ -19,7 +19,7 @@ const AllProcurements = () => {
   const allProcurements = data?.data ?? [];
   const currentPrice = sorter.find((item) => item.field === 'price')?.order || 'desc';
 
-  const toggleSort = (field: string) => {
+  const toggleSort = (field : string) => {
     setSorter([{ field, order: currentPrice === 'asc' ? 'desc' : 'asc' }]);
   };
 
@@ -31,16 +31,15 @@ const AllProcurements = () => {
     };
   }, [filters]);
 
-  const handleDeleteProcurement = (id: string) => {
-    const response = confirm('Are you sure you want to delete this procurement?');
-    if (response) {
+  const handleDeleteProcurement = (id : string) => {
+    if (confirm('Are you sure you want to delete this procurement?')) {
       mutate({
         resource: 'procurements',
-        id: id, // Correct id reference for the procurement
+        id: id,
       }, {
         onSuccess: () => {
           alert('Procurement deleted successfully!');
-          navigate('/procurements'); // Redirect or refresh the page after deletion
+          navigate('/procurements');
         },
         onError: (error) => {
           alert('Failed to delete procurement.');
@@ -53,13 +52,13 @@ const AllProcurements = () => {
   const columns = [
     { field: 'title', headerName: 'Title', width: 150 },
     { field: 'location', headerName: 'Location', width: 150 },
-    { field: 'price', headerName: 'Price', width: 100 },
+    { field: 'price', headerName: 'Price', width: 100, type: 'number' },
     { field: 'procurementType', headerName: 'Procurement Type', width: 130 },
     {
       field: 'actions',
       headerName: 'Actions',
       width: 200,
-      renderCell: (params: GridRenderCellParams) => (
+      renderCell: (params :  GridRenderCellParams) => (
         <Stack direction="row" spacing={1}>
           <CustomButton
             title="View"
@@ -93,7 +92,7 @@ const AllProcurements = () => {
   }));
 
   if (isLoading) return <Typography>Loading...</Typography>;
-  if (isError) return <Typography>Error...</Typography>;
+  if (isError) return <Typography>Error loading procurements...</Typography>;
 
   return (
     <Box>
@@ -156,10 +155,17 @@ const AllProcurements = () => {
         <DataGrid
           rows={rows}
           columns={columns}
-          pageSizeOptions={[5, 10]}
           checkboxSelection
           sx={{ border: 0 }}
           pagination
+          autoHeight // Make the height auto-adjust based on content
+          sortingOrder={['asc', 'desc']} // Enable sorting
+          componentsProps={{
+            pagination: {
+              showFirstButton: true,
+              showLastButton: true,
+            },
+          }}
         />
       </Paper>
     </Box>

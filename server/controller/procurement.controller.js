@@ -55,14 +55,13 @@ const getProcurementDetail = async (req, res) => {
 };
 
 const createProcurement = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const {
       title, description, procurementType, location, price, email,
     } = req.body;
-
-    // Start a new session
-    const session = await mongoose.startSession();
-    session.startTransaction();
 
     // Retrieve user by email
     const user = await User.findOne({ email }).session(session);
@@ -71,7 +70,7 @@ const createProcurement = async (req, res) => {
     }
 
     // Create a new procurement
-    const newProcurement = await Procurement.create(
+    const newProcurement = await Procurement.create([
       {
         title,
         description,
@@ -80,20 +79,30 @@ const createProcurement = async (req, res) => {
         price,
         creator: user._id,
       },
-    );
+    ], { session });
+
+    // Ensure user.allProcurements exists and is an array
+    if (!Array.isArray(user.allProcurements)) {
+      user.allProcurements = [];
+    }
 
     // Update the user's allProcurements field with the new procurement
-    user.allProcurements.push(newProcurement._id);
+    user.allProcurements.push(newProcurement[0]._id);
     await user.save({ session });
 
     // Commit the transaction
     await session.commitTransaction();
-    session.endSession(); // End the session
 
     // Send response
-    res.status(200).json({ message: 'Procurement created successfully' });
+    res.status(200).json({ message: 'Procurement created successfully', procurement: newProcurement[0] });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to create procurement, please try again later' });
+    // If an error occurs, abort the transaction
+    await session.abortTransaction();
+    console.error('Error in createProcurement:', err);
+    res.status(500).json({ message: 'Failed to create procurement, please try again later', error: err.message });
+  } finally {
+    // End the session
+    session.endSession();
   }
 };
 
