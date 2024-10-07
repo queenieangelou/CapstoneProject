@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
 import { useLogin } from '@pankod/refine-core';
-import { Container, Box } from '@pankod/refine-mui';
+import { Box, Container } from '@pankod/refine-mui';
 import axios from 'axios'; // Import axios for API requests
 import { CredentialResponse } from 'interfaces/google';
+import { useEffect, useRef } from 'react';
 import { yariga } from '../assets';
 
 const GoogleButton: React.FC<{ onLogin: (res: CredentialResponse) => void }> = ({ onLogin }) => {
@@ -26,7 +26,7 @@ const GoogleButton: React.FC<{ onLogin: (res: CredentialResponse) => void }> = (
             // Modify axios request to point to the correct backend URL
             const userResponse = await axios.get(`http://localhost:8080/api/v1/users?email=${profileObj.email}`);
 
-            if (userResponse.data && userResponse.data.isAllowed) {
+            if (userResponse.data.isAllowed) {
               // User is allowed to log in
               onLogin(res);
             } else {

@@ -13,10 +13,10 @@ export interface FormValues {
     price: number | undefined,
 }
 
-export interface PropertyCardProps {
+export interface ProcurementCardProps {
   id?: BaseKey | undefined,
   title: string,
   location: string,
   price: string,
-  photo: string,
+  procurementType?: string;
 }

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box, Typography, FormControl, FormHelperText, TextField, TextareaAutosize, Stack, Select, MenuItem, Button } from '@pankod/refine-mui';
+import { Box, Typography, FormControl, FormHelperText, TextField, TextareaAutosize, Stack, Select, MenuItem } from '@pankod/refine-mui';
 
-import { FormProps } from 'interfaces/common';
+import { FormPropsProcurement } from 'interfaces/common';
 import CustomButton from './CustomButton';
 
-const ProcurementForm = ({ type, register, handleSubmit, handleImageChange, formLoading, onFinishHandler, procurementImage }: FormProps) => (
+const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }: FormPropsProcurement) => (
   <Box>
     <Typography fontSize={25} fontWeight={700} color="#11142D">{type} a Procurement</Typography>
 
@@ -94,28 +94,6 @@ const ProcurementForm = ({ type, register, handleSubmit, handleImageChange, form
             {...register('location', { required: true })}
           />
         </FormControl>
-
-        <Stack direction="column" gap={1} justifyContent="center" mb={2}>
-          <Stack direction="row" gap={2}>
-            <Typography color="#11142D" fontSize={16} fontWeight={500} my="10px">Procurement Photo</Typography>
-
-            <Button component="label" sx={{ width: 'fit-content', color: '#2ED480', textTransform: 'capitalize', fontSize: 16 }}>
-              Upload *
-              <input
-                hidden
-                accept="image/*"
-                type="file"
-                onChange={(e) => {
-                  // @ts-ignore
-                  handleImageChange(e.target.files[0]);
-                }}
-              />
-            </Button>
-          </Stack>
-          <Typography fontSize={14} color="#808191" sx={{ wordBreak: 'break-all' }}>
-            {procurementImage?.name}
-          </Typography>
-        </Stack>
 
         <CustomButton
           type="submit"

@@ -1,19 +1,12 @@
 /* eslint-disable linebreak-style */
 /* eslint-disable no-underscore-dangle */
 import * as dotenv from 'dotenv';
-import { v2 as cloudinary } from 'cloudinary';
 
 import mongoose from 'mongoose';
 import Procurement from '../mongodb/models/procurement.js';
 import User from '../mongodb/models/user.js';
 
 dotenv.config();
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 const getAllProcurements = async (req, res) => {
   const {
@@ -64,7 +57,7 @@ const getProcurementDetail = async (req, res) => {
 const createProcurement = async (req, res) => {
   try {
     const {
-      title, description, procurementType, location, price, photo, email,
+      title, description, procurementType, location, price, email,
     } = req.body;
 
     // Start a new session
@@ -77,8 +70,6 @@ const createProcurement = async (req, res) => {
       throw new Error('User not found');
     }
 
-    const photoUrl = await cloudinary.uploader.upload(photo);
-
     // Create a new procurement
     const newProcurement = await Procurement.create(
       {
@@ -87,7 +78,6 @@ const createProcurement = async (req, res) => {
         procurementType,
         location,
         price,
-        photo: photoUrl.url,
         creator: user._id,
       },
     );
@@ -111,13 +101,8 @@ const updateProcurement = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      title, description, procurementType, location, price, photo,
+      title, description, procurementType, location, price,
     } = req.body;
-
-    let photoUrl = '';
-    if (photo) {
-      photoUrl = await cloudinary.uploader.upload(photo);
-    }
 
     // Update a new procurement
     await Procurement.findByIdAndUpdate({ _id: id }, {
@@ -126,13 +111,12 @@ const updateProcurement = async (req, res) => {
       procurementType,
       location,
       price,
-      photo: photoUrl?.url || photo,
     });
 
     // Send response
-    res.status(200).json({ message: 'Procurement created successfully' });
+    res.status(200).json({ message: 'Procurement updated successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to create procurement, please try again later' });
+    res.status(500).json({ message: 'Failed to update procurement, please try again later' });
   }
 };
 

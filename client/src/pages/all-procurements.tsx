@@ -2,24 +2,21 @@ import React, { useMemo } from 'react';
 import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid';
 import { Add } from '@mui/icons-material';
 import { Box, MenuItem, Select, Stack, TextField, Typography, Paper } from '@mui/material';
-import { useNavigate } from '@pankod/refine-react-router-v6';
-import { useTable } from '@pankod/refine-core';
+import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
+import { useTable, useDelete } from '@pankod/refine-core';
 import CustomButton from 'components/common/CustomButton';
 
 const AllProcurements = () => {
+  const { mutate } = useDelete(); // Correct hook usage
   const navigate = useNavigate();
+  
   const {
     tableQueryResult: { data, isLoading, isError },
-    current,
-    setCurrent,
-    setPageSize,
-    pageCount,
     sorter, setSorter,
     filters, setFilters,
   } = useTable();
 
   const allProcurements = data?.data ?? [];
-
   const currentPrice = sorter.find((item) => item.field === 'price')?.order || 'desc';
 
   const toggleSort = (field: string) => {
@@ -34,30 +31,55 @@ const AllProcurements = () => {
     };
   }, [filters]);
 
+  const handleDeleteProcurement = (id: string) => {
+    const response = confirm('Are you sure you want to delete this procurement?');
+    if (response) {
+      mutate({
+        resource: 'procurements',
+        id: id, // Correct id reference for the procurement
+      }, {
+        onSuccess: () => {
+          alert('Procurement deleted successfully!');
+          navigate('/procurements'); // Redirect or refresh the page after deletion
+        },
+        onError: (error) => {
+          alert('Failed to delete procurement.');
+          console.error('Delete error:', error);
+        }
+      });
+    }
+  };
+
   const columns = [
-    {
-      field: 'title',
-      headerName: 'Title',
-      width: 150,
-    },
-    {
-      field: 'location',
-      headerName: 'Location',
-      width: 150,
-    },
+    { field: 'title', headerName: 'Title', width: 150 },
+    { field: 'location', headerName: 'Location', width: 150 },
     { field: 'price', headerName: 'Price', width: 100 },
     { field: 'procurementType', headerName: 'Procurement Type', width: 130 },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 130,
+      width: 200,
       renderCell: (params: GridRenderCellParams) => (
-        <CustomButton
-          title="View"
-          handleClick={() => navigate(`/procurements/${params.row.id}`)}
-          backgroundColor="#475BE8"
-          color="#FCFCFC"
-        />
+        <Stack direction="row" spacing={1}>
+          <CustomButton
+            title="View"
+            handleClick={() => navigate(`/procurements/show/${params.row.id}`)}
+            backgroundColor="#475BE8"
+            color="#FCFCFC"
+          />
+          <CustomButton
+            title="Edit"
+            handleClick={() => navigate(`/procurements/edit/${params.row.id}`)}
+            backgroundColor="#FFA726"
+            color="#FFF"
+          />
+          <CustomButton
+            title="Delete"
+            handleClick={() => handleDeleteProcurement(params.row.id)}
+            backgroundColor="#d42e2e"
+            color="#FFF"
+          />
+        </Stack>
       ),
     },
   ];
@@ -89,7 +111,6 @@ const AllProcurements = () => {
                 backgroundColor="#475BE8"
                 color="#FCFCFC"
               />
-
               <TextField
                 variant="outlined"
                 color="info"
@@ -99,7 +120,6 @@ const AllProcurements = () => {
                   setFilters([{ field: 'title', operator: 'contains', value: e.target.value || undefined }])
                 }
               />
-
               <Select
                 variant="outlined"
                 color="info"

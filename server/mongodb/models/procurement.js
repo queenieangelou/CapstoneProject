@@ -21,10 +21,6 @@ const ProcurementSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  photo: {
-    type: String,
-    required: true,
-  },
   creator: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

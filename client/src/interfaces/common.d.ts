@@ -14,7 +14,8 @@ export interface ProfileProps {
     name: string,
     avatar: string,
     email: string,
-    properties: Array | undefined
+    properties: Array | undefined,
+    isAdmin: boolean;
 }
 
 export interface PropertyProps {
@@ -36,5 +37,13 @@ export interface FormProps {
     handleImageChange: (file) => void,
     onFinishHandler: (data: FieldValues) => Promise<void>,
     propertyImage?: { name: string, url: string },
-    procurementImage?: { name: string, url: string },
+}
+
+export interface FormPropsProcurement {
+    type: string,
+    register: any,
+    onFinish: (values: FieldValues) => Promise<void | CreateResponse<BaseRecord> | UpdateResponse<BaseRecord>>,
+    formLoading: boolean,
+    handleSubmit: FormEventHandler<HTMLFormElement> | undefined,
+    onFinishHandler: (data: FieldValues) => Promise<void>,
 }
