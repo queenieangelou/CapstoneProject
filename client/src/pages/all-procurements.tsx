@@ -57,7 +57,7 @@ const AllProcurements = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 200,
+      width: 500,
       renderCell: (params :  GridRenderCellParams) => (
         <Stack direction="row" spacing={1}>
           <CustomButton
@@ -102,14 +102,8 @@ const AllProcurements = () => {
             {!allProcurements.length ? 'There are no procurements' : 'All Procurements'}
           </Typography>
 
-          <Box mb={2} mt={3} display="flex" width="84%" justifyContent="space-between" flexWrap="wrap">
-            <Box display="flex" gap={2} flexWrap="wrap" mb={{ xs: '20px', sm: 0 }}>
-              <CustomButton
-                title={`Sort price ${currentPrice === 'asc' ? '↑' : '↓'}`}
-                handleClick={() => toggleSort('price')}
-                backgroundColor="#475BE8"
-                color="#FCFCFC"
-              />
+          <Box mb={2} mt={3} display="flex" width="100%" justifyContent="space-between" flexWrap="wrap">
+            <Box display="flex" gap={2} flexWrap="wrap" mb={{ xs: '20px', sm: 0 }} sx={{ alignSelf: 'flex-start', ml: 0 }}>
               <TextField
                 variant="outlined"
                 color="info"
@@ -151,7 +145,7 @@ const AllProcurements = () => {
         </Stack>
       </Box>
 
-      <Paper sx={{ height: 400, width: '100%' }}>
+      <Paper sx={{ height: 750, width: '100%' }}>
         <DataGrid
           rows={rows}
           columns={columns}
