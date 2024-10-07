@@ -28,6 +28,7 @@ const AgentProfile = () => {
       avatar={agentProfile?.avatar}
       email={agentProfile?.email}
       properties={agentProfile?.allProperties}
+      isAdmin={agentProfile?.isAdmin}
     />
   );
 };
