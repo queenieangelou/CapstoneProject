@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box, Typography, FormControl, FormHelperText, TextField, TextareaAutosize, Stack, Select, MenuItem } from '@pankod/refine-mui';
-
+import { Box, Typography, FormControl, FormHelperText, TextField, Select, MenuItem } from '@pankod/refine-mui';
 import { FormPropsProcurement } from 'interfaces/common';
 import CustomButton from './CustomButton';
 
-const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }: FormPropsProcurement) => (
+const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts }: FormPropsProcurement) => (
   <Box>
     <Typography fontSize={25} fontWeight={700} color="#11142D">{type} a Procurement</Typography>
 
@@ -13,88 +12,162 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
         style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
         onSubmit={handleSubmit(onFinishHandler)}
       >
+
+        {/* Seq Field */}
         <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Enter procurement name</FormHelperText>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Sequence Number</FormHelperText>
           <TextField
             fullWidth
             required
-            id="outlined-basic"
-            color="info"
             variant="outlined"
-            {...register('title', { required: true })}
+            color="info"
+            {...register('seq', { required: true })}
+            defaultValue=""
           />
         </FormControl>
 
+        {/* Date Field */}
         <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Procurement Description</FormHelperText>
-          <TextareaAutosize
-            minRows={5}
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Date</FormHelperText>
+          <TextField
+            fullWidth
             required
-            placeholder="Write description of procurement"
+            type="date"
+            variant="outlined"
             color="info"
-            style={{ width: '100%', background: 'transparent', fontSize: '16px', borderColor: 'rgba(0, 0, 0, 0.23)', borderRadius: 6, padding: 10, color: '#919191' }}
+            {...register('date', { required: true })}
+            defaultValue=""
+          />
+        </FormControl>
+
+        {/* Supplier Name Field */}
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Supplier Name</FormHelperText>
+          <TextField
+            fullWidth
+            required
+            variant="outlined"
+            color="info"
+            {...register('supplierName', { required: true })}
+            defaultValue=""
+          />
+        </FormControl>
+
+        {/* Reference Field */}
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Reference</FormHelperText>
+          <TextField
+            fullWidth
+            required
+            variant="outlined"
+            color="info"
+            {...register('reference', { required: true })}
+            defaultValue=""
+          />
+        </FormControl>
+
+        {/* TIN Field */}
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>TIN</FormHelperText>
+          <TextField
+            fullWidth
+            required
+            variant="outlined"
+            color="info"
+            {...register('tin', { required: true })}
+            defaultValue=""
+          />
+        </FormControl>
+
+        {/* Address Field */}
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Address</FormHelperText>
+          <TextField
+            fullWidth
+            required
+            variant="outlined"
+            color="info"
+            {...register('address', { required: true })}
+            defaultValue=""
+          />
+        </FormControl>
+
+        {/* Part Name Field */}
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Part Name</FormHelperText>
+          <Select
+            fullWidth
+            variant="outlined"
+            color="info"
+            {...register('partName', { required: true })}
+            defaultValue={existingParts.length > 0 ? existingParts[0].partName : ""}
+          >
+            {existingParts.map((part) => (
+              <MenuItem key={part._id} value={part.partName}>{part.partName}</MenuItem>
+            ))}
+            <MenuItem value="">Add New Part</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Brand Name Field */}
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Brand Name</FormHelperText>
+          <Select
+            fullWidth
+            variant="outlined"
+            color="info"
+            {...register('brandName', { required: true })}
+            defaultValue={existingParts.length > 0 ? existingParts[0].brandName : ""}
+          >
+            {existingParts.map((part) => (
+              <MenuItem key={part._id} value={part.brandName}>{part.brandName}</MenuItem>
+            ))}
+            <MenuItem value="">Add New Brand</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Description Field */}
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Description</FormHelperText>
+          <TextField
+            fullWidth
+            required
+            variant="outlined"
+            color="info"
             {...register('description', { required: true })}
+            defaultValue=""
           />
         </FormControl>
 
-        <Stack direction="row" gap={4}>
-          <FormControl sx={{ flex: 1 }}>
-            <FormHelperText
-              sx={{
-                fontWeight: 500,
-                margin: '10px 0',
-                fontSize: 16,
-                color: '#11142D',
-              }}
-            >
-              Enter procurement type
-            </FormHelperText>
-            <Select
-              variant="outlined"
-              color="info"
-              displayEmpty
-              required
-              inputProps={{ 'aria-label': 'Without label' }}
-              defaultValue="apartment"
-              {...register('procurementType', { required: true })}
-            >
-              <MenuItem value="apartment">Apartment</MenuItem>
-              <MenuItem value="villa">Villa</MenuItem>
-              <MenuItem value="farmhouse">Farmhouse</MenuItem>
-              <MenuItem value="condos">Condos</MenuItem>
-              <MenuItem value="townhouse">Townhouse</MenuItem>
-              <MenuItem value="duplex">Duplex</MenuItem>
-              <MenuItem value="studio">Studio</MenuItem>
-              <MenuItem value="chalet">Chalet</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl sx={{ flex: 1 }}>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Enter procurement price</FormHelperText>
-            <TextField
-              fullWidth
-              required
-              id="outlined-basic"
-              variant="outlined"
-              color="info"
-              type="number"
-              {...register('price', { required: true })}
-            />
-          </FormControl>
-        </Stack>
-
+        {/* Quantity Bought Field */}
         <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Enter location</FormHelperText>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Quantity Bought</FormHelperText>
           <TextField
             fullWidth
             required
-            id="outlined-basic"
+            type="number"
             variant="outlined"
             color="info"
-            {...register('location', { required: true })}
+            {...register('quantityBought', { required: true })}
+            defaultValue={0}
           />
         </FormControl>
 
+        {/* Amount Field */}
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Amount</FormHelperText>
+          <TextField
+            fullWidth
+            required
+            type="number"
+            variant="outlined"
+            color="info"
+            {...register('amount', { required: true })}
+            defaultValue={0}
+          />
+        </FormControl>
+
+        {/* Submit Button */}
         <CustomButton
           type="submit"
           title={formLoading ? 'Submitting...' : 'Submit'}

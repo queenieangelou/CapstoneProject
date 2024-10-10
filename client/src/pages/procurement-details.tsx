@@ -5,7 +5,7 @@ import { useParams, useNavigate } from '@pankod/refine-react-router-v6';
 
 const ProcurementDetails = () => {
   const navigate = useNavigate();
-  const { data: user } = useGetIdentity();
+  const { data: user, data: part } = useGetIdentity();
   const { queryResult } = useShow();
   const { mutate } = useDelete();
   const { id } = useParams();
@@ -48,11 +48,17 @@ const ProcurementDetails = () => {
       <Typography fontSize={25} fontWeight={700} color="#11142D">Details</Typography>
 
       <Box mt="20px">
-        <Typography fontSize={18} fontWeight={600} color="#11142D">Title: {procurementDetails.title}</Typography>
+        <Typography fontSize={18} fontWeight={600} color="#11142D">Sequence: {procurementDetails.seq}</Typography>
+        <Typography fontSize={16} color="#808191">Supplier Name: {procurementDetails.supplierName}</Typography>
+        <Typography fontSize={16} color="#808191">Type: {procurementDetails.reference}</Typography>
+        <Typography fontSize={16} color="#808191">Location: {procurementDetails.tin}</Typography>
+        <Typography fontSize={16} color="#808191">Address: {procurementDetails.address}</Typography>
+        <Typography fontSize={16} color="#808191">Part Name: {procurementDetails.part.partName}</Typography>
+        <Typography fontSize={16} color="#808191">Brand Name: {procurementDetails.part.brandName}</Typography>
         <Typography fontSize={16} color="#808191">Description: {procurementDetails.description}</Typography>
-        <Typography fontSize={16} color="#808191">Type: {procurementDetails.procurementType}</Typography>
-        <Typography fontSize={16} color="#808191">Location: {procurementDetails.location}</Typography>
-        <Typography fontSize={16} color="#808191">Price: {procurementDetails.price}</Typography>
+        <Typography fontSize={16} color="#808191">quantityBought: {procurementDetails.quantityBought}</Typography>
+        <Typography fontSize={16} color="#808191">Amount: {procurementDetails.amount}</Typography>
+
         <Typography fontSize={16} fontWeight={600} color="#11142D">Creator: {procurementDetails.creator.name}</Typography>
       </Box>
       

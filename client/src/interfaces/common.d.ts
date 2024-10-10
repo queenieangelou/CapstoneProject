@@ -46,4 +46,5 @@ export interface FormPropsProcurement {
     formLoading: boolean,
     handleSubmit: FormEventHandler<HTMLFormElement> | undefined,
     onFinishHandler: (data: FieldValues) => Promise<void>,
+    existingParts: Part[]
 }

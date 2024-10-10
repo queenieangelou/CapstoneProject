@@ -1,36 +1,33 @@
 /* eslint-disable linebreak-style */
 /* eslint-disable no-underscore-dangle */
 import * as dotenv from 'dotenv';
-
 import mongoose from 'mongoose';
 import Procurement from '../mongodb/models/procurement.js';
 import User from '../mongodb/models/user.js';
+import Part from '../mongodb/models/part.js';
 
 dotenv.config();
 
 const getAllProcurements = async (req, res) => {
   const {
-    _end, _order, _start, _sort, title_like = '', procurementType = '',
+    _end, _order, _start, _sort, supplierName_like = '',
   } = req.query;
 
   const query = {};
 
-  if (procurementType !== '') {
-    query.procurementType = procurementType;
-  }
-
-  if (title_like) {
-    query.title = { $regex: title_like, $options: 'i' };
+  if (supplierName_like) {
+    query.supplierName = { $regex: supplierName_like, $options: 'i' };
   }
 
   try {
-    const count = await Procurement.countDocuments({ query });
+    const count = await Procurement.countDocuments(query);
 
     const procurements = await Procurement
       .find(query)
-      .limit(_end)
-      .skip(_start)
-      .sort({ [_sort]: _order });
+      .limit(parseInt(_end) - parseInt(_start)) // Make sure to adjust pagination limits
+      .skip(parseInt(_start))
+      .sort({ [_sort]: _order })
+      .populate('part', 'partName brandName'); // This populates part with only partName and brandName
 
     res.header('x-total-count', count);
     res.header('Access-Control-Expose-Headers', 'x-total-count');
@@ -45,117 +42,184 @@ const getAllProcurements = async (req, res) => {
 const getProcurementDetail = async (req, res) => {
   try {
     const { id } = req.params;
-    const procurementExists = await Procurement.findOne({ _id: id }).populate('creator');
+    const procurementExists = await Procurement.findOne({ _id: id }).populate('creator').populate('part').session(session);
 
     if (procurementExists) res.status(200).json(procurementExists);
     else res.status(404).json({ message: 'Procurement does not exist' });
   } catch (err) {
+    console.log('Error fetching procurement detail:', err.message);
     res.status(500).json({ message: 'Failed to get the procurement details, please try again later' });
   }
 };
 
 const createProcurement = async (req, res) => {
+  const {
+    email,
+    seq,
+    date,
+    supplierName,
+    reference,
+    tin,
+    address,
+    partName,
+    brandName,
+    description,
+    quantityBought,
+    amount,
+  } = req.body;
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const {
-      title, description, procurementType, location, price, email,
-    } = req.body;
-
-    // Retrieve user by email
     const user = await User.findOne({ email }).session(session);
     if (!user) {
       throw new Error('User not found');
     }
 
-    // Create a new procurement
-    const newProcurement = await Procurement.create([
-      {
-        title,
-        description,
-        procurementType,
-        location,
-        price,
-        creator: user._id,
-      },
-    ], { session });
+    // Check if the part already exists
+    let part = await Part.findOne({ partName: partName, brandName: brandName }).session(session);
 
-    // Ensure user.allProcurements exists and is an array
-    if (!Array.isArray(user.allProcurements)) {
-      user.allProcurements = [];
+    if (!part) {
+      // Create new part if it doesn't exist
+      part = new Part({
+        partName: partName,
+        brandName: brandName,
+        quantity: quantityBought,
+        procurements: []  // Initialize procurements list
+      });
+      await part.save({ session });
+    } else {
+      // Update part quantity
+      part.quantity += quantityBought;
+      await part.save({ session });
     }
 
-    // Update the user's allProcurements field with the new procurement
-    user.allProcurements.push(newProcurement[0]._id);
+    // Create the procurement
+    const newProcurement = new Procurement({
+      seq,
+      date,
+      supplierName,
+      reference,
+      tin,
+      address,
+      description,
+      part: part._id,  // Linking the part by its ID
+      quantityBought,
+      amount,
+      creator: user._id,  // Linking the user
+    });
+
+    // Save procurement
+    await newProcurement.save({ session });
+
+    // Link procurement to part's procurements
+    part.procurements.push(newProcurement._id);
+    await part.save({ session });
+
+    // Link procurement to user's procurements
+    user.allProcurements.push(newProcurement._id);
     await user.save({ session });
 
-    // Commit the transaction
     await session.commitTransaction();
-
-    // Send response
-    res.status(200).json({ message: 'Procurement created successfully', procurement: newProcurement[0] });
-  } catch (err) {
-    // If an error occurs, abort the transaction
+    res.status(201).json({ message: 'Procurement created successfully', procurement: newProcurement });
+  } catch (error) {
     await session.abortTransaction();
-    console.error('Error in createProcurement:', err);
-    res.status(500).json({ message: 'Failed to create procurement, please try again later', error: err.message });
+    res.status(500).json({ message: 'Failed to create procurement', error: error.message });
   } finally {
-    // End the session
     session.endSession();
   }
 };
 
 const updateProcurement = async (req, res) => {
+  const { id } = req.params;
+  const { seq, date, supplierName, reference, tin, address, description, partName, brandName, quantityBought, amount } = req.body;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { id } = req.params;
-    const {
-      title, description, procurementType, location, price,
-    } = req.body;
+    const procurement = await Procurement.findById(id).session(session);
+    if (!procurement) {
+      return res.status(404).json({ message: 'Procurement not found' });
+    }
 
-    // Update a new procurement
-    await Procurement.findByIdAndUpdate({ _id: id }, {
-      title,
-      description,
-      procurementType,
-      location,
-      price,
-    });
+    let part = await Part.findOne({ partName: partName, brandName: brandName }).session(session);
 
-    // Send response
-    res.status(200).json({ message: 'Procurement updated successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to update procurement, please try again later' });
+    if (!part) {
+      // Create new part if it doesn't exist
+      part = new Part({
+        partName: partName,
+        brandName: brandName,
+        quantity: quantityBought,
+        procurements: []
+      });
+      await part.save({ session });
+    } else {
+      // Update part quantity based on the difference in quantities
+      const previousQuantity = procurement.quantityBought;
+      part.quantity += (quantityBought - previousQuantity);  // Adjust for the difference
+      await part.save({ session });
+    }
+
+    // Update procurement details
+    procurement.seq = seq;
+    procurement.date = date;
+    procurement.supplierName = supplierName;
+    procurement.reference = reference;
+    procurement.tin = tin;
+    procurement.address = address;
+    procurement.description = description;
+    procurement.part = part._id;
+    procurement.quantityBought = quantityBought;
+    procurement.amount = amount;
+
+    await procurement.save({ session });
+    await session.commitTransaction();
+
+    res.status(200).json({ message: 'Procurement updated successfully', procurement });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(500).json({ message: 'Failed to update procurement', error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
+
 const deleteProcurement = async (req, res) => {
-  let toDeleteProcurement;
+  const { id } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    const { id } = req.params;
-
-    // Fetch the procurement to be deleted
-    toDeleteProcurement = await Procurement.findById(id).populate('creator');
-    if (!toDeleteProcurement) {
-      return res.status(404).json({ message: 'Procurement not found' }); // Return 404 for not found
+    const procurement = await Procurement.findById(id).populate('creator').populate('part').session(session);
+    if (!procurement) {
+      return res.status(404).json({ message: 'Procurement not found' });
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // Adjust part quantity
+    const part = procurement.part;
+    if (part) {
+      part.quantity -= procurement.quantityBought;
+      part.procurements.pull(procurement._id);  // Remove procurement from part's procurements
+      await part.save({ session });
+    }
 
-    // Remove the procurement and update the creator
-    await toDeleteProcurement.remove({ session });
-    toDeleteProcurement.creator.allProperties.pull(toDeleteProcurement._id); // Ensure you use _id here
+    // Remove procurement from user's procurements
+    procurement.creator.allProcurements.pull(procurement._id);
+    await procurement.creator.save({ session });
 
-    await toDeleteProcurement.creator.save({ session });
+    // Delete the procurement
+    await procurement.remove({ session });
     await session.commitTransaction();
-    session.endSession(); // End the session
 
     res.status(200).json({ message: 'Procurement deleted successfully' });
-  } catch (err) {
-    console.error(err); // Log the error for debugging
-    res.status(500).json({ message: 'Failed to delete procurement, please try again later' });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(500).json({ message: 'Failed to delete procurement', error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid';
 import { Add } from '@mui/icons-material';
-import { Box, MenuItem, Select, Stack, TextField, Typography, Paper } from '@mui/material';
+import { Box, Stack, TextField, Typography, Paper } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete } from '@pankod/refine-core';
 import CustomButton from 'components/common/CustomButton';
@@ -9,7 +9,7 @@ import CustomButton from 'components/common/CustomButton';
 const AllProcurements = () => {
   const { mutate } = useDelete();
   const navigate = useNavigate();
-  
+
   const {
     tableQueryResult: { data, isLoading, isError },
     sorter, setSorter,
@@ -17,17 +17,14 @@ const AllProcurements = () => {
   } = useTable();
 
   const allProcurements = data?.data ?? [];
-  const currentPrice = sorter.find((item) => item.field === 'price')?.order || 'desc';
-
   const toggleSort = (field : string) => {
-    setSorter([{ field, order: currentPrice === 'asc' ? 'desc' : 'asc' }]);
+    setSorter([{ field, order: sorter.find((item) => item.field === field)?.order === 'asc' ? 'desc' : 'asc' }]);
   };
 
   const currentFilterValues = useMemo(() => {
     const logicalFilters = filters.flatMap((item) => ('field' in item ? item : []));
     return {
-      title: logicalFilters.find((item) => item.field === 'title')?.value || '',
-      procurementType: logicalFilters.find((item) => item.field === 'procurementType')?.value || '',
+      supplierName: logicalFilters.find((item) => item.field === 'supplierName')?.value || '',
     };
   }, [filters]);
 
@@ -50,15 +47,22 @@ const AllProcurements = () => {
   };
 
   const columns = [
-    { field: 'title', headerName: 'Title', width: 150 },
-    { field: 'location', headerName: 'Location', width: 150 },
-    { field: 'price', headerName: 'Price', width: 100, type: 'number' },
-    { field: 'procurementType', headerName: 'Procurement Type', width: 130 },
+    { field: 'seq', headerName: 'Seq', width: 100 },
+    { field: 'date', headerName: 'Date', width: 150 },
+    { field: 'supplierName', headerName: 'Supplier Name', width: 150 },
+    { field: 'reference', headerName: 'Reference', width: 150 },
+    { field: 'tin', headerName: 'TIN', width: 100 },
+    { field: 'address', headerName: 'Address', width: 200 },
+    { field: 'partName', headerName: 'Part Name', width: 150 },
+    { field: 'brandName', headerName: 'Brand Name', width: 150 },
+    { field: 'description', headerName: 'Description', width: 200 },
+    { field: 'quantityBought', headerName: 'Quantity Bought', width: 130, type: 'number' },
+    { field: 'amount', headerName: 'Amount', width: 130, type: 'number' },
     {
       field: 'actions',
       headerName: 'Actions',
       width: 500,
-      renderCell: (params :  GridRenderCellParams) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Stack direction="row" spacing={1}>
           <CustomButton
             title="View"
@@ -85,10 +89,17 @@ const AllProcurements = () => {
 
   const rows = allProcurements.map((procurement) => ({
     id: procurement._id,
-    title: procurement.title,
-    location: procurement.location,
-    price: procurement.price,
-    procurementType: procurement.procurementType,
+    seq: procurement.seq,
+    date: procurement.date,
+    supplierName: procurement.supplierName,
+    reference: procurement.reference,
+    tin: procurement.tin,
+    address: procurement.address,
+    partName: procurement.part?.partName, // Ensure this is populated
+    brandName: procurement.part?.brandName, // Ensure this is populated
+    description: procurement.description,
+    quantityBought: procurement.quantityBought,
+    amount: procurement.amount,
   }));
 
   if (isLoading) return <Typography>Loading...</Typography>;
@@ -103,35 +114,16 @@ const AllProcurements = () => {
           </Typography>
 
           <Box mb={2} mt={3} display="flex" width="100%" justifyContent="space-between" flexWrap="wrap">
-            <Box display="flex" gap={2} flexWrap="wrap" mb={{ xs: '20px', sm: 0 }} sx={{ alignSelf: 'flex-start', ml: 0 }}>
+            <Box display="flex" gap={2} flexWrap="wrap" mb={{ xs: '20px', sm: 0 }}>
               <TextField
                 variant="outlined"
                 color="info"
-                placeholder="Search by title"
-                value={currentFilterValues.title}
+                placeholder="Search by supplier name"
+                value={currentFilterValues.supplierName}
                 onChange={(e) =>
-                  setFilters([{ field: 'title', operator: 'contains', value: e.target.value || undefined }])
+                  setFilters([{ field: 'supplierName', operator: 'contains', value: e.target.value || undefined }])
                 }
               />
-              <Select
-                variant="outlined"
-                color="info"
-                displayEmpty
-                defaultValue=""
-                value={currentFilterValues.procurementType}
-                onChange={(e) =>
-                  setFilters([{ field: 'procurementType', operator: 'eq', value: e.target.value }], 'replace')
-                }
-              >
-                <MenuItem value="">All</MenuItem>
-                {['Apartment', 'Villa', 'Farmhouse', 'Condos', 'Townhouse', 'Duplex', 'Studio', 'Chalet'].map(
-                  (type) => (
-                    <MenuItem key={type} value={type.toLowerCase()}>
-                      {type}
-                    </MenuItem>
-                  ),
-                )}
-              </Select>
             </Box>
 
             <CustomButton
@@ -152,8 +144,8 @@ const AllProcurements = () => {
           checkboxSelection
           sx={{ border: 0 }}
           pagination
-          autoHeight // Make the height auto-adjust based on content
-          sortingOrder={['asc', 'desc']} // Enable sorting
+          autoHeight
+          sortingOrder={['asc', 'desc']}
           componentsProps={{
             pagination: {
               showFirstButton: true,
