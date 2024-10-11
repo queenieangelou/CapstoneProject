@@ -17,7 +17,7 @@ import {
   ReadyPage,
   RefineSnackbarProvider,
 } from '@pankod/refine-mui';
-import routerProvider from '@pankod/refine-react-router-v6';
+import routerProvider, { BrowserRouter, Route, Routes } from '@pankod/refine-react-router-v6';
 import dataProvider from '@pankod/refine-simple-rest';
 import axios, { AxiosRequestConfig } from 'axios';
 
@@ -42,6 +42,7 @@ import {
 } from 'pages';
 import AllProcurements from 'pages/all-procurements';
 import UserManagement from 'pages/user-management';
+import { UnauthorizedPage } from 'pages/unauthorized';
 
 const axiosInstance = axios.create();
 axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
@@ -229,24 +230,34 @@ const App = () => {
       <CssBaseline />
       <GlobalStyles styles={{ html: { WebkitFontSmoothing: 'auto' } }} />
       <RefineSnackbarProvider>
-        <Refine
-          dataProvider={dataProvider('http://localhost:8080/api/v1')}
-          notificationProvider={notificationProvider}
-          ReadyPage={ReadyPage}
-          catchAll={<ErrorComponent />}
-          resources={resources}
-          Title={Title}
-          Sider={Sider}
-          Layout={Layout}
-          Header={Header}
-          routerProvider={routerProvider}
-          authProvider={authProvider}
-          LoginPage={Login}
-          DashboardPage={Home}
-        />
+          <Refine
+            dataProvider={dataProvider('http://localhost:8080/api/v1')}
+            notificationProvider={notificationProvider}
+            ReadyPage={ReadyPage}
+            catchAll={<ErrorComponent />}
+            resources={resources}
+            Title={Title}
+            Sider={Sider}
+            Layout={Layout}
+            Header={Header}
+            routerProvider={{
+              ...routerProvider,
+              routes: [
+                {
+                  path: '/unauthorized',
+                  element: <UnauthorizedPage />
+                },
+              ],
+            }}
+            authProvider={authProvider}
+            LoginPage={Login}
+            DashboardPage={Home}
+            
+          />
       </RefineSnackbarProvider>
     </ColorModeContextProvider>
   );
 };
+
 
 export default App;

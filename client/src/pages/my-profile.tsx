@@ -1,7 +1,7 @@
 import { useGetIdentity, useOne } from '@pankod/refine-core';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { CustomButton, Profile } from 'components'; // Single import from 'components'
-import AddIcon from '@mui/icons-material/Add';
+
 
 const MyProfile = () => {
   const { data: user } = useGetIdentity();
@@ -32,18 +32,6 @@ const MyProfile = () => {
         properties={myProfile?.allProperties}
         isAdmin={myProfile?.isAdmin}
       />
-      {myProfile?.isAdmin && (
-        <CustomButton
-          type="button"
-          title="Add New User"
-          backgroundColor="#4CAF50" // Example background color
-          color="#fff" // Example text color
-          fullWidth={false}
-          icon={<AddIcon />} // Example icon
-          handleClick={() => navigate('/add-user')}
-          disabled={false} // Optionally set to true or based on condition
-        />
-      )}
     </div>
   );
 };
