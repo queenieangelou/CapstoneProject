@@ -1,6 +1,7 @@
-import { useLogin } from '@pankod/refine-core';
+// eslint-disable
+import { useLogin, useNavigation } from '@pankod/refine-core';
 import { Box, Container } from '@pankod/refine-mui';
-import axios from 'axios'; // Import axios for API requests
+import axios from 'axios';
 import { CredentialResponse } from 'interfaces/google';
 import { useEffect, useRef } from 'react';
 import { yariga } from '../assets';
@@ -8,7 +9,6 @@ import { yariga } from '../assets';
 const GoogleButton: React.FC<{ onLogin: (res: CredentialResponse) => void }> = ({ onLogin }) => {
   const divRef = useRef<HTMLDivElement>(null);
 
-  // In the useEffect:
   useEffect(() => {
     if (typeof window === 'undefined' || !window.google || !divRef.current) {
       return;
@@ -20,17 +20,18 @@ const GoogleButton: React.FC<{ onLogin: (res: CredentialResponse) => void }> = (
         client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
         callback: async (res: CredentialResponse) => {
           if (res.credential) {
-            // Decode JWT to get user info
             const profileObj = JSON.parse(atob(res.credential.split('.')[1]));
+            const response = await axios.post('http://localhost:8080/api/v1/users', {
+              name: profileObj.name,
+              email: profileObj.email,
+              avatar: profileObj.picture,
+            });
 
-            // Modify axios request to point to the correct backend URL
-            const userResponse = await axios.get(`http://localhost:8080/api/v1/users?email=${profileObj.email}`);
-
-            if (userResponse.data.isAllowed) {
-              // User is allowed to log in
+            if (response.data.isAllowed) {
               onLogin(res);
             } else {
-              alert('You are not allowed to log in.');
+              // Redirect to Unauthorized page
+              window.location.href = '/unauthorized';
             }
           }
         },

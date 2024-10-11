@@ -25,18 +25,21 @@ export const createUser = async (req, res) => {
   try {
     const { name, email, avatar } = req.body;
 
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(200).json(userExists);  // Return existing user if found
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      // Create a new user with isAllowed set to false
+      user = await User.create({
+        name,
+        email,
+        avatar,
+        isAllowed: false,
+      });
+    }
 
-    const newUser = await User.create({
-      name,
-      email,
-      avatar,
-    });
-
-    res.status(200).json(newUser);
+    res.status(200).json(user);
   } catch (err) {
-    res.status(500).json({ message: 'Something went wrong, failed to create user' });
+    res.status(500).json({ message: 'Something went wrong, failed to create/fetch user' });
   }
 };
 
