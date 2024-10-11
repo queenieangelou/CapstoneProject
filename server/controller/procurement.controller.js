@@ -99,15 +99,14 @@ const createProcurement = async (req, res) => {
       part = new Part({
         partName: partName,
         brandName: brandName,
-        quantity: quantityBought,
-        procurements: []  // Initialize procurements list
+        qtyLeft: parseInt(quantityBought),
+        procurements: []
       });
-      await part.save({ session });
     } else {
       // Update part quantity
-      part.quantity += quantityBought;
-      await part.save({ session });
+      part.qtyLeft += parseInt(quantityBought);
     }
+    await part.save({ session });
 
     // Create the procurement
     const newProcurement = new Procurement({
@@ -117,11 +116,11 @@ const createProcurement = async (req, res) => {
       reference,
       tin,
       address,
+      part: part._id,
       description,
-      part: part._id,  // Linking the part by its ID
-      quantityBought,
+      quantityBought: parseInt(quantityBought),
       amount,
-      creator: user._id,  // Linking the user
+      creator: user._id,
     });
 
     // Save procurement
@@ -153,28 +152,31 @@ const updateProcurement = async (req, res) => {
   session.startTransaction();
 
   try {
-    const procurement = await Procurement.findById(id).session(session);
+    const procurement = await Procurement.findById(id).populate('part').session(session);
     if (!procurement) {
       return res.status(404).json({ message: 'Procurement not found' });
     }
 
-    let part = await Part.findOne({ partName: partName, brandName: brandName }).session(session);
+    // Adjust the old part's quantity
+    const oldPart = procurement.part;
+    oldPart.qtyLeft -= procurement.quantityBought;
+    await oldPart.save({ session });
 
-    if (!part) {
-      // Create new part if it doesn't exist
-      part = new Part({
+    // Find or create the new part
+    let newPart = await Part.findOne({ partName: partName, brandName: brandName }).session(session);
+
+    if (!newPart) {
+      newPart = new Part({
         partName: partName,
         brandName: brandName,
-        qtyLeft: quantityBought,
+        qtyLeft: parseInt(quantityBought),
         procurements: []
       });
-      await part.save({ session });
     } else {
-      // Update part quantity based on the difference in quantities
-      const previousQuantity = procurement.quantityBought;
-      part.quantity += (quantityBought - previousQuantity);  // Adjust for the difference
-      await part.save({ session });
+      newPart.qtyLeft += parseInt(quantityBought);
     }
+
+    await newPart.save({ session });
 
     // Update procurement details
     procurement.seq = seq;
@@ -184,11 +186,19 @@ const updateProcurement = async (req, res) => {
     procurement.tin = tin;
     procurement.address = address;
     procurement.description = description;
-    procurement.part = part._id;
-    procurement.quantityBought = quantityBought;
+    procurement.part = newPart._id;
+    procurement.quantityBought = parseInt(quantityBought);
     procurement.amount = amount;
 
     await procurement.save({ session });
+
+    // Update part references
+    oldPart.procurements.pull(procurement._id);
+    await oldPart.save({ session });
+
+    newPart.procurements.push(procurement._id);
+    await newPart.save({ session });
+
     await session.commitTransaction();
 
     res.status(200).json({ message: 'Procurement updated successfully', procurement });
@@ -199,7 +209,6 @@ const updateProcurement = async (req, res) => {
     session.endSession();
   }
 };
-
 
 const deleteProcurement = async (req, res) => {
   const { id } = req.params;
@@ -215,7 +224,7 @@ const deleteProcurement = async (req, res) => {
     // Adjust part quantity
     const part = procurement.part;
     if (part) {
-      part.quantity -= procurement.quantityBought;
+      part.qtyLeft -= procurement.quantityBought;
       part.procurements.pull(procurement._id);  // Remove procurement from part's procurements
       await part.save({ session });
     }
@@ -225,7 +234,7 @@ const deleteProcurement = async (req, res) => {
     await procurement.creator.save({ session });
 
     // Delete the procurement
-    await procurement.remove({ session });
+    await Procurement.findByIdAndDelete(id).session(session);
     await session.commitTransaction();
 
     res.status(200).json({ message: 'Procurement deleted successfully' });

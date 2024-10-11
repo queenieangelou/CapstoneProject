@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from 'react';
 import { useList, useUpdate, useDelete } from '@pankod/refine-core';
 import { 

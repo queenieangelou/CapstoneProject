@@ -1,17 +1,40 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box, Typography, FormControl, FormHelperText, TextField, Select, MenuItem } from '@pankod/refine-mui';
+/* eslint-disable */
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, FormControl, FormHelperText, TextField, Select, MenuItem, SelectChangeEvent } from '@pankod/refine-mui';
 import { FormPropsProcurement } from 'interfaces/common';
 import CustomButton from './CustomButton';
 
-const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts }: FormPropsProcurement) => (
-  <Box>
-    <Typography fontSize={25} fontWeight={700} color="#11142D">{type} a Procurement</Typography>
+const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts }: FormPropsProcurement) => {
+  const [selectedPart, setSelectedPart] = useState('');
+  const [newPartName, setNewPartName] = useState('');
+  const [newBrandName, setNewBrandName] = useState('');
 
-    <Box mt={2.5} borderRadius="15px" padding="20px" bgcolor="#FCFCFC">
-      <form
-        style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
-        onSubmit={handleSubmit(onFinishHandler)}
-      >
+  const handlePartChange = (event: SelectChangeEvent<string>) => {
+    setSelectedPart(event.target.value as string);
+  };
+
+  const onSubmit = (data: Record<string, any>) => {
+    const updatedData = { ...data };
+    if (selectedPart === 'new') {
+      updatedData.partName = newPartName;
+      updatedData.brandName = newBrandName;
+    } else {
+      const [partName, brandName] = selectedPart.split('|');
+      updatedData.partName = partName;
+      updatedData.brandName = brandName;
+    }
+    onFinishHandler(updatedData);
+  };
+
+  return (
+    <Box>
+      <Typography fontSize={25} fontWeight={700} color="#11142D">{type} a Procurement</Typography>
+
+      <Box mt={2.5} borderRadius="15px" padding="20px" bgcolor="#FCFCFC">
+        <form
+          style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
+          onSubmit={handleSubmit(onSubmit)}
+        >
 
         {/* Seq Field */}
         <FormControl>
@@ -93,39 +116,50 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
           />
         </FormControl>
 
-        {/* Part Name Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Part Name</FormHelperText>
-          <Select
-            fullWidth
-            variant="outlined"
-            color="info"
-            {...register('partName', { required: true })}
-            defaultValue={existingParts.length > 0 ? existingParts[0].partName : ''}
-          >
-            {existingParts.map((part) => (
-              <MenuItem key={part._id} value={part.partName}>{part.partName}</MenuItem>
-            ))}
-            <MenuItem value="">Add New Part</MenuItem>
-          </Select>
-        </FormControl>
+          {/* Part Selection */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Part</FormHelperText>
+            <Select
+              fullWidth
+              value={selectedPart}
+              onChange={handlePartChange}
+            >
+              {existingParts.map((part) => (
+                <MenuItem key={part._id} value={`${part.partName}|${part.brandName}`}>
+                  {`${part.partName} - ${part.brandName}`}
+                </MenuItem>
+              ))}
+              <MenuItem value="new">Add New Part</MenuItem>
+            </Select>
+          </FormControl>
 
-        {/* Brand Name Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Brand Name</FormHelperText>
-          <Select
-            fullWidth
-            variant="outlined"
-            color="info"
-            {...register('brandName', { required: true })}
-            defaultValue={existingParts.length > 0 ? existingParts[0].brandName : ''}
-          >
-            {existingParts.map((part) => (
-              <MenuItem key={part._id} value={part.brandName}>{part.brandName}</MenuItem>
-            ))}
-            <MenuItem value="">Add New Brand</MenuItem>
-          </Select>
-        </FormControl>
+          {/* New Part Input Fields */}
+          {selectedPart === 'new' && (
+            <>
+              <FormControl>
+                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>New Part Name</FormHelperText>
+                <TextField
+                  fullWidth
+                  required
+                  variant="outlined"
+                  color="info"
+                  value={newPartName}
+                  onChange={(e) => setNewPartName(e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>New Brand Name</FormHelperText>
+                <TextField
+                  fullWidth
+                  required
+                  variant="outlined"
+                  color="info"
+                  value={newBrandName}
+                  onChange={(e) => setNewBrandName(e.target.value)}
+                />
+              </FormControl>
+            </>
+          )}
 
         {/* Description Field */}
         <FormControl>
@@ -139,7 +173,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
             defaultValue=""
           />
         </FormControl>
-
+        
         {/* Quantity Bought Field */}
         <FormControl>
           <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Quantity Bought</FormHelperText>
@@ -168,16 +202,17 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
           />
         </FormControl>
 
-        {/* Submit Button */}
-        <CustomButton
-          type="submit"
-          title={formLoading ? 'Submitting...' : 'Submit'}
-          backgroundColor="#475BE8"
-          color="#FCFCFC"
-        />
-      </form>
+          {/* Submit Button */}
+          <CustomButton
+            type="submit"
+            title={formLoading ? 'Submitting...' : 'Submit'}
+            backgroundColor="#475BE8"
+            color="#FCFCFC"
+          />
+        </form>
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};
 
 export default ProcurementForm;
