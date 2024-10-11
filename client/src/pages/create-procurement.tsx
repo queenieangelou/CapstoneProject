@@ -1,4 +1,4 @@
-import { useGetIdentity, useList } from '@pankod/refine-core'; 
+import { useGetIdentity, useList } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import ProcurementForm from 'components/common/ProcurementForm';
@@ -20,16 +20,16 @@ const CreateProcurement = () => {
   });
 
   // Extract parts from response or fallback to an empty array
-  const parts = partsResponse?.data || []; 
+  const parts = partsResponse?.data || [];
 
   const { refineCore: { onFinish, formLoading }, register, handleSubmit } = useForm();
 
   const onFinishHandler = async (data: FieldValues) => {
-    await onFinish({ 
-      ...data, 
+    await onFinish({
+      ...data,
       partName: data.partName, // Use the selected partName
       brandName: data.brandName, // Corrected to `brandName`
-      email: user.email 
+      email: user.email,
     });
 
     navigate('/procurements');

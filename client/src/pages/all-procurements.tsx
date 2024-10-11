@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridRenderCellParams, GridColDef } from '@mui/x-data-grid';
 import { Add } from '@mui/icons-material';
 import { Box, Stack, TextField, Typography, Paper } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
@@ -12,14 +12,10 @@ const AllProcurements = () => {
 
   const {
     tableQueryResult: { data, isLoading, isError },
-    sorter, setSorter,
     filters, setFilters,
   } = useTable();
 
   const allProcurements = data?.data ?? [];
-  const toggleSort = (field : string) => {
-    setSorter([{ field, order: sorter.find((item) => item.field === field)?.order === 'asc' ? 'desc' : 'asc' }]);
-  };
 
   const currentFilterValues = useMemo(() => {
     const logicalFilters = filters.flatMap((item) => ('field' in item ? item : []));
@@ -28,26 +24,30 @@ const AllProcurements = () => {
     };
   }, [filters]);
 
-  const handleDeleteProcurement = (id : string) => {
-    if (confirm('Are you sure you want to delete this procurement?')) {
-      mutate({
-        resource: 'procurements',
-        id: id,
-      }, {
-        onSuccess: () => {
-          alert('Procurement deleted successfully!');
-          navigate('/procurements');
+  const handleDeleteProcurement = (id: string) => {
+    const confirmDeletion = (message: string) => window.confirm(message); // Simplified to a single line
+    if (confirmDeletion('Are you sure you want to delete this procurement?')) {
+      mutate(
+        {
+          resource: 'procurements',
+          id,
         },
-        onError: (error) => {
-          alert('Failed to delete procurement.');
-          console.error('Delete error:', error);
-        }
-      });
+        {
+          onSuccess: () => {
+            alert('Procurement deleted successfully!');
+            navigate('/procurements');
+          },
+          onError: (error) => {
+            alert('Failed to delete procurement.');
+            console.error('Delete error:', error);
+          },
+        },
+      );
     }
   };
 
-  const columns = [
-    { field: 'seq', headerName: 'Seq', width: 100 },
+  const columns: GridColDef[] = [
+    { field: 'seq', headerName: 'Seq', width: 100, type: 'number' },
     { field: 'date', headerName: 'Date', width: 150 },
     { field: 'supplierName', headerName: 'Supplier Name', width: 150 },
     { field: 'reference', headerName: 'Reference', width: 150 },
@@ -95,8 +95,8 @@ const AllProcurements = () => {
     reference: procurement.reference,
     tin: procurement.tin,
     address: procurement.address,
-    partName: procurement.part?.partName, // Ensure this is populated
-    brandName: procurement.part?.brandName, // Ensure this is populated
+    partName: procurement.part?.partName,
+    brandName: procurement.part?.brandName,
     description: procurement.description,
     quantityBought: procurement.quantityBought,
     amount: procurement.amount,
@@ -120,9 +120,9 @@ const AllProcurements = () => {
                 color="info"
                 placeholder="Search by supplier name"
                 value={currentFilterValues.supplierName}
-                onChange={(e) =>
-                  setFilters([{ field: 'supplierName', operator: 'contains', value: e.target.value || undefined }])
-                }
+                onChange={(e) => {
+                  setFilters([{ field: 'supplierName', operator: 'contains', value: e.target.value || undefined }]);
+                }}
               />
             </Box>
 
@@ -146,7 +146,7 @@ const AllProcurements = () => {
           pagination
           autoHeight
           sortingOrder={['asc', 'desc']}
-          componentsProps={{
+          slotProps={{
             pagination: {
               showFirstButton: true,
               showLastButton: true,

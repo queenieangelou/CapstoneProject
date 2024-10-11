@@ -19,10 +19,11 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
           <TextField
             fullWidth
             required
+            type="number"
             variant="outlined"
             color="info"
             {...register('seq', { required: true })}
-            defaultValue=""
+            defaultValue={0}
           />
         </FormControl>
 
@@ -100,7 +101,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
             variant="outlined"
             color="info"
             {...register('partName', { required: true })}
-            defaultValue={existingParts.length > 0 ? existingParts[0].partName : ""}
+            defaultValue={existingParts.length > 0 ? existingParts[0].partName : ''}
           >
             {existingParts.map((part) => (
               <MenuItem key={part._id} value={part.partName}>{part.partName}</MenuItem>
@@ -117,7 +118,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
             variant="outlined"
             color="info"
             {...register('brandName', { required: true })}
-            defaultValue={existingParts.length > 0 ? existingParts[0].brandName : ""}
+            defaultValue={existingParts.length > 0 ? existingParts[0].brandName : ''}
           >
             {existingParts.map((part) => (
               <MenuItem key={part._id} value={part.brandName}>{part.brandName}</MenuItem>

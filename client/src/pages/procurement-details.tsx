@@ -5,7 +5,7 @@ import { useParams, useNavigate } from '@pankod/refine-react-router-v6';
 
 const ProcurementDetails = () => {
   const navigate = useNavigate();
-  const { data: user, data: part } = useGetIdentity();
+  const { data: user } = useGetIdentity();
   const { queryResult } = useShow();
   const { mutate } = useDelete();
   const { id } = useParams();
@@ -61,11 +61,20 @@ const ProcurementDetails = () => {
 
         <Typography fontSize={16} fontWeight={600} color="#11142D">Creator: {procurementDetails.creator.name}</Typography>
       </Box>
-      
       {isCurrentUser && (
         <Box mt="20px">
-          <button onClick={() => navigate(`/procurements/edit/${procurementDetails._id}`)}>Edit</button>
-          <button onClick={handleDeleteProcurement}>Delete</button>
+          <button
+            type="button"
+            onClick={() => navigate(`/procurements/edit/${procurementDetails._id}`)}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={handleDeleteProcurement}
+          >
+            Delete
+          </button>
         </Box>
       )}
     </Box>

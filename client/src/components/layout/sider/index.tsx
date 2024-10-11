@@ -62,7 +62,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
   const { mutate: mutateLogout } = useLogout();
   const Title = useTitle();
 
-  const [open, setOpen] = useState<{ [k: string]: any }>({});
+  const [open, setOpen] = useState<{ [key: string]: boolean }>({});
 
   React.useEffect(() => {
     setOpen((previousOpen) => {

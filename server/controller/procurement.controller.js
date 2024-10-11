@@ -40,15 +40,29 @@ const getAllProcurements = async (req, res) => {
 };
 
 const getProcurementDetail = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { id } = req.params;
+
+    // Validate ObjectID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+
     const procurementExists = await Procurement.findOne({ _id: id }).populate('creator').populate('part').session(session);
 
-    if (procurementExists) res.status(200).json(procurementExists);
-    else res.status(404).json({ message: 'Procurement does not exist' });
+    if (procurementExists) {
+      res.status(200).json(procurementExists);
+    } else {
+      res.status(404).json({ message: 'Procurement does not exist' });
+    }
   } catch (err) {
-    console.log('Error fetching procurement detail:', err.message);
+    console.error('Error fetching procurement detail:', err);
     res.status(500).json({ message: 'Failed to get the procurement details, please try again later' });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -151,7 +165,7 @@ const updateProcurement = async (req, res) => {
       part = new Part({
         partName: partName,
         brandName: brandName,
-        quantity: quantityBought,
+        qtyLeft: quantityBought,
         procurements: []
       });
       await part.save({ session });

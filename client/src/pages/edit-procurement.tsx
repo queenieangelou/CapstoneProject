@@ -1,4 +1,4 @@
-import { useGetIdentity, useList } from '@pankod/refine-core'; // Changed from useGetList to useList
+import { useGetIdentity, useList } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import ProcurementForm from 'components/common/ProcurementForm';
@@ -10,7 +10,7 @@ interface Part {
     brandName: string;
 }
 
-const CreateProcurement = () => {
+const EditProcurement = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
 
@@ -20,16 +20,16 @@ const CreateProcurement = () => {
   });
 
   // Extract parts from response or fallback to an empty array
-  const parts = partsResponse?.data || []; 
+  const parts = partsResponse?.data || [];
 
   const { refineCore: { onFinish, formLoading }, register, handleSubmit } = useForm();
 
   const onFinishHandler = async (data: FieldValues) => {
-    await onFinish({ 
-      ...data, 
-      partName: data.partName, // Use the selected partName if applicable
-      brandName: data.brandName, // Use the selected partBrand if applicable
-      email: user.email 
+    await onFinish({
+      ...data,
+      partName: data.partName, // Use the selected partName
+      brandName: data.brandName, // Corrected to brandName
+      email: user.email,
     });
 
     navigate('/procurements');
@@ -42,7 +42,7 @@ const CreateProcurement = () => {
 
   return (
     <ProcurementForm
-      type="Create"
+      type="Edit"
       register={register}
       onFinish={onFinish}
       formLoading={formLoading}
@@ -53,4 +53,4 @@ const CreateProcurement = () => {
   );
 };
 
-export default CreateProcurement;
+export default EditProcurement;
