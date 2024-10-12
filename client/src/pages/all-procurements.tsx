@@ -1,14 +1,18 @@
+/* eslint-disable */
+//all-procurement.tsx
 import React, { useMemo } from 'react';
-import { DataGrid, GridRenderCellParams, GridColDef } from '@mui/x-data-grid';
-import { Add } from '@mui/icons-material';
-import { Box, Stack, TextField, Typography, Paper } from '@mui/material';
+import { DataGrid, GridRenderCellParams, GridColDef, GridDeleteIcon } from '@mui/x-data-grid';
+import { Add, Edit, Visibility } from '@mui/icons-material';
+import { Box, Stack, TextField, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete } from '@pankod/refine-core';
-import CustomButton from 'components/common/CustomButton';
+import { CustomButton, TableButton } from 'components';
 
 const AllProcurements = () => {
   const { mutate } = useDelete();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   const {
     tableQueryResult: { data, isLoading, isError },
@@ -25,7 +29,7 @@ const AllProcurements = () => {
   }, [filters]);
 
   const handleDeleteProcurement = (id: string) => {
-    const confirmDeletion = (message: string) => window.confirm(message); // Simplified to a single line
+    const confirmDeletion = (message: string) => window.confirm(message);
     if (confirmDeletion('Are you sure you want to delete this procurement?')) {
       mutate(
         {
@@ -47,37 +51,39 @@ const AllProcurements = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'seq', headerName: 'Seq', width: 100, type: 'number' },
-    { field: 'date', headerName: 'Date', width: 150 },
-    { field: 'supplierName', headerName: 'Supplier Name', width: 150 },
-    { field: 'reference', headerName: 'Reference', width: 150 },
-    { field: 'tin', headerName: 'TIN', width: 100 },
-    { field: 'address', headerName: 'Address', width: 200 },
-    { field: 'partName', headerName: 'Part Name', width: 150 },
-    { field: 'brandName', headerName: 'Brand Name', width: 150 },
-    { field: 'description', headerName: 'Description', width: 200 },
-    { field: 'quantityBought', headerName: 'Quantity Bought', width: 130, type: 'number' },
-    { field: 'amount', headerName: 'Amount', width: 130, type: 'number' },
+    { field: 'seq', headerName: 'Seq', width: 60 },
+    { field: 'date', headerName: 'Date', width: 90 },
+    { field: 'supplierName', headerName: 'Supplier', width: 120 },
+    { field: 'reference', headerName: 'Ref', width: 80 },
+    { field: 'tin', headerName: 'TIN', width: 70 },
+    { field: 'address', headerName: 'Address', width: 150},
+    { field: 'partName', headerName: 'Part', width: 120 },
+    { field: 'brandName', headerName: 'Brand', width: 120 },
+    { field: 'quantityBought', headerName: 'Qty', width: 60, type: 'number' },
+    { field: 'amount', headerName: 'Amount', width: 80, type: 'number' },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 500,
+      width: 180,
       renderCell: (params: GridRenderCellParams) => (
         <Stack direction="row" spacing={1}>
-          <CustomButton
-            title="View"
+          <TableButton
+            title=''
+            icon={<Visibility />}
             handleClick={() => navigate(`/procurements/show/${params.row.id}`)}
             backgroundColor="#475BE8"
             color="#FCFCFC"
           />
-          <CustomButton
-            title="Edit"
+          <TableButton
+            title=""
+            icon={<Edit />}
             handleClick={() => navigate(`/procurements/edit/${params.row.id}`)}
             backgroundColor="#FFA726"
             color="#FFF"
           />
-          <CustomButton
-            title="Delete"
+          <TableButton
+            title=""
+            icon={<GridDeleteIcon />}
             handleClick={() => handleDeleteProcurement(params.row.id)}
             backgroundColor="#d42e2e"
             color="#FFF"
@@ -97,7 +103,6 @@ const AllProcurements = () => {
     address: procurement.address,
     partName: procurement.part?.partName,
     brandName: procurement.part?.brandName,
-    description: procurement.description,
     quantityBought: procurement.quantityBought,
     amount: procurement.amount,
   }));
@@ -106,54 +111,62 @@ const AllProcurements = () => {
   if (isError) return <Typography>Error loading procurements...</Typography>;
 
   return (
-    <Box>
-      <Box mt="20px" sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-        <Stack direction="column" width="100%">
-          <Typography fontSize={25} fontWeight={700} color="#11142D">
-            {!allProcurements.length ? 'There are no procurements' : 'All Procurements'}
-          </Typography>
 
-          <Box mb={2} mt={3} display="flex" width="100%" justifyContent="space-between" flexWrap="wrap">
-            <Box display="flex" gap={2} flexWrap="wrap" mb={{ xs: '20px', sm: 0 }}>
-              <TextField
-                variant="outlined"
-                color="info"
-                placeholder="Search by supplier name"
-                value={currentFilterValues.supplierName}
-                onChange={(e) => {
-                  setFilters([{ field: 'supplierName', operator: 'contains', value: e.target.value || undefined }]);
-                }}
-              />
-            </Box>
+    <Box sx={{ maxWidth: '95%' }}>
+      <Stack direction="column" spacing={2}>
+        <Typography fontSize={25} fontWeight={700} color="#11142D">
+          {!allProcurements.length ? 'There are no procurements' : 'All Procurements'}
+        </Typography>
 
-            <CustomButton
-              title="Add Procurement"
-              handleClick={() => navigate('/procurements/create')}
-              backgroundColor="#475BE8"
-              color="#FCFCFC"
-              icon={<Add />}
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+          <TextField
+            variant="outlined"
+            color="info"
+            placeholder="Search by supplier name"
+            value={currentFilterValues.supplierName}
+            onChange={(e) => {
+              setFilters([{ field: 'supplierName', operator: 'contains', value: e.target.value || undefined }]);
+            }}
+            sx={{ mb: 2, minWidth: '200px', flex: 1, mr: 2 }}
+          />
+
+          <CustomButton
+            title="Add Procurement"
+            handleClick={() => navigate('/procurements/create')}
+            backgroundColor="#475BE8"
+            color="#FCFCFC"
+            icon={<Add />}
+          />
+        </Box>
+
+        <Paper elevation={3} sx={{ padding: '20px', margin: '20px auto', width: '100%' }}>
+          <Box sx={{ height: 650, width: '100%' }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              checkboxSelection={false}
+              sx={{
+                '& .MuiDataGrid-cell': {
+                  whiteSpace: 'normal',
+                  lineHeight: 'normal',
+                  padding: '8px',
+                },
+                '& .MuiDataGrid-row': {
+                  maxHeight: 'none !important',
+                },
+                '& .MuiDataGrid-main': {
+                  overflow: 'hidden',
+                },
+              }}
+              initialState={{
+                pagination: { paginationModel: { pageSize: 10 } },
+              }}
+              pageSizeOptions={[10, 25, 50]}
+              getRowHeight={() => 'auto'}
             />
           </Box>
-        </Stack>
-      </Box>
-
-      <Paper sx={{ height: 750, width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          checkboxSelection
-          sx={{ border: 0 }}
-          pagination
-          autoHeight
-          sortingOrder={['asc', 'desc']}
-          slotProps={{
-            pagination: {
-              showFirstButton: true,
-              showLastButton: true,
-            },
-          }}
-        />
-      </Paper>
+        </Paper>
+      </Stack>
     </Box>
   );
 };

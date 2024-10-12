@@ -1,54 +1,61 @@
-import { useGetIdentity, useList } from '@pankod/refine-core';
+/* eslint-disable */
+import React from 'react';
+import { useGetIdentity, useOne, useList } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
-import { useNavigate } from '@pankod/refine-react-router-v6';
+import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import ProcurementForm from 'components/common/ProcurementForm';
-
-// Define a type for the parts
-interface Part {
-    _id: number;
-    partName: string;
-    brandName: string;
-}
 
 const EditProcurement = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { data: user } = useGetIdentity();
 
-  // Fetch existing parts
-  const { data: partsResponse, isLoading } = useList<Part>({
-    resource: 'parts', // Adjust resource name based on your API
+  const { data: procurementData, isLoading: isProcurementLoading } = useOne({
+    resource: 'procurements',
+    id: id as string,
   });
 
-  // Extract parts from response or fallback to an empty array
-  const parts = partsResponse?.data || [];
+  const { data: partsData, isLoading: isPartsLoading } = useList({
+    resource: 'parts',
+  });
 
-  const { refineCore: { onFinish, formLoading }, register, handleSubmit } = useForm();
+  const {
+    refineCore: { onFinish, formLoading },
+    register,
+    handleSubmit,
+    setValue,
+  } = useForm({
+    refineCoreProps: {
+      resource: 'procurements',
+      id: id as string,
+      redirect: false,
+      onMutationSuccess: () => {
+        navigate('/procurements');
+      },
+    },
+  });
 
   const onFinishHandler = async (data: FieldValues) => {
     await onFinish({
       ...data,
-      partName: data.partName, // Use the selected partName
-      brandName: data.brandName, // Corrected to brandName
       email: user.email,
     });
-
-    navigate('/procurements');
   };
 
-  // Handle loading state if needed
-  if (isLoading) {
-    return <div>Loading...</div>; // You can customize this loading state
+  if (isProcurementLoading || isPartsLoading) {
+    return <div>Loading...</div>;
   }
 
   return (
     <ProcurementForm
       type="Edit"
       register={register}
+      onFinishHandler={onFinishHandler}
       onFinish={onFinish}
       formLoading={formLoading}
       handleSubmit={handleSubmit}
-      onFinishHandler={onFinishHandler}
-      existingParts={parts} // Pass the fetched parts to the form
+      existingParts={partsData?.data || []}
+      initialValues={procurementData?.data}
     />
   );
 };

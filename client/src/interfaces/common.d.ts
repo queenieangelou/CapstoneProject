@@ -9,6 +9,17 @@ export interface CustomButtonProps {
     handleClick?: () => void
 }
 
+export interface TableButtonProps {
+    type?: string,
+    title: string,
+    backgroundColor: string,
+    color: string,
+    fullWidth?: boolean,
+    icon?: ReactNode,
+    disabled?: boolean,
+    handleClick?: () => void
+}
+
 export interface ProfileProps {
     type: string,
     name: string,
@@ -47,4 +58,5 @@ export interface FormPropsProcurement {
     handleSubmit: FormEventHandler<HTMLFormElement> | undefined,
     onFinishHandler: (data: FieldValues) => Promise<void>,
     existingParts: Part[]
+    initialValues?: Record<string, any>;
 }

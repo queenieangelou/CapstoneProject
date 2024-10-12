@@ -2,6 +2,7 @@
 import Profile from './common/Profile';
 import PropertyCard from './common/PropertyCard';
 import CustomButton from './common/CustomButton';
+import TableButton from './common/TableButton';
 
 // charts
 import PieChart from './charts/PieChart';
@@ -18,6 +19,7 @@ export {
   Profile,
   PropertyCard,
   CustomButton,
+  TableButton,
 
   PieChart,
   PropertyReferrals,
