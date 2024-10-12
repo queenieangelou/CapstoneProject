@@ -31,6 +31,16 @@ const UserSchema = new mongoose.Schema({
     ref: 'Procurement',
     default: []
   },
+  allSales: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Sale',
+    default: []
+  },
+  allDeployments: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Deployment',
+    default: []
+  },
 
 });
 

@@ -8,6 +8,8 @@ import propertyRouter from './routes/property.routes.js';
 import procurementRouter from './routes/procurement.routes.js';
 import partRouter from './routes/part.routes.js';
 import userManagementRoutes from './routes/userManagement.routes.js';
+import saleRouter from './routes/sale.routes.js';
+import deploymentRouter from './routes/deployment.routes.js'
 
 dotenv.config();
 
@@ -26,6 +28,8 @@ app.use('/api/v1/properties', propertyRouter);
 app.use('/api/v1/procurements', procurementRouter);
 app.use('/api/v1/parts', partRouter);
 app.use('/api/v1/user-management', userManagementRoutes);
+app.use('/api/v1/sales', saleRouter);
+app.use('/api/v1/deployments', deploymentRouter);
 
 const startServer = async () => {
   try {

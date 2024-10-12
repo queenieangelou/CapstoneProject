@@ -43,6 +43,14 @@ import {
 import AllProcurements from 'pages/all-procurements';
 import UserManagement from 'pages/user-management';
 import { UnauthorizedPage } from 'pages/unauthorized';
+import SaleDetails from 'pages/sale-details';
+import AllSales from 'pages/all-sales';
+import CreateSale from 'pages/create-sale';
+import EditSale from 'pages/edit-sale';
+import AllDeployments from 'pages/all-deployment';
+import DeploymentDetails from 'pages/deployment-details';
+import CreateDeployment from 'pages/create-deployment';
+import EditDeployment from 'pages/edit-deployment';
 
 const axiosInstance = axios.create();
 axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
@@ -184,6 +192,22 @@ const App = () => {
       show: ProcurementDetails,
       create: CreateProcurement,
       edit: EditProcurement,
+      icon: <VillaOutlined />,
+    },
+    {
+      name: 'deployments', // LINK
+      list: AllDeployments,
+      show: DeploymentDetails,
+      create: CreateDeployment,
+      edit: EditDeployment,
+      icon: <VillaOutlined />,
+    },
+    {
+      name: 'sales', // LINK
+      list: AllSales,
+      show: SaleDetails,
+      create: CreateSale,
+      edit: EditSale,
       icon: <VillaOutlined />,
     },
     {
