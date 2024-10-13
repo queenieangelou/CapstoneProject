@@ -1,18 +1,24 @@
+/* eslint-diable */
 import { useGetIdentity, useOne } from '@pankod/refine-core';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-import { CustomButton, Profile } from 'components'; // Single import from 'components'
+import { Profile } from 'components';
 
+interface UserProfile {
+  name: string;
+  avatar: string;
+  email: string;
+  allProperties: any[]; // Replace 'any[]' with a more specific type if possible
+  isAdmin: boolean;
+}
 
 const MyProfile = () => {
   const { data: user } = useGetIdentity();
-  const { data, isLoading, isError } = useOne({
+  const { data, isLoading, isError } = useOne<UserProfile>({
     resource: 'users',
     id: user?.userid,
   });
-
   const navigate = useNavigate();
-
-  const myProfile = data?.data ?? [];
+  const myProfile: UserProfile | undefined = data?.data;
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -24,14 +30,16 @@ const MyProfile = () => {
 
   return (
     <div>
-      <Profile
-        type="My"
-        name={myProfile?.name}
-        avatar={myProfile?.avatar}
-        email={myProfile?.email}
-        properties={myProfile?.allProperties}
-        isAdmin={myProfile?.isAdmin}
-      />
+      {myProfile && (
+        <Profile
+          type="My"
+          name={myProfile.name}
+          avatar={myProfile.avatar}
+          email={myProfile.email}
+          properties={myProfile.allProperties}
+          isAdmin={myProfile.isAdmin}
+        />
+      )}
     </div>
   );
 };

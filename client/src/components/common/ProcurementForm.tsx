@@ -4,10 +4,16 @@ import { Box, Typography, FormControl, FormHelperText, TextField, Select, MenuIt
 import { FormPropsProcurement } from 'interfaces/common';
 import CustomButton from './CustomButton';
 
-const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts }: FormPropsProcurement) => {
+const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts, initialValues }: FormPropsProcurement) => {
   const [selectedPart, setSelectedPart] = useState('');
   const [newPartName, setNewPartName] = useState('');
   const [newBrandName, setNewBrandName] = useState('');
+
+  useEffect(() => {
+    if (initialValues && initialValues.partName && initialValues.brandName) {
+      setSelectedPart(`${initialValues.partName}|${initialValues.brandName}`);
+    }
+  }, [initialValues]);
 
   const handlePartChange = (event: SelectChangeEvent<string>) => {
     setSelectedPart(event.target.value as string);
@@ -35,86 +41,85 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
           style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
           onSubmit={handleSubmit(onSubmit)}
         >
+          {/* Seq Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Sequence Number</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              type="number"
+              variant="outlined"
+              color="info"
+              {...register('seq', { required: true })}
+              defaultValue={initialValues?.seq || 0}
+            />
+          </FormControl>
 
-        {/* Seq Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Sequence Number</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            type="number"
-            variant="outlined"
-            color="info"
-            {...register('seq', { required: true })}
-            defaultValue={0}
-          />
-        </FormControl>
+          {/* Date Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Date</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              type="date"
+              variant="outlined"
+              color="info"
+              {...register('date', { required: true })}
+              defaultValue={initialValues?.date || ""}
+            />
+          </FormControl>
 
-        {/* Date Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Date</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            type="date"
-            variant="outlined"
-            color="info"
-            {...register('date', { required: true })}
-            defaultValue=""
-          />
-        </FormControl>
+          {/* Supplier Name Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Supplier Name</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              variant="outlined"
+              color="info"
+              {...register('supplierName', { required: true })}
+              defaultValue={initialValues?.supplierName || ""}
+            />
+          </FormControl>
 
-        {/* Supplier Name Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Supplier Name</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            variant="outlined"
-            color="info"
-            {...register('supplierName', { required: true })}
-            defaultValue=""
-          />
-        </FormControl>
+          {/* Reference Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Reference</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              variant="outlined"
+              color="info"
+              {...register('reference', { required: true })}
+              defaultValue={initialValues?.reference || ""}
+            />
+          </FormControl>
 
-        {/* Reference Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Reference</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            variant="outlined"
-            color="info"
-            {...register('reference', { required: true })}
-            defaultValue=""
-          />
-        </FormControl>
+          {/* TIN Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>TIN</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              variant="outlined"
+              color="info"
+              {...register('tin', { required: true })}
+              defaultValue={initialValues?.tin || ""}
+            />
+          </FormControl>
 
-        {/* TIN Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>TIN</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            variant="outlined"
-            color="info"
-            {...register('tin', { required: true })}
-            defaultValue=""
-          />
-        </FormControl>
-
-        {/* Address Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Address</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            variant="outlined"
-            color="info"
-            {...register('address', { required: true })}
-            defaultValue=""
-          />
-        </FormControl>
+          {/* Address Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Address</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              variant="outlined"
+              color="info"
+              {...register('address', { required: true })}
+              defaultValue={initialValues?.address || ""}
+            />
+          </FormControl>
 
           {/* Part Selection */}
           <FormControl>
@@ -161,46 +166,46 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
             </>
           )}
 
-        {/* Description Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Description</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            variant="outlined"
-            color="info"
-            {...register('description', { required: true })}
-            defaultValue=""
-          />
-        </FormControl>
+          {/* Description Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Description</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              variant="outlined"
+              color="info"
+              {...register('description', { required: true })}
+              defaultValue={initialValues?.description || ""}
+            />
+          </FormControl>
         
-        {/* Quantity Bought Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Quantity Bought</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            type="number"
-            variant="outlined"
-            color="info"
-            {...register('quantityBought', { required: true })}
-            defaultValue={0}
-          />
-        </FormControl>
+          {/* Quantity Bought Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Quantity Bought</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              type="number"
+              variant="outlined"
+              color="info"
+              {...register('quantityBought', { required: true })}
+              defaultValue={initialValues?.quantityBought || 0}
+            />
+          </FormControl>
 
-        {/* Amount Field */}
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Amount</FormHelperText>
-          <TextField
-            fullWidth
-            required
-            type="number"
-            variant="outlined"
-            color="info"
-            {...register('amount', { required: true })}
-            defaultValue={0}
-          />
-        </FormControl>
+          {/* Amount Field */}
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Amount</FormHelperText>
+            <TextField
+              fullWidth
+              required
+              type="number"
+              variant="outlined"
+              color="info"
+              {...register('amount', { required: true })}
+              defaultValue={initialValues?.amount || 0}
+            />
+          </FormControl>
 
           {/* Submit Button */}
           <CustomButton

@@ -1,5 +1,3 @@
-/* eslint-disable linebreak-style */
-/* eslint-disable no-underscore-dangle */
 import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Procurement from '../mongodb/models/procurement.js';
@@ -51,10 +49,19 @@ const getProcurementDetail = async (req, res) => {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    const procurementExists = await Procurement.findOne({ _id: id }).populate('creator').populate('part').session(session);
+    const procurementExists = await Procurement.findOne({ _id: id })
+      .populate('creator')
+      .populate('part')
+      .session(session);
 
     if (procurementExists) {
-      res.status(200).json(procurementExists);
+      // Restructure the response to include partName and brandName at the top level
+      const response = {
+        ...procurementExists.toObject(),
+        partName: procurementExists.part ? procurementExists.part.partName : null,
+        brandName: procurementExists.part ? procurementExists.part.brandName : null,
+      };
+      res.status(200).json(response);
     } else {
       res.status(404).json({ message: 'Procurement does not exist' });
     }
