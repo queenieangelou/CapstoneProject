@@ -110,8 +110,8 @@ const AllProcurements = () => {
   if (isError) return <Typography>Error loading procurements...</Typography>;
 
   return (
-
-    <Box sx={{ maxWidth: '95%' }}>
+  <Box>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap'}}>
       <Stack direction="column" spacing={2}>
         <Typography fontSize={25} fontWeight={700} color="#11142D">
           {!allProcurements.length ? 'There are no procurements' : 'All Procurements'}
@@ -126,7 +126,7 @@ const AllProcurements = () => {
             onChange={(e) => {
               setFilters([{ field: 'supplierName', operator: 'contains', value: e.target.value || undefined }]);
             }}
-            sx={{ mb: 2, minWidth: '200px', flex: 1, mr: 2 }}
+            sx={{ minWidth: '200px', flex: 1, mr: 2 }}
           />
 
           <CustomButton
@@ -156,6 +156,7 @@ const AllProcurements = () => {
                 '& .MuiDataGrid-main': {
                   overflow: 'hidden',
                 },
+                flex: "wrap"
               }}
               initialState={{
                 pagination: { paginationModel: { pageSize: 10 } },
@@ -167,6 +168,7 @@ const AllProcurements = () => {
         </Paper>
       </Stack>
     </Box>
+  </Box>
   );
 };
 

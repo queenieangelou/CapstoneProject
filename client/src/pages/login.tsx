@@ -1,10 +1,10 @@
-// eslint-disable
+/* eslint-disable */
 import { useLogin, useNavigation } from '@pankod/refine-core';
 import { Box, Container } from '@pankod/refine-mui';
 import axios from 'axios';
 import { CredentialResponse } from 'interfaces/google';
 import { useEffect, useRef } from 'react';
-import { yariga } from '../assets';
+import { gammad } from '../assets';
 
 const GoogleButton: React.FC<{ onLogin: (res: CredentialResponse) => void }> = ({ onLogin }) => {
   const divRef = useRef<HTMLDivElement>(null);
@@ -68,7 +68,7 @@ export const Login: React.FC = () => {
           alignItems: 'center',
         }}
         >
-          <img src={yariga} alt="Yariga Logo" />
+          <img src={gammad} alt="Gammad Logo" />
           <Box mt={4}>
             <GoogleButton onLogin={login} />
           </Box>

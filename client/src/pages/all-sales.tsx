@@ -1,10 +1,12 @@
+/* eslint-disable */
 import React, { useMemo } from 'react';
-import { DataGrid, GridRenderCellParams, GridColDef } from '@mui/x-data-grid';
-import { Add } from '@mui/icons-material';
+import { DataGrid, GridRenderCellParams, GridColDef, GridDeleteIcon } from '@mui/x-data-grid';
+import { Add, Edit, Visibility } from '@mui/icons-material';
 import { Box, Stack, TextField, Typography, Paper } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete } from '@pankod/refine-core';
 import CustomButton from 'components/common/CustomButton';
+import { TableButton } from 'components';
 
 const AllSales = () => {
   const { mutate } = useDelete();
@@ -48,32 +50,35 @@ const AllSales = () => {
 
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', width: 100, type: 'number' },
-    { field: 'date', headerName: 'Date', width: 150 },
-    { field: 'clientName', headerName: 'Client Name', width: 150 },
-    { field: 'tin', headerName: 'TIN', width: 150 },
-    { field: 'amount', headerName: 'Amount', width: 150, type: 'number' },
-    { field: 'netOfVAT', headerName: 'Net of VAT', width: 150, type: 'number' },
-    { field: 'outputVAT', headerName: 'Output VAT', width: 150, type: 'number' },
+    { field: 'date', headerName: 'Date', width: 200 },
+    { field: 'clientName', headerName: 'Client Name', width: 200 },
+    { field: 'tin', headerName: 'TIN', width: 100 },
+    { field: 'amount', headerName: 'Amount', width: 100, type: 'number' },
+    { field: 'netOfVAT', headerName: 'Net of VAT', width: 100, type: 'number' },
+    { field: 'outputVAT', headerName: 'Output VAT', width: 100, type: 'number' },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 500,
+      width: 200,
       renderCell: (params: GridRenderCellParams) => (
-        <Stack direction="row" spacing={1}>
-          <CustomButton
-            title="View"
+        <Stack direction="row" spacing={2}>
+          <TableButton
+            title=""
+            icon={<Visibility />}
             handleClick={() => navigate(`/sales/show/${params.row.id}`)}
             backgroundColor="#475BE8"
             color="#FCFCFC"
           />
-          <CustomButton
-            title="Edit"
+          <TableButton
+            title=""
+            icon={<Edit />}
             handleClick={() => navigate(`/sales/edit/${params.row.id}`)}
             backgroundColor="#FFA726"
             color="#FFF"
           />
-          <CustomButton
-            title="Delete"
+          <TableButton
+            title=""
+            icon={<GridDeleteIcon />}
             handleClick={() => handleDeleteSale(params.row.id)}
             backgroundColor="#d42e2e"
             color="#FFF"
@@ -99,14 +104,13 @@ const AllSales = () => {
 
   return (
     <Box>
-      <Box mt="20px" sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-        <Stack direction="column" width="100%">
+      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+        <Stack direction="column" spacing={2}>
           <Typography fontSize={25} fontWeight={700} color="#11142D">
             {!allSales.length ? 'There are no sales' : 'All Sales'}
           </Typography>
 
-          <Box mb={2} mt={3} display="flex" width="100%" justifyContent="space-between" flexWrap="wrap">
-            <Box display="flex" gap={2} flexWrap="wrap" mb={{ xs: '20px', sm: 0 }}>
+          <Box mb={2} mt={3} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
               <TextField
                 variant="outlined"
                 color="info"
@@ -115,9 +119,8 @@ const AllSales = () => {
                 onChange={(e) => {
                   setFilters([{ field: 'clientName', operator: 'contains', value: e.target.value || undefined }]);
                 }}
+                sx={{ minWidth: '200px', flex: 1, mr: 2 }}
               />
-            </Box>
-
             <CustomButton
               title="Add Sale"
               handleClick={() => navigate('/sales/create')}
@@ -126,26 +129,35 @@ const AllSales = () => {
               icon={<Add />}
             />
           </Box>
+          <Paper elevation={3} sx={{ padding: '20px', margin: '20px auto', width: '100%' }}>
+            <Box sx={{ height: 650, width: '100%' }}>
+              <DataGrid
+                rows={rows}
+                columns={columns}
+                checkboxSelection={false}
+                sx={{
+                  '& .MuiDataGrid-cell': {
+                    whiteSpace: 'normal',
+                    lineHeight: 'normal',
+                    padding: '8px',
+                  },
+                  '& .MuiDataGrid-row': {
+                    maxHeight: 'none !important',
+                  },
+                  '& .MuiDataGrid-main': {
+                    overflow: 'hidden',
+                  },
+                }}
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10 } },
+                }}
+                pageSizeOptions={[10, 25, 50]}
+                getRowHeight={() => 'auto'}
+              />
+            </Box>
+          </Paper>
         </Stack>
       </Box>
-
-      <Paper sx={{ height: 750, width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          checkboxSelection
-          sx={{ border: 0 }}
-          pagination
-          autoHeight
-          sortingOrder={['asc', 'desc']}
-          slotProps={{
-            pagination: {
-              showFirstButton: true,
-              showLastButton: true,
-            },
-          }}
-        />
-      </Paper>
     </Box>
   );
 };

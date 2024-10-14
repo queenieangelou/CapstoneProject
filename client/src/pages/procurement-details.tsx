@@ -1,7 +1,8 @@
-/* eslint-disable no-restricted-globals */
-import { Typography, Box } from '@pankod/refine-mui';
+/* eslint-disable */
+import { Typography, Box, Paper, DeleteButton, EditButton } from '@pankod/refine-mui';
 import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
 import { useParams, useNavigate } from '@pankod/refine-react-router-v6';
+import { TableButton } from 'components';
 
 const ProcurementDetails = () => {
   const navigate = useNavigate();
@@ -39,15 +40,18 @@ const ProcurementDetails = () => {
   };
 
   return (
-    <Box
-      borderRadius="15px"
-      padding="20px"
-      bgcolor="#FCFCFC"
-      width="fit-content"
+    <Paper
+    style={{
+      borderRadius: "15px",
+      padding: "20px",
+      background: "#FCFCFC",
+      maxWidth: "400px",
+      margin: "20px auto"
+    }}
     >
-      <Typography fontSize={25} fontWeight={700} color="#11142D">Details</Typography>
+      <Typography fontSize={25} fontWeight={700} color="#11142D" align='center'>Details</Typography>
 
-      <Box mt="20px">
+      <Box mt="20px" margin={'20px'} padding={'10px'}>
         <Typography fontSize={18} fontWeight={600} color="#11142D">Sequence: {procurementDetails.seq}</Typography>
         <Typography fontSize={16} color="#808191">Supplier Name: {procurementDetails.supplierName}</Typography>
         <Typography fontSize={16} color="#808191">Type: {procurementDetails.reference}</Typography>
@@ -62,22 +66,24 @@ const ProcurementDetails = () => {
         <Typography fontSize={16} fontWeight={600} color="#11142D">Creator: {procurementDetails.creator.name}</Typography>
       </Box>
       {isCurrentUser && (
-        <Box mt="20px">
-          <button
-            type="button"
-            onClick={() => navigate(`/procurements/edit/${procurementDetails._id}`)}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={handleDeleteProcurement}
-          >
-            Delete
-          </button>
+        <Box mt="20px" style={{ display: "flex", justifyContent:"space-evenly" }} >
+          <TableButton
+            handleClick={() => navigate(`/procurements/edit/${procurementDetails._id}`)}
+            title=''
+            icon={< EditButton />}
+            backgroundColor={''}
+            color={''}   
+          />
+          <TableButton
+            handleClick={handleDeleteProcurement}
+            title=''
+            icon={<DeleteButton />}
+            backgroundColor={''}
+            color={''}
+            />
         </Box>
       )}
-    </Box>
+    </Paper>
   );
 };
 

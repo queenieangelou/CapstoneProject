@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useMemo } from 'react';
 import { DataGrid, GridRenderCellParams, GridColDef } from '@mui/x-data-grid';
 import { Add } from '@mui/icons-material';

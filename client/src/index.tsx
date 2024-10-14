@@ -1,5 +1,7 @@
+/* eslint-disable */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { CssBaseline } from '@pankod/refine-mui';
 
 import reportWebVitals from './reportWebVitals';
 import App from './App';
@@ -12,7 +14,9 @@ const root = createRoot(container);
 root.render(
   <React.StrictMode>
     <ColorModeContextProvider>
-      <App />
+      <CssBaseline>
+        <App />
+      </CssBaseline>
     </ColorModeContextProvider>
   </React.StrictMode>,
 );

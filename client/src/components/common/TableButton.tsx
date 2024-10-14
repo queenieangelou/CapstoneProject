@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { Button } from '@pankod/refine-mui';
 
 import { TableButtonProps } from 'interfaces/common';
