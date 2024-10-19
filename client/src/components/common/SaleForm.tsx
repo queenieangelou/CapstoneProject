@@ -92,6 +92,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
                   type="number"
                   variant="outlined"
                   color="info"
+                  value={amount}
                   {...register('amount', { 
                     required: true,
                     valueAsNumber: true,

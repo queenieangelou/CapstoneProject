@@ -12,26 +12,21 @@ const CreateSale = () => {
   const { refineCore: { onFinish, formLoading }, register, handleSubmit, watch } = useForm();
 
   const onFinishHandler = async (data: FieldValues) => {
-    try {
+
       const amount = parseFloat(data.amount) || 0;
       const VAT_RATE = 0.12;
       const netOfVAT = amount / (1 + VAT_RATE);
       const outputVAT = amount - netOfVAT;
 
-      const saleData = {
+      await onFinish({
         ...data,
         amount,
         netOfVAT: parseFloat(netOfVAT.toFixed(2)),
         outputVAT: parseFloat(outputVAT.toFixed(2)),
         email: user.email,
-      };
+      });
 
-      const result = await onFinish(saleData);
-  
       navigate('/sales');
-    } catch (error) {
-
-    }
   };
 
   return (
