@@ -1,5 +1,4 @@
-/* eslint-disable linebreak-style */
-/* eslint-disable no-underscore-dangle */
+// server\controller\property.controller.js
 import * as dotenv from 'dotenv';
 import { v2 as cloudinary } from 'cloudinary';
 
@@ -67,42 +66,37 @@ const createProperty = async (req, res) => {
       title, description, propertyType, location, price, photo, email,
     } = req.body;
 
-    // Start a new session
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    // Retrieve user by email
     const user = await User.findOne({ email }).session(session);
     if (!user) {
       throw new Error('User not found');
     }
 
-    const photoUrl = await cloudinary.uploader.upload(photo);
+    // Log photo data and response from Cloudinary
 
-    // Create a new property
-    const newProperty = await Property.create(
-      {
-        title,
-        description,
-        propertyType,
-        location,
-        price,
-        photo: photoUrl.url,
-        creator: user._id,
-      },
-    );
+    const photoUrl = await cloudinary.uploader.upload(photo, { timeout: 60000 }); // 60 seconds
 
-    // Update the user's allProperties field with the new property
+    const newProperty = await Property.create({
+      title,
+      description,
+      propertyType,
+      location,
+      price,
+      photo: photoUrl.url,
+      creator: user._id,
+    });
+
     user.allProperties.push(newProperty._id);
     await user.save({ session });
 
-    // Commit the transaction
     await session.commitTransaction();
-    session.endSession(); // End the session
+    session.endSession();
 
-    // Send response
     res.status(200).json({ message: 'Property created successfully' });
   } catch (err) {
+    console.error('Error during property creation:', err); // Log error details
     res.status(500).json({ message: 'Failed to create property, please try again later' });
   }
 };

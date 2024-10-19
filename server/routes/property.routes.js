@@ -1,3 +1,4 @@
+// server\routes\property.routes.js
 import express from 'express';
 
 import {

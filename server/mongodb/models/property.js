@@ -1,3 +1,4 @@
+// server\mongodb\models\property.js
 import mongoose from 'mongoose';
 
 const PropertySchema = new mongoose.Schema({

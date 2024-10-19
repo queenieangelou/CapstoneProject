@@ -1,3 +1,4 @@
+// client\src\pages\all-properties.tsx
 import { useMemo } from 'react';
 import { Add } from '@mui/icons-material';
 import { useTable } from '@pankod/refine-core';
