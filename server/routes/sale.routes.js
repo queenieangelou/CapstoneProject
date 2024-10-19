@@ -1,3 +1,4 @@
+// server\routes\sale.routes.js
 import express from 'express';
 
 import {

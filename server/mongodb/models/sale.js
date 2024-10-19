@@ -1,3 +1,4 @@
+// server\mongodb\models\sale.js
 import mongoose from 'mongoose';
 
 const SaleSchema = new mongoose.Schema({

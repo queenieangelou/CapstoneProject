@@ -1,3 +1,5 @@
+/* eslint-disable */
+// client\src\pages\create-sale.tsx
 import { useGetIdentity } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate } from '@pankod/refine-react-router-v6';
@@ -7,15 +9,29 @@ const CreateSale = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
 
-  const { refineCore: { onFinish, formLoading }, register, handleSubmit } = useForm();
+  const { refineCore: { onFinish, formLoading }, register, handleSubmit, watch } = useForm();
 
   const onFinishHandler = async (data: FieldValues) => {
-    await onFinish({
-      ...data,
-      email: user.email,
-    });
+    try {
+      const amount = parseFloat(data.amount) || 0;
+      const VAT_RATE = 0.12;
+      const netOfVAT = amount / (1 + VAT_RATE);
+      const outputVAT = amount - netOfVAT;
 
-    navigate('/sales');
+      const saleData = {
+        ...data,
+        amount,
+        netOfVAT: parseFloat(netOfVAT.toFixed(2)),
+        outputVAT: parseFloat(outputVAT.toFixed(2)),
+        email: user.email,
+      };
+
+      const result = await onFinish(saleData);
+  
+      navigate('/sales');
+    } catch (error) {
+
+    }
   };
 
   return (

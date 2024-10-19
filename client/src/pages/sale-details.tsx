@@ -1,7 +1,8 @@
 /* eslint-disable */
-import { Typography, Box } from '@pankod/refine-mui';
+import { Typography, Box, DeleteButton, EditButton, Paper } from '@pankod/refine-mui';
 import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
 import { useParams, useNavigate } from '@pankod/refine-react-router-v6';
+import { TableButton } from 'components';
 
 const SaleDetails = () => {
   const navigate = useNavigate();
@@ -39,15 +40,18 @@ const SaleDetails = () => {
   };
 
   return (
-    <Box
-      borderRadius="15px"
-      padding="20px"
-      bgcolor="#FCFCFC"
-      width="fit-content"
+    <Paper
+    style={{
+      borderRadius: "15px",
+      padding: "20px",
+      background: "#FCFCFC",
+      maxWidth: "400px",
+      margin: "20px auto"
+    }}
     >
-      <Typography fontSize={25} fontWeight={700} color="#11142D">Details</Typography>
+      <Typography fontSize={25} fontWeight={700} color="#11142D" align='center'>Details</Typography>
 
-      <Box mt="20px">
+      <Box mt="20px" margin={'20px'} padding={'10px'}>
         <Typography fontSize={18} fontWeight={600} color="#11142D">Sequence: {saleDetails.seq}</Typography>
         <Typography fontSize={16} color="#808191">Date: {saleDetails.date}</Typography>
         <Typography fontSize={16} color="#808191">Client Name: {saleDetails.clientName}</Typography>
@@ -59,22 +63,24 @@ const SaleDetails = () => {
         <Typography fontSize={16} fontWeight={600} color="#11142D">Creator: {saleDetails.creator.name}</Typography>
       </Box>
       {isCurrentUser && (
-        <Box mt="20px">
-          <button
-            type="button"
-            onClick={() => navigate(`/sales/edit/${saleDetails._id}`)}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={handleDeleteSale}
-          >
-            Delete
-          </button>
+        <Box mt="20px" style={{ display: "flex", justifyContent:"space-evenly" }} >
+           <TableButton
+            handleClick={() => navigate(`/sales/edit/${saleDetails._id}`)}
+            title=''
+            icon={< EditButton />}
+            backgroundColor={''}
+            color={''}   
+          />
+          <TableButton
+            handleClick={handleDeleteSale}
+            title=''
+            icon={<DeleteButton />}
+            backgroundColor={''}
+            color={''}
+            />
         </Box>
       )}
-    </Box>
+    </Paper>
   );
 };
 

@@ -1,3 +1,4 @@
+// server\controller\sale.controller.js
 import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Sale from '../mongodb/models/sale.js';
@@ -51,37 +52,59 @@ const getSaleDetail = async (req, res) => {
 };
 
 const createSale = async (req, res) => {
+  console.log('Received sale creation request with body:', req.body);
   try {
     const {
       seq, date, clientName, tin, amount, netOfVAT, outputVAT, email,
     } = req.body;
 
+    console.log('Parsed sale data:', { seq, date, clientName, tin, amount, netOfVAT, outputVAT, email });
+
+    // Validate required fields
+    if (!seq || !date || !clientName || !tin || !amount) {
+      console.log('Validation failed: Missing required fields');
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    const user = await User.findOne({ email }).session(session);
+    try {
+      const user = await User.findOne({ email }).session(session);
 
-    if (!user) throw new Error('User not found');
+      if (!user) {
+        console.log('User not found for email:', email);
+        throw new Error('User not found');
+      }
 
-    const newSale = await Sale.create({
-      seq,
-      date,
-      clientName,
-      tin,
-      amount,
-      netOfVAT,
-      outputVAT,
-      creator: user._id,
-    });
+      const newSale = await Sale.create({
+        seq,
+        date,
+        clientName,
+        tin,
+        amount,
+        netOfVAT,
+        outputVAT,
+        creator: user._id,
+      });
 
-    user.allSales.push(newSale._id);
-    await user.save({ session });
+      user.allSales.push(newSale._id);
+      await user.save({ session });
 
-    await session.commitTransaction();
+      await session.commitTransaction();
 
-    res.status(200).json({ message: 'Sale created successfully' });
+
+      res.status(200).json({ message: 'Sale created successfully', sale: newSale });
+    } catch (error) {
+      await session.abortTransaction();
+
+      throw error;
+    } finally {
+      session.endSession();
+    }
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create sale, please try again later' });
+
+    res.status(500).json({ message: 'Failed to create sale', error: error.message });
   }
 };
 
@@ -90,19 +113,33 @@ const updateSale = async (req, res) => {
     const { id } = req.params;
     const { seq, date, clientName, tin, amount, netOfVAT, outputVAT } = req.body;
 
-    await Sale.findByIdAndUpdate({ _id: id }, {
-      seq,
-      date,
-      clientName,
-      tin,
-      amount,
-      netOfVAT,
-      outputVAT,
-    });
+    // Input validation
+    if (typeof amount !== 'number' || isNaN(amount)) {
+      return res.status(400).json({ message: 'Invalid amount' });
+    }
 
-    res.status(200).json({ message: 'Sale updated successfully' });
+    const updatedSale = await Sale.findByIdAndUpdate(
+      { _id: id },
+      {
+        seq,
+        date,
+        clientName,
+        tin,
+        amount,
+        netOfVAT,
+        outputVAT,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedSale) {
+      return res.status(404).json({ message: 'Sale not found' });
+    }
+
+    res.status(200).json(updatedSale);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update sale, please try again later' });
+
+    res.status(500).json({ message: 'Failed to update sale', error: error.message });
   }
 };
 

@@ -23,6 +23,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
     setOutputVAT(calculatedOutputVAT);
   };
 
+
   return (
     <Box>
       <Typography fontSize={25} fontWeight={700} color="#11142D">{type} a Sale</Typography>
@@ -86,13 +87,16 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
           <FormControl sx={{flex: 1}}>
             <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Amount</FormHelperText>
             <TextField
-              fullWidth
-              required
-              type="number"
-              variant="outlined"
-              color="info"
-              value={amount}
-              onChange={handleAmountChange}
+                  fullWidth
+                  required
+                  type="number"
+                  variant="outlined"
+                  color="info"
+                  {...register('amount', { 
+                    required: true,
+                    valueAsNumber: true,
+                    onChange: handleAmountChange 
+                  })}
             />
           </FormControl>
 
