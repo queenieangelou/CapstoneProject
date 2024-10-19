@@ -17,7 +17,7 @@ import {
   ReadyPage,
   RefineSnackbarProvider,
 } from '@pankod/refine-mui';
-import routerProvider, { BrowserRouter, Route, Routes } from '@pankod/refine-react-router-v6';
+import routerProvider from '@pankod/refine-react-router-v6';
 import dataProvider from '@pankod/refine-simple-rest';
 import axios, { AxiosRequestConfig } from 'axios';
 
@@ -276,7 +276,6 @@ const App = () => {
             authProvider={authProvider}
             LoginPage={Login}
             DashboardPage={Home}
-            
           />
       </RefineSnackbarProvider>
     </ColorModeContextProvider>

@@ -11,7 +11,8 @@ const AllProcurements = () => {
   const { mutate } = useDelete();
   const navigate = useNavigate();
   const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   const {
     tableQueryResult: { data, isLoading, isError },
@@ -138,7 +139,7 @@ const AllProcurements = () => {
           />
         </Box>
 
-        <Paper elevation={3} sx={{ padding: '20px', margin: '20px auto', width: '100%' }}>
+        <Paper elevation={3} sx={{ padding: '20px', margin: '20px auto', maxWidth: '100%'}}>
           <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
               rows={rows}
@@ -156,7 +157,6 @@ const AllProcurements = () => {
                 '& .MuiDataGrid-main': {
                   overflow: 'hidden',
                 },
-                flex: "wrap"
               }}
               initialState={{
                 pagination: { paginationModel: { pageSize: 10 } },

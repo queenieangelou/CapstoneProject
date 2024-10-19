@@ -49,20 +49,20 @@ const AllDeployments = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'seq', headerName: 'Seq', flex: 1 },
-    { field: 'date', headerName: 'Date', flex: 1 },
-    { field: 'clientName', headerName: 'Client Name', flex: 1 },
-    { field: 'tin', headerName: 'TIN', flex: 1 },
-    { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1 },
-    { field: 'partName', headerName: 'Part Name', flex: 1 },
-    { field: 'quantityUsed', headerName: 'Quantity Used', flex: 1 },
-    { field: 'deploymentStatus', headerName: 'Deployment Status', flex: 1, renderCell: (params: GridRenderCellParams) => params.value ? 'Yes' : 'No' },
-    { field: 'deploymentDate', headerName: 'Deployment Date', flex: 1 },
-    { field: 'releaseStatus', headerName: 'Release Status', flex: 1, renderCell: (params: GridRenderCellParams) => params.value ? 'Yes' : 'No' },
-    { field: 'releaseDate', headerName: 'Release Date', flex: 1 },
-    { field: 'amount', headerName: 'Amount', flex: 1 },
-    { field: 'netOfVAT', headerName: 'Net of VAT', flex: 1 },
-    { field: 'outputVAT', headerName: 'Output VAT', flex: 1 },
+    { field: 'seq', headerName: 'Seq'},
+    { field: 'date', headerName: 'Date'},
+    { field: 'clientName', headerName: 'Client Name' },
+    { field: 'tin', headerName: 'TIN'},
+    { field: 'vehicleModel', headerName: 'Vehicle Model'},
+    { field: 'partName', headerName: 'Part Name'},
+    { field: 'quantityUsed', headerName: 'Quantity Used'},
+    { field: 'deploymentStatus', headerName: 'Deployment Status', renderCell: (params: GridRenderCellParams) => params.value ? 'Yes' : 'No' },
+    { field: 'deploymentDate', headerName: 'Deployment Date'},
+    { field: 'releaseStatus', headerName: 'Release Status', renderCell: (params: GridRenderCellParams) => params.value ? 'Yes' : 'No' },
+    { field: 'releaseDate', headerName: 'Release Date'},
+    { field: 'amount', headerName: 'Amount'},
+    { field: 'netOfVAT', headerName: 'Net of VAT'},
+    { field: 'outputVAT', headerName: 'Output VAT'},
     {
       field: 'actions',
       headerName: 'Actions',
@@ -99,7 +99,6 @@ const rows = allDeployments.map((deployment) => ({
     seq: deployment.seq,
     date: new Date(deployment.date).toLocaleDateString(),
     clientName: deployment.clientName,
-    tin: deployment.tin,
     vehicleModel: deployment.vehicleModel,
     partName: deployment.part?.name,
     partBrand: deployment.part?.brand,
@@ -108,9 +107,6 @@ const rows = allDeployments.map((deployment) => ({
     deploymentDate: deployment.deploymentDate ? new Date(deployment.deploymentDate).toLocaleDateString() : 'N/A',
     releaseStatus: deployment.releaseStatus,
     releaseDate: deployment.releaseDate ? new Date(deployment.releaseDate).toLocaleDateString() : 'N/A',
-    amount: deployment.amount.toFixed(2),
-    netOfVAT: deployment.netOfVAT.toFixed(2),
-    outputVAT: deployment.outputVAT.toFixed(2),
   }));
 
   if (isLoading) return <Typography>Loading...</Typography>;
@@ -118,19 +114,13 @@ const rows = allDeployments.map((deployment) => ({
 
   return (
     <Box>
-      <Box mt="20px" sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-        <Stack direction="column" width="100%">
+      <Box sx={{ display: 'flex', flexWrap: 'wrap'}}>
+        <Stack direction="column" spacing={2}>
           <Typography fontSize={25} fontWeight={700} color="#11142D">
             {!allDeployments.length ? 'There are no deployments' : 'All Deployments'}
           </Typography>
-          <Box mb={2} mt={3} display="flex" width="84%" justifyContent="space-between" flexWrap="wrap">
-            <Box display="flex" gap={2} flexWrap="wrap" mb={{ xs: '20px', sm: 0 }}>
-              <CustomButton
-                title={`Sort date ${sorter.find((item) => item.field === 'date')?.order === 'asc' ? '↑' : '↓'}`}
-                handleClick={() => setSorter([{ field: 'date', order: sorter.find((item) => item.field === 'date')?.order === 'asc' ? 'desc' : 'asc' }])}
-                backgroundColor="#475BE8"
-                color="#FCFCFC"
-              />
+
+          <Box mb={2} mt={3} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
               <TextField
                 variant="outlined"
                 color="info"
@@ -145,9 +135,8 @@ const rows = allDeployments.map((deployment) => ({
                     },
                   ]);
                 }}
+                sx={{ minWidth: '200px', flex: 1, mr: 2 }}
               />
-            </Box>
-
             <CustomButton
                 title="Add Deployment"
                 handleClick={() => navigate('/deployments/create')}
@@ -156,26 +145,35 @@ const rows = allDeployments.map((deployment) => ({
                 icon={<Add />}
             />
           </Box>
-        </Stack>
+          <Paper elevation={3} sx={{ padding: '20px', margin: '20px auto', width: '100%' }}>
+            <Box sx={{ height: 650, width: '100%' }}>
+              <DataGrid
+                rows={rows}
+                columns={columns}
+                checkboxSelection={false}
+                sx={{
+                  '& .MuiDataGrid-cell': {
+                    whiteSpace: 'normal',
+                    lineHeight: 'normal',
+                    padding: '8px',
+                  },
+                  '& .MuiDataGrid-row': {
+                    maxHeight: 'none !important',
+                  },
+                  '& .MuiDataGrid-main': {
+                    overflow: 'hidden',
+                  },
+                }}
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10 } },
+                }}
+                pageSizeOptions={[10, 25, 50]}
+                getRowHeight={() => 'auto'}
+              />
+            </Box>
+          </Paper>
+      </Stack>
       </Box>
-
-      <Paper sx={{ height: 750, width: '100%' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          checkboxSelection
-          sx={{ border: 0 }}
-          pagination
-          autoHeight
-          sortingOrder={['asc', 'desc']}
-          slotProps={{
-            pagination: {
-              showFirstButton: true,
-              showLastButton: true,
-            },
-          }}
-        />
-      </Paper>
     </Box>
   );
 };

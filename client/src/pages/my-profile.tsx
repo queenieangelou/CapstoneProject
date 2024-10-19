@@ -1,4 +1,4 @@
-/* eslint-diable */
+/* eslint-disable */
 import { useGetIdentity, useOne } from '@pankod/refine-core';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { Profile } from 'components';
