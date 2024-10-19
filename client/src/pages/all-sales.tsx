@@ -106,7 +106,7 @@ const AllSales = () => {
     <Box>
       <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
         <Stack direction="column" spacing={2}>
-          <Typography fontSize={25} fontWeight={700} color="#11142D">
+          <Typography fontSize={25} fontWeight={700}>
             {!allSales.length ? 'There are no sales' : 'All Sales'}
           </Typography>
 
@@ -124,8 +124,8 @@ const AllSales = () => {
             <CustomButton
               title="Add Sale"
               handleClick={() => navigate('/sales/create')}
-              backgroundColor="#475BE8"
-              color="#FCFCFC"
+              backgroundColor="#fff200"
+              color="#595959"
               icon={<Add />}
             />
           </Box>

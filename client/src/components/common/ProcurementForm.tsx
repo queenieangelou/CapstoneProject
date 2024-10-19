@@ -1,8 +1,9 @@
 /* eslint-disable */
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, FormControl, FormHelperText, TextField, Select, MenuItem, SelectChangeEvent, Stack, width } from '@pankod/refine-mui';
+import { Box, Typography, FormControl, FormHelperText, TextField, Select, MenuItem, SelectChangeEvent, Paper } from '@pankod/refine-mui';
 import { FormPropsProcurement } from 'interfaces/common';
 import CustomButton from './CustomButton';
+import { ColorModeContextProvider } from 'contexts';
 
 
 const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts, initialValues }: FormPropsProcurement) => {
@@ -34,10 +35,10 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
   };
 
   return (
-    <Box>
-      <Typography fontSize={25} fontWeight={700} color="#11142D">{type} a Procurement</Typography>
 
-      <Box mt={2.5} borderRadius="15px" padding="15px" bgcolor="#FCFCFC" >
+    <Box>
+      <Typography fontSize={25} fontWeight={700} >{type} a Procurement</Typography>
+      <Paper sx={{marginTop: '15px', padding: '15px'}}>
         <form
           style={{ marginTop: '5px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
           onSubmit={handleSubmit(onSubmit)}
@@ -46,7 +47,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
           <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '40%'}}>
               {/* Seq Field */}
               <FormControl sx={{marginRight: '10px', flex: 1}}>
-                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Sequence Number</FormHelperText>
+                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Sequence Number</FormHelperText>
                 <TextField
                   fullWidth
                   required
@@ -60,7 +61,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
 
               {/* Date Field */}
               <FormControl sx={{marginRight: '10px', flex: 1}}>
-                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Date</FormHelperText>
+                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Date</FormHelperText>
                 <TextField
                   fullWidth
                   required
@@ -74,7 +75,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
               </Box>
                 {/* Supplier Name Field */}
                   <FormControl sx={{ flex: 1}}>
-                    <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Supplier Name</FormHelperText>
+                    <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Supplier Name</FormHelperText>
                     <TextField
                       fullWidth
                       required
@@ -89,7 +90,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
           <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '40%'}}>
             {/* Reference Field */}
             <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Reference</FormHelperText>
+              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Reference</FormHelperText>
               <TextField
                 fullWidth
                 required
@@ -102,7 +103,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
 
             {/* TIN Field */}
             <FormControl sx={{marginRight: '10px',flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>TIN</FormHelperText>
+              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>TIN</FormHelperText>
               <TextField
                 fullWidth
                 required
@@ -115,7 +116,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
             </Box>
             {/* Address Field */}
             <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Address</FormHelperText>
+              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Address</FormHelperText>
               <TextField
                 fullWidth
                 required
@@ -130,7 +131,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
         <Box style={{display: 'flex', width: '40%'}}>
             {/* Part Selection */}
             <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D'}}>Part & Brand</FormHelperText>
+              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16}}>Part & Brand</FormHelperText>
               <Select
                 fullWidth
                 value={selectedPart}
@@ -149,7 +150,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
             {selectedPart === 'new' && (
               <>
                 <FormControl sx={{marginRight: '10px', flex: 1}}>
-                  <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>New Part Name</FormHelperText>
+                  <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>New Part Name</FormHelperText>
                   <TextField
                     fullWidth
                     required
@@ -160,7 +161,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
                   />
                 </FormControl>
                 <FormControl sx={{marginRight: '10px', flex: 1}}>
-                  <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>New Brand Name</FormHelperText>
+                  <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>New Brand Name</FormHelperText>
                   <TextField
                     fullWidth
                     required
@@ -177,7 +178,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
         <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '40%'}}>
           {/* Description Field */}
           <FormControl sx={{marginRight: '10px', flex: 1}}>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Description</FormHelperText>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Description</FormHelperText>
             <TextField
               fullWidth
               required
@@ -191,7 +192,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
           <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '60%'}}>
             {/* Quantity Bought Field */}
             <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Quantity Bought</FormHelperText>
+              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Quantity Bought</FormHelperText>
               <TextField
                 fullWidth
                 required
@@ -205,7 +206,7 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
 
             {/* Amount Field */}
             <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Amount</FormHelperText>
+              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Amount</FormHelperText>
               <TextField
                 fullWidth
                 required
@@ -223,12 +224,12 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
           <CustomButton
             type="submit"
             title={formLoading ? 'Submitting...' : 'Submit'}
-            backgroundColor="#475BE8"
-            color="#FCFCFC"
+            backgroundColor="#fff000"
+            color="#141414"
           />
         </Box>
         </form>
-      </Box>
+        </Paper>
     </Box>
   );
 };

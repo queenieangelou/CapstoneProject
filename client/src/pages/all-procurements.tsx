@@ -114,7 +114,7 @@ const AllProcurements = () => {
   <Box>
     <Box sx={{ display: 'flex', flexWrap: 'wrap'}}>
       <Stack direction="column" spacing={2}>
-        <Typography fontSize={25} fontWeight={700} color="#11142D">
+        <Typography fontSize={25} fontWeight={700}>
           {!allProcurements.length ? 'There are no procurements' : 'All Procurements'}
         </Typography>
 
@@ -133,8 +133,8 @@ const AllProcurements = () => {
           <CustomButton
             title="Add Procurement"
             handleClick={() => navigate('/procurements/create')}
-            backgroundColor="#475BE8"
-            color="#FCFCFC"
+            backgroundColor="#fff200"
+            color="#595959"
             icon={<Add />}
           />
         </Box>

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React, { useState } from 'react';
-import { Box, Typography, FormControl, FormHelperText, TextField } from '@pankod/refine-mui';
+import { Box, Typography, FormControl, FormHelperText, TextField, Paper } from '@pankod/refine-mui';
 import { FormPropsSale } from 'interfaces/common';
 import CustomButton from './CustomButton';
 
@@ -26,16 +26,16 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
 
   return (
     <Box>
-      <Typography fontSize={25} fontWeight={700} color="#11142D">{type} a Sale</Typography>
+      <Typography fontSize={25} fontWeight={700}>{type} a Sale</Typography>
 
-      <Box mt={2.5} borderRadius="15px" padding="20px" bgcolor="#FCFCFC">
+      <Paper sx={{marginTop: '15px', padding: '15px'}}>
         <form
           style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
           onSubmit={handleSubmit(onFinishHandler)}
         >
           <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px'}}>
           <FormControl>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Sequence Number</FormHelperText>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Sequence Number</FormHelperText>
             <TextField
               fullWidth
               required
@@ -47,7 +47,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
           </FormControl>
 
           <FormControl>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Date</FormHelperText>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Date</FormHelperText>
             <TextField
               fullWidth
               required
@@ -61,7 +61,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
 
           <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px'}}>
           <FormControl sx={{ width: '40%'}}>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Client Name</FormHelperText>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Client Name</FormHelperText>
             <TextField
               fullWidth
               required
@@ -72,7 +72,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
           </FormControl>
 
           <FormControl sx={{ width: '30%'}}>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>TIN</FormHelperText>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>TIN</FormHelperText>
             <TextField
               fullWidth
               required
@@ -85,7 +85,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
 
           <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px', width: '80%'}}>
           <FormControl sx={{flex: 1}}>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Amount</FormHelperText>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Amount</FormHelperText>
             <TextField
                   fullWidth
                   required
@@ -102,7 +102,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
           </FormControl>
 
           <FormControl sx={{flex: 1}}>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Net of VAT</FormHelperText>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Net of VAT</FormHelperText>
             <TextField
               fullWidth
               required
@@ -117,7 +117,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
           </FormControl>
 
           <FormControl sx={{flex: 1}}>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16, color: '#11142D' }}>Output VAT</FormHelperText>
+            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Output VAT</FormHelperText>
             <TextField
               fullWidth
               required
@@ -134,11 +134,11 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler }
           <CustomButton
             type="submit"
             title={formLoading ? 'Submitting...' : 'Submit'}
-            backgroundColor="#475BE8"
-            color="#FCFCFC"
+            backgroundColor="#fff200"
+            color="#141414"
           />
         </form>
-      </Box>
+      </Paper>
     </Box>
   );
 };

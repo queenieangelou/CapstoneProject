@@ -1,12 +1,14 @@
-/* eslint-disable */
 import React from 'react';
 import {
   AccountCircleOutlined,
+  AttachMoneyOutlined,
   ChatBubbleOutline,
   ManageAccounts,
+  NoCrashOutlined,
   PeopleAltOutlined,
   StarOutlineRounded,
   VillaOutlined,
+  WarehouseOutlined,
 } from '@mui/icons-material';
 import { AuthProvider, Refine } from '@pankod/refine-core';
 import {
@@ -192,7 +194,7 @@ const App = () => {
       show: ProcurementDetails,
       create: CreateProcurement,
       edit: EditProcurement,
-      icon: <VillaOutlined />,
+      icon: <WarehouseOutlined />,
     },
     {
       name: 'deployments', // LINK
@@ -200,7 +202,7 @@ const App = () => {
       show: DeploymentDetails,
       create: CreateDeployment,
       edit: EditDeployment,
-      icon: <VillaOutlined />,
+      icon: <NoCrashOutlined />,
     },
     {
       name: 'sales', // LINK
@@ -208,7 +210,7 @@ const App = () => {
       show: SaleDetails,
       create: CreateSale,
       edit: EditSale,
-      icon: <VillaOutlined />,
+      icon: <AttachMoneyOutlined/>,
     },
     {
       name: 'agents',
