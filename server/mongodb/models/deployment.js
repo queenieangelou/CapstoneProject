@@ -13,10 +13,6 @@ const DeploymentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  tin: {
-    type: String,
-    required: true,
-  },
   vehicleModel: {
     type: String,
     required: true,
@@ -43,18 +39,6 @@ const DeploymentSchema = new mongoose.Schema({
   },
   releaseDate: {
     type: String,
-  },
-  amount: {
-    type: Number,
-    required: true,
-  },
-  netOfVAT: {
-    type: Number,
-    required: true,
-  },
-  outputVAT: {
-    type: Number,
-    required: true,
   },
   creator: {
     type: mongoose.Schema.Types.ObjectId,

@@ -33,11 +33,11 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
 
   return (
     <Box>
-      <Typography fontSize={25} fontWeight={700} color="#11142D">
+      <Typography fontSize={25} fontWeight={700}>
         {type} a Deployment
       </Typography>
 
-      <Box mt={2.5} borderRadius="15px" padding="20px" bgcolor="#FCFCFC">
+      <Box mt={2.5} borderRadius="15px" padding="20px">
         <form
           style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
           onSubmit={handleSubmit(onFinishHandler)}
@@ -76,18 +76,6 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
               color="info"
               variant="outlined"
               {...register('clientName', { required: true })}
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormHelperText>TIN</FormHelperText>
-            <TextField
-              fullWidth
-              required
-              id="outlined-basic"
-              color="info"
-              variant="outlined"
-              {...register('tin', { required: true })}
             />
           </FormControl>
 
@@ -181,45 +169,6 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
               />
             </FormControl>
           )}
-
-          <FormControl>
-            <FormHelperText>Amount</FormHelperText>
-            <TextField
-              fullWidth
-              required
-              id="outlined-basic"
-              color="info"
-              type="number"
-              variant="outlined"
-              {...register('amount', { required: true, min: 0 })}
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormHelperText>Net of VAT</FormHelperText>
-            <TextField
-              fullWidth
-              required
-              id="outlined-basic"
-              color="info"
-              type="number"
-              variant="outlined"
-              {...register('netOfVAT', { required: true, min: 0 })}
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormHelperText>Output VAT</FormHelperText>
-            <TextField
-              fullWidth
-              required
-              id="outlined-basic"
-              color="info"
-              type="number"
-              variant="outlined"
-              {...register('outputVAT', { required: true, min: 0 })}
-            />
-          </FormControl>
 
           <CustomButton
             type="submit"

@@ -52,7 +52,6 @@ const AllDeployments = () => {
     { field: 'seq', headerName: 'Seq'},
     { field: 'date', headerName: 'Date'},
     { field: 'clientName', headerName: 'Client Name' },
-    { field: 'tin', headerName: 'TIN'},
     { field: 'vehicleModel', headerName: 'Vehicle Model'},
     { field: 'partName', headerName: 'Part Name'},
     { field: 'quantityUsed', headerName: 'Quantity Used'},
@@ -60,9 +59,6 @@ const AllDeployments = () => {
     { field: 'deploymentDate', headerName: 'Deployment Date'},
     { field: 'releaseStatus', headerName: 'Release Status', renderCell: (params: GridRenderCellParams) => params.value ? 'Yes' : 'No' },
     { field: 'releaseDate', headerName: 'Release Date'},
-    { field: 'amount', headerName: 'Amount'},
-    { field: 'netOfVAT', headerName: 'Net of VAT'},
-    { field: 'outputVAT', headerName: 'Output VAT'},
     {
       field: 'actions',
       headerName: 'Actions',
