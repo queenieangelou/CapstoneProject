@@ -1,3 +1,4 @@
+//server\mongodb\models\deployment.js
 import mongoose from 'mongoose';
 
 const DeploymentSchema = new mongoose.Schema({

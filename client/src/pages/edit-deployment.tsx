@@ -1,27 +1,30 @@
+// src/pages/edit-deployment.tsx
 import React from 'react';
-import { useGetIdentity, useList, useOne } from '@pankod/refine-core';
+import { useGetIdentity, useOne, useList } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import DeploymentForm from 'components/common/DeploymentForm';
-
-export interface Part {
-    id: string;
-    name: string;
-    brand: string;
-    qtyLeft: number;
-  }
+import { Part, Deployment } from 'interfaces/common';
 
 const EditDeployment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: user } = useGetIdentity();
-  const { data: partData, isLoading: partsLoading, isError: partsError } = useList({ resource: 'parts' });
-  const { data: deploymentData, isLoading: deploymentLoading, isError: deploymentError } = useOne({
+
+  const { data: partsData, isLoading: partsLoading } = useList<Part>({ 
+    resource: 'parts' 
+  });
+
+  const { data: deploymentData, isLoading: deploymentLoading } = useOne<Deployment>({
     resource: 'deployments',
     id: id as string,
   });
 
-  const { refineCore: { onFinish, formLoading }, register, handleSubmit, setValue } = useForm({
+  const { 
+    refineCore: { onFinish, formLoading }, 
+    register, 
+    handleSubmit 
+  } = useForm({
     refineCoreProps: {
       resource: 'deployments',
       id: id as string,
@@ -29,22 +32,17 @@ const EditDeployment = () => {
     },
   });
 
-  React.useEffect(() => {
-    if (deploymentData?.data) {
-      const deployment = deploymentData.data;
-      Object.keys(deployment).forEach((key) => {
-        setValue(key, deployment[key]);
-      });
-    }
-  }, [deploymentData, setValue]);
-
   const onFinishHandler = async (data: FieldValues) => {
-    await onFinish({ ...data, user: user?.id });
-    navigate('/deployments');
+    if (user?.id) {
+      await onFinish({
+        ...data,
+        creator: user.id
+      });
+      navigate('/deployments');
+    }
   };
 
   if (partsLoading || deploymentLoading) return <div>Loading...</div>;
-  if (partsError || deploymentError) return <div>Error loading data</div>;
 
   return (
     <DeploymentForm
@@ -54,7 +52,8 @@ const EditDeployment = () => {
       formLoading={formLoading}
       handleSubmit={handleSubmit}
       onFinishHandler={onFinishHandler}
-      existingParts={partData?.data || []}
+      existingParts={partsData?.data || []}
+      initialData={deploymentData?.data}
     />
   );
 };

@@ -1,3 +1,4 @@
+//server\mongodb\models\part.js
 import mongoose from 'mongoose';
 
 const PartsSchema = new mongoose.Schema({

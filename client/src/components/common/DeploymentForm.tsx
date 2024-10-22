@@ -1,127 +1,173 @@
-/* eslint-disable */
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, FormControl, FormHelperText, TextField, Select, MenuItem, SelectChangeEvent, Checkbox, FormControlLabel } from '@pankod/refine-mui';
+// src/components/common/DeploymentForm.tsx
+import { 
+  Box, 
+  Typography, 
+  FormControl, 
+  FormHelperText, 
+  TextField, 
+  Select, 
+  MenuItem, 
+  SelectChangeEvent, 
+  Checkbox, 
+  FormControlLabel,
+  Stack
+} from '@pankod/refine-mui';
 import { FormPropsDeployment } from 'interfaces/common';
 import CustomButton from './CustomButton';
+import { useEffect, useState } from 'react';
 
-const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts }: FormPropsDeployment) => {
-  const [selectedPart, setSelectedPart] = useState('');
-  const [deploymentStatus, setDeploymentStatus] = useState(false);
-  const [releaseStatus, setReleaseStatus] = useState(false);
-  const [quantityUsed, setQuantityUsed] = useState(0);
-  const [availableQuantity, setAvailableQuantity] = useState(0);
+const DeploymentForm = ({ 
+  type, 
+  register, 
+  handleSubmit, 
+  formLoading, 
+  onFinishHandler, 
+  existingParts,
+  initialData 
+}: FormPropsDeployment) => {
+  const [selectedPart, setSelectedPart] = useState<string>(initialData?.part._id || '');
+  const [deploymentStatus, setDeploymentStatus] = useState<boolean>(initialData?.deploymentStatus || false);
+  const [releaseStatus, setReleaseStatus] = useState<boolean>(initialData?.releaseStatus || false);
+  const [quantityUsed, setQuantityUsed] = useState<number>(initialData?.quantityUsed || 0);
+  const [availableQuantity, setAvailableQuantity] = useState<number>(0);
 
   useEffect(() => {
     if (selectedPart) {
-      const part = existingParts.find(p => p.id === selectedPart);
+      const part = existingParts.find(p => p._id === selectedPart);
       if (part) {
-        setAvailableQuantity(part.qtyLeft);
+        const additionalQty = initialData && initialData.part._id === part._id ? initialData.quantityUsed : 0;
+        setAvailableQuantity(part.qtyLeft + additionalQty);
       }
     }
-  }, [selectedPart, existingParts]);
+  }, [selectedPart, existingParts, initialData]);
 
-  const handlePartChange = (event: SelectChangeEvent) => {
+  const handlePartChange = (event: SelectChangeEvent<string>) => {
     setSelectedPart(event.target.value);
+    setQuantityUsed(0);
   };
 
   const handleQuantityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value);
-    if (value <= availableQuantity) {
+    if (!isNaN(value) && value >= 0 && value <= availableQuantity) {
       setQuantityUsed(value);
     }
   };
 
+  const onSubmit = async (data: any) => {
+    try {
+      console.log('Starting form submission with data:', {
+        selectedPart,
+        quantityUsed,
+        deploymentStatus,
+        releaseStatus,
+        formData: data
+      });
+  
+      if (!selectedPart) {
+        alert('Please select a part');
+        return;
+      }
+  
+      if (quantityUsed <= 0 || quantityUsed > availableQuantity) {
+        alert(`Please enter a valid quantity between 1 and ${availableQuantity}`);
+        return;
+      }
+  
+      const formData = {
+        seq: parseInt(data.seq), // Convert to number
+        date: data.date,
+        clientName: data.clientName,
+        vehicleModel: data.vehicleModel,
+        part: selectedPart,
+        quantityUsed: quantityUsed, // Ensure it's a number
+        deploymentStatus,
+        deploymentDate: deploymentStatus ? data.deploymentDate : null,
+        releaseStatus,
+        releaseDate: releaseStatus ? data.releaseDate : null
+      };
+  
+      console.log('Formatted form data before submission:', formData);
+      await onFinishHandler(formData);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      alert(`Error submitting form: ${(error as Error).message}`);
+    }
+  };
   return (
     <Box>
-      <Typography fontSize={25} fontWeight={700}>
+      <Typography variant="h5" fontWeight="bold" color="text.primary" mb={2}>
         {type} a Deployment
       </Typography>
-
-      <Box mt={2.5} borderRadius="15px" padding="20px">
-        <form
-          style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
-          onSubmit={handleSubmit(onFinishHandler)}
-        >
-          <FormControl>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+        <Stack spacing={2}>
+          <FormControl fullWidth>
             <FormHelperText>Seq</FormHelperText>
             <TextField
-              fullWidth
               required
-              id="outlined-basic"
-              color="info"
+              id="seq"
               variant="outlined"
               {...register('seq', { required: true })}
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl fullWidth>
             <FormHelperText>Date</FormHelperText>
             <TextField
-              fullWidth
               required
-              id="outlined-basic"
-              color="info"
               type="date"
+              id="date"
               variant="outlined"
               {...register('date', { required: true })}
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl fullWidth>
             <FormHelperText>Client Name</FormHelperText>
             <TextField
-              fullWidth
               required
-              id="outlined-basic"
-              color="info"
+              id="clientName"
               variant="outlined"
               {...register('clientName', { required: true })}
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl fullWidth>
             <FormHelperText>Vehicle Model</FormHelperText>
             <TextField
-              fullWidth
               required
-              id="outlined-basic"
-              color="info"
+              id="vehicleModel"
               variant="outlined"
               {...register('vehicleModel', { required: true })}
             />
           </FormControl>
 
           <FormControl fullWidth>
-            <FormHelperText>Part Name - Brand Name</FormHelperText>
+            <FormHelperText>Part Selection</FormHelperText>
             <Select
               value={selectedPart}
               onChange={handlePartChange}
               displayEmpty
-              inputProps={{ 'aria-label': 'Without label' }}
+              required
             >
               <MenuItem value="">
-                <em>None</em>
+                <em>Select a part</em>
               </MenuItem>
               {existingParts.map((part) => (
-                <MenuItem key={part.id} value={part.id}>
-                  {`${part.name} - ${part.brand}`}
+                <MenuItem key={part._id} value={part._id}>
+                  {`${part.partName} - ${part.brandName} (Available: ${part.qtyLeft})`}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          <FormControl>
+          <FormControl fullWidth>
             <FormHelperText>Quantity Used (Available: {availableQuantity})</FormHelperText>
             <TextField
-              fullWidth
               required
-              id="outlined-basic"
-              color="info"
               type="number"
-              variant="outlined"
               value={quantityUsed}
               onChange={handleQuantityChange}
-              {...register('quantityUsed', { required: true, min: 1, max: availableQuantity })}
+              inputProps={{ min: 1, max: availableQuantity }}
             />
           </FormControl>
 
@@ -130,17 +176,15 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
               <Checkbox
                 checked={deploymentStatus}
                 onChange={(e) => setDeploymentStatus(e.target.checked)}
-                {...register('deploymentStatus')}
               />
             }
             label="Deployment Status"
           />
 
           {deploymentStatus && (
-            <FormControl>
+            <FormControl fullWidth>
               <FormHelperText>Deployment Date</FormHelperText>
               <TextField
-                fullWidth
                 type="date"
                 {...register('deploymentDate', { required: deploymentStatus })}
               />
@@ -153,30 +197,30 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
                 checked={releaseStatus}
                 onChange={(e) => setReleaseStatus(e.target.checked)}
                 disabled={!deploymentStatus}
-                {...register('releaseStatus')}
               />
             }
             label="Release Status"
           />
 
           {releaseStatus && (
-            <FormControl>
+            <FormControl fullWidth>
               <FormHelperText>Release Date</FormHelperText>
               <TextField
-                fullWidth
                 type="date"
                 {...register('releaseDate', { required: releaseStatus })}
               />
             </FormControl>
           )}
-
+          {/* Submit Button */}
           <CustomButton
             type="submit"
             title={formLoading ? 'Submitting...' : 'Submit'}
             backgroundColor="#475BE8"
             color="#FCFCFC"
+            handleClick={handleSubmit(onSubmit)} 
+          
           />
-        </form>
+        </Stack>
       </Box>
     </Box>
   );

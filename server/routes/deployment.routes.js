@@ -1,3 +1,4 @@
+//server\routes\deployment.routes.js
 import express from 'express';
 import {
   getAllDeployments,

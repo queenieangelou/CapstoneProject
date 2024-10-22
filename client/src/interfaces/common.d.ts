@@ -57,7 +57,7 @@ export interface FormPropsProcurement {
   formLoading: boolean,
   handleSubmit: FormEventHandler<HTMLFormElement> | undefined,
   onFinishHandler: (data: FieldValues) => Promise<void>,
-  existingParts: Part[]
+  existingParts: Parts[],
   initialValues?: Record<string, any>;
 }
 
@@ -70,12 +70,43 @@ export interface FormPropsSale {
   onFinishHandler: (data: FieldValues) => Promise<void>,
 }
 
-export interface FormPropsDeployment {
-    type: string,
-    register: any,
-    onFinish: (values: FieldValues) => Promise<void | CreateResponse<BaseRecord> | UpdateResponse<BaseRecord>>,
-    formLoading: boolean,
-    handleSubmit: FormEventHandler<HTMLFormElement> | undefined,
-    onFinishHandler: (data: FieldValues) => Promise<void>,
-    existingParts: Part[]
-  }
+export interface Part {
+  _id: string;
+  partName: string;
+  brandName: string;
+  qtyLeft: number;
+  procurements?: string[];
+}
+
+export interface Deployment {
+  _id: string;
+  seq: number;
+  date: string;
+  clientName: string;
+  vehicleModel: string;
+  part: Part;
+  quantityUsed: number;
+  deploymentStatus: boolean;
+  deploymentDate?: string;
+  releaseStatus: boolean;
+  releaseDate?: string;
+  creator?: string;
+}
+
+interface FormPropsDeployment {
+  type: string;
+  register: any; // Use proper type from react-hook-form
+  onFinish: (values: FieldValues) => Promise<void | CreateResponse<BaseRecord> | UpdateResponse<BaseRecord>>,
+  handleSubmit: any; // Use proper type from react-hook-form
+  formLoading: boolean;
+  onFinishHandler: (data: FieldValues) => Promise<void>;
+  existingParts: Part[];
+  initialData?: {
+    part: {
+      _id: string;
+    };
+    deploymentStatus: boolean;
+    releaseStatus: boolean;
+    quantityUsed: number;
+  };
+}
