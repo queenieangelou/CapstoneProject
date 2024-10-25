@@ -18,6 +18,10 @@ const DeploymentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  arrivalDate: {
+    type: String,
+    required: true,
+  },
   part: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Part',

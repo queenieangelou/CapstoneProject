@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { DataGrid, GridRenderCellParams, GridColDef, GridDeleteIcon } from '@mui/x-data-grid';
 import { Add, Edit, Visibility } from '@mui/icons-material';
-import { Box, Stack, TextField, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Stack, TextField, Typography, Paper, useTheme, useMediaQuery, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete } from '@pankod/refine-core';
 import { CustomButton, TableButton } from 'components';
@@ -24,9 +24,53 @@ const AllProcurements = () => {
   const currentFilterValues = useMemo(() => {
     const logicalFilters = filters.flatMap((item) => ('field' in item ? item : []));
     return {
-      supplierName: logicalFilters.find((item) => item.field === 'supplierName')?.value || '',
+        searchField: logicalFilters.find((item) => item.field === 'searchField')?.value || 'supplierName',
+        searchValue: logicalFilters.find((item) => item.field === 'searchValue')?.value || '',
     };
-  }, [filters]);
+}, [filters]);
+
+// Available search fields
+const searchFields = [
+    { value: 'supplierName', label: 'Supplier Name' },
+    { value: 'partName', label: 'Part Name' },
+    { value: 'brandName', label: 'Brand Name' },
+    { value: 'seq', label: 'Sequence' },
+];
+
+// Handle search
+const handleSearch = (field: string, value: string) => {
+    setFilters([
+        {
+            field: 'searchField',
+            operator: 'eq',
+            value: field,
+        },
+        {
+            field: 'searchValue',
+            operator: 'contains',
+            value: value ? value : undefined,
+        },
+    ]);
+};
+
+// Filter rows based on search criteria
+const filteredRows = allProcurements.filter((procurement) => {
+    if (!currentFilterValues.searchValue) return true;
+
+    const searchValue = currentFilterValues.searchValue.toLowerCase();
+    const field = currentFilterValues.searchField;
+
+    switch (field) {
+        case 'partName':
+            return procurement.part?.partName?.toLowerCase().includes(searchValue);
+        case 'brandName':
+            return procurement.part?.brandName?.toLowerCase().includes(searchValue);
+        case 'seq':
+            return procurement.seq?.toString().includes(searchValue);
+        default:
+            return procurement[field]?.toLowerCase().includes(searchValue);
+    }
+});
 
   const handleDeleteProcurement = (id: string) => {
     const confirmDeletion = (message: string) => window.confirm(message);
@@ -93,7 +137,7 @@ const AllProcurements = () => {
     },
   ];
 
-  const rows = allProcurements.map((procurement) => ({
+  const rows = filteredRows.map((procurement) => ({
     id: procurement._id,
     seq: procurement.seq,
     date: procurement.date,
@@ -118,17 +162,31 @@ const AllProcurements = () => {
           {!allProcurements.length ? 'There are no procurements' : 'All Procurements'}
         </Typography>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
-          <TextField
-            variant="outlined"
-            color="info"
-            placeholder="Search by supplier name"
-            value={currentFilterValues.supplierName}
-            onChange={(e) => {
-              setFilters([{ field: 'supplierName', operator: 'contains', value: e.target.value || undefined }]);
-            }}
-            sx={{ minWidth: '200px', flex: 1, mr: 2 }}
-          />
+        <Box mb={2} mt={3} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+                        <Box display="flex" gap={2} flex={1}>
+                            <FormControl sx={{ minWidth: 200 }}>
+                                <InputLabel>Search By</InputLabel>
+                                <Select
+                                    value={currentFilterValues.searchField}
+                                    label="Search By"
+                                    onChange={(e) => handleSearch(e.target.value, currentFilterValues.searchValue)}
+                                >
+                                    {searchFields.map((field) => (
+                                        <MenuItem key={field.value} value={field.value}>
+                                            {field.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <TextField
+                                variant="outlined"
+                                color="info"
+                                placeholder={`Search by ${searchFields.find(f => f.value === currentFilterValues.searchField)?.label}`}
+                                value={currentFilterValues.searchValue}
+                                onChange={(e) => handleSearch(currentFilterValues.searchField, e.currentTarget.value)}
+                                sx={{ minWidth: '200px', flex: 1 }}
+                            />
+                        </Box>
 
           <CustomButton
             title="Add Procurement"

@@ -219,16 +219,6 @@ const App = () => {
       icon: <PeopleAltOutlined />,
     },
     {
-      name: 'review',
-      list: Home,
-      icon: <StarOutlineRounded />,
-    },
-    {
-      name: 'message',
-      list: Home,
-      icon: <ChatBubbleOutline />,
-    },
-    {
       name: 'my-profile',
       options: { label: 'My Profile' },
       list: MyProfile,

@@ -4,46 +4,47 @@ import { useGetIdentity, useOne, useList } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import DeploymentForm from 'components/common/DeploymentForm';
-import { Part, Deployment } from 'interfaces/common';
 
 const EditDeployment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: user } = useGetIdentity();
 
-  const { data: partsData, isLoading: partsLoading } = useList<Part>({ 
-    resource: 'parts' 
-  });
-
-  const { data: deploymentData, isLoading: deploymentLoading } = useOne<Deployment>({
+  const { data: deploymentData, isLoading: isDeploymentLoading } = useOne({
     resource: 'deployments',
     id: id as string,
   });
 
-  const { 
-    refineCore: { onFinish, formLoading }, 
-    register, 
-    handleSubmit 
+  const { data: partsData, isLoading: isPartsLoading } = useList({
+    resource: 'parts',
+  });
+
+  const {
+    refineCore: { onFinish, formLoading },
+    register,
+    handleSubmit,
+    setValue,
   } = useForm({
     refineCoreProps: {
       resource: 'deployments',
       id: id as string,
-      action: 'edit',
+      redirect: false,
+      onMutationSuccess: () => {
+        navigate('/deployments');
+      },
     },
   });
 
   const onFinishHandler = async (data: FieldValues) => {
-    if (user?.id) {
-      await onFinish({
-        ...data,
-        creator: user.id
-      });
-      navigate('/deployments');
-    }
+    await onFinish({
+      ...data,
+      email: user.email,
+    });
   };
 
-  if (partsLoading || deploymentLoading) return <div>Loading...</div>;
-
+  if (isDeploymentLoading || isPartsLoading) {
+    return <div>Loading...</div>;
+  }
   return (
     <DeploymentForm
       type="Edit"
@@ -53,7 +54,7 @@ const EditDeployment = () => {
       handleSubmit={handleSubmit}
       onFinishHandler={onFinishHandler}
       existingParts={partsData?.data || []}
-      initialData={deploymentData?.data}
+      initialValues={deploymentData?.data}
     />
   );
 };

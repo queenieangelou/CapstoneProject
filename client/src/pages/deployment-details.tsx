@@ -1,8 +1,7 @@
-import React from 'react';
-import { Typography, Box, Stack } from '@pankod/refine-mui';
-import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
-import { useParams, useNavigate } from '@pankod/refine-react-router-v6';
 import { ChatBubble, Delete, Edit, Phone } from '@mui/icons-material';
+import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
+import { Box, Stack, Typography } from '@pankod/refine-mui';
+import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 
 import { CustomButton } from 'components';
 
@@ -40,29 +39,29 @@ const DeploymentDetails = () => {
   };
 
   return (
-    <Box borderRadius="15px" padding="20px" bgcolor="#FCFCFC" width="fit-content">
-      <Typography fontSize={25} fontWeight={700} color="#11142D">Deployment Details</Typography>
+    <Box borderRadius="15px" padding="20px" width="fit-content">
+      <Typography fontSize={25} fontWeight={700}>Deployment Details</Typography>
 
       <Box mt="20px" display="flex" flexDirection={{ xs: 'column', lg: 'row' }} gap={4}>
         <Box flex={1} maxWidth={764}>
           <Box mt="15px">
             <Stack direction="row" justifyContent="space-between" flexWrap="wrap" alignItems="center">
-              <Typography fontSize={18} fontWeight={500} color="#11142D" textTransform="capitalize">{deploymentDetails.clientName}</Typography>
+              <Typography fontSize={18} fontWeight={500} textTransform="capitalize">{deploymentDetails.clientName}</Typography>
               <Box>
                 {isCurrentUser && (
                   <Stack direction="row" gap={2}>
                     <CustomButton
                       title="Edit"
-                      backgroundColor="#475BE8"
-                      color="#FCFCFC"
+                      backgroundColor={'transparent'}
+                      color={''}
                       fullWidth
                       icon={<Edit />}
                       handleClick={() => navigate(`/deployments/edit/${deploymentDetails._id}`)}
                     />
                     <CustomButton
                       title="Delete"
-                      backgroundColor="#d42e2e"
-                      color="#FCFCFC"
+                      backgroundColor={'transparent'}
+                      color={'red'}
                       fullWidth
                       icon={<Delete />}
                       handleClick={() => handleDeleteDeployment()}
@@ -75,7 +74,6 @@ const DeploymentDetails = () => {
             <Stack direction="column" gap="10px" mt="10px">
               <Typography fontSize={16} color="#808191">Seq: {deploymentDetails.seq}</Typography>
               <Typography fontSize={16} color="#808191">Date: {deploymentDetails.date}</Typography>
-              <Typography fontSize={16} color="#808191">TIN: {deploymentDetails.tin}</Typography>
               <Typography fontSize={16} color="#808191">Vehicle Model: {deploymentDetails.vehicleModel}</Typography>
               <Typography fontSize={16} color="#808191">Part Name: {deploymentDetails.partName}</Typography>
               <Typography fontSize={16} color="#808191">Quantity Used: {deploymentDetails.quantityUsed}</Typography>
@@ -87,9 +85,6 @@ const DeploymentDetails = () => {
               {deploymentDetails.releaseStatus && (
                 <Typography fontSize={16} color="#808191">Release Date: {deploymentDetails.releaseDate}</Typography>
               )}
-              <Typography fontSize={16} color="#808191">Amount: {deploymentDetails.amount}</Typography>
-              <Typography fontSize={16} color="#808191">Net of VAT: {deploymentDetails.netOfVAT}</Typography>
-              <Typography fontSize={16} color="#808191">Output VAT: {deploymentDetails.outputVAT}</Typography>
             </Stack>
           </Box>
         </Box>
@@ -117,25 +112,6 @@ const DeploymentDetails = () => {
                 <Typography fontSize={14} color="#808191">{deploymentDetails.creator.email}</Typography>
               </Stack>
             </Box>
-          </Stack>
-
-          <Stack direction="row" flexWrap="wrap" gap={2}>
-            <CustomButton
-              title="Message"
-              backgroundColor="#475BE8"
-              color="#FCFCFC"
-              fullWidth
-              icon={<ChatBubble />}
-              handleClick={() => {}}
-            />
-            <CustomButton
-              title="Call"
-              backgroundColor="#2ED480"
-              color="#FCFCFC"
-              fullWidth
-              icon={<Phone />}
-              handleClick={() => {}}
-            />
           </Stack>
         </Box>
       </Box>
