@@ -53,6 +53,7 @@ import AllDeployments from 'pages/all-deployment';
 import DeploymentDetails from 'pages/deployment-details';
 import CreateDeployment from 'pages/create-deployment';
 import EditDeployment from 'pages/edit-deployment';
+import ClientPortal from 'pages/client-portal';
 
 const axiosInstance = axios.create();
 axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
@@ -262,6 +263,10 @@ const App = () => {
                 {
                   path: '/unauthorized',
                   element: <UnauthorizedPage />
+                },
+                {
+                  path: '/client-portal',
+                  element: <ClientPortal />
                 },
               ],
             }}

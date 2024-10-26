@@ -1,3 +1,4 @@
+// server\index.js
 import express from 'express';
 import * as dotenv from 'dotenv';
 import cors from 'cors';
@@ -10,16 +11,17 @@ import partRouter from './routes/part.routes.js';
 import userManagementRoutes from './routes/userManagement.routes.js';
 import saleRouter from './routes/sale.routes.js';
 import deploymentRouter from './routes/deployment.routes.js'
+import clientPortalRouter from './routes/clientPortal.routes.js'
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
 
 app.get('/', (req, res) => {
   res.status(200).json({
-    message: 'Welcome to Yariga!',
+    message: 'Welcome to Gammad!',
   });
 });
 
@@ -30,6 +32,7 @@ app.use('/api/v1/parts', partRouter);
 app.use('/api/v1/user-management', userManagementRoutes);
 app.use('/api/v1/sales', saleRouter);
 app.use('/api/v1/deployments', deploymentRouter);
+app.use('/api/v1/clientPortal', clientPortalRouter);
 
 const startServer = async () => {
   try {
