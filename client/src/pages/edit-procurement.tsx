@@ -4,6 +4,7 @@ import { useGetIdentity, useOne, useList } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import ProcurementForm from 'components/common/ProcurementForm';
+import { Box, CircularProgress } from '@pankod/refine-mui';
 
 const EditProcurement = () => {
   const navigate = useNavigate();
@@ -43,7 +44,11 @@ const EditProcurement = () => {
   };
 
   if (isProcurementLoading || isPartsLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (

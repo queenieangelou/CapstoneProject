@@ -1,4 +1,5 @@
 import { useGetIdentity, useList } from '@pankod/refine-core';
+import { Box, CircularProgress } from '@pankod/refine-mui';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import ProcurementForm from 'components/common/ProcurementForm';
@@ -37,7 +38,11 @@ const CreateProcurement = () => {
 
   // Handle loading state if needed
   if (isLoading) {
-    return <div>Loading...</div>; // You can customize this loading state
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (

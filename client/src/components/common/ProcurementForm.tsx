@@ -1,15 +1,45 @@
-/* eslint-disable */
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, FormControl, FormHelperText, TextField, Select, MenuItem, SelectChangeEvent, Paper } from '@pankod/refine-mui';
+import { Close, Publish } from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Paper,
+  Select,
+  SelectChangeEvent,
+  Tooltip,
+  Typography
+} from '@pankod/refine-mui';
+import { useNavigate } from '@pankod/refine-react-router-v6';
 import { FormPropsProcurement } from 'interfaces/common';
-import CustomButton from './CustomButton';
+import { useEffect, useState } from 'react';
 
+const getTodayDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
-
-const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts, initialValues }: FormPropsProcurement) => {
+const ProcurementForm = ({ 
+  type, 
+  register, 
+  handleSubmit, 
+  formLoading, 
+  onFinishHandler,
+  existingParts,
+  initialValues 
+}: FormPropsProcurement) => {
   const [selectedPart, setSelectedPart] = useState('');
   const [newPartName, setNewPartName] = useState('');
   const [newBrandName, setNewBrandName] = useState('');
+  const navigate = useNavigate();
+  
+  const isError = false;
 
   useEffect(() => {
     if (initialValues && initialValues.partName && initialValues.brandName) {
@@ -34,203 +64,281 @@ const ProcurementForm = ({ type, register, handleSubmit, formLoading, onFinishHa
     onFinishHandler(updatedData);
   };
 
+  if (formLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Typography variant="h6" color="error">
+          Error loading procurements data
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
+    <Paper 
+      elevation={2} 
+      sx={{ 
+        padding: '32px',
+        margin: '24px auto',
+        maxWidth: '1000px',
+        borderRadius: '16px',
+        transition: 'transform 0.2s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-2px)'
+        }
+      }}
+    >
+      <Typography 
+        variant="h4" 
+        sx={{ 
+          textAlign: 'left',
+          mb: 4,
+          fontWeight: 600,
+        }}
+      >
+        {type} a Procurement
+      </Typography>
 
-    <Box>
-      <Typography fontSize={25} fontWeight={700} >{type} a Procurement</Typography>
-      <Paper sx={{marginTop: '15px', padding: '15px'}}>
-        <form
-          style={{ marginTop: '5px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
-          onSubmit={handleSubmit(onSubmit)}
-        >
-        <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
-          <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '40%'}}>
-              {/* Seq Field */}
-              <FormControl sx={{marginRight: '10px', flex: 1}}>
-                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Sequence Number</FormHelperText>
-                <TextField
-                  fullWidth
-                  required
-                  type="number"
-                  variant="outlined"
-                  color="info"
-                  {...register('seq', { required: true })}
-                  defaultValue={initialValues?.seq || 0}
+      <form
+        style={{ 
+          width: '100%', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '24px' 
+        }}
+        onSubmit={handleSubmit(onSubmit)}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: 2,
+          '& .MuiFormControl-root': { flex: 1 }
+        }}>
+          <FormControl>
+            <InputLabel htmlFor="seq">Sequence Number</InputLabel>
+            <OutlinedInput
+              id="seq"
+              type="number"
+              label="Sequence Number"
+              {...register('seq', { required: true })}
+              defaultValue={initialValues?.seq || 0}
+            />
+          </FormControl>
+
+          <FormControl>
+            <InputLabel htmlFor="date">Date</InputLabel>
+            <OutlinedInput
+              id="date"
+              type="date"
+              label="Date"
+              {...register('date', { required: true })}
+              defaultValue={initialValues?.date || getTodayDate()}
+            />
+          </FormControl>
+        </Box>
+
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: 2,
+          '& .MuiFormControl-root': { flex: 1 }
+        }}>
+          <FormControl>
+            <InputLabel htmlFor="supplierName">Supplier Name</InputLabel>
+            <OutlinedInput
+              id="supplierName"
+              label="Supplier Name"
+              {...register('supplierName', { required: true })}
+              defaultValue={initialValues?.supplierName || ""}
+            />
+          </FormControl>
+
+          <FormControl>
+            <InputLabel htmlFor="reference">Reference</InputLabel>
+            <OutlinedInput
+              id="reference"
+              label="Reference"
+              {...register('reference', { required: true })}
+              defaultValue={initialValues?.reference || ""}
+            />
+          </FormControl>
+        </Box>
+
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: 2,
+          '& .MuiFormControl-root': { flex: 1 }
+        }}>
+          <FormControl>
+            <InputLabel htmlFor="tin">TIN</InputLabel>
+            <OutlinedInput
+              id="tin"
+              label="TIN"
+              {...register('tin', { required: true })}
+              defaultValue={initialValues?.tin || ""}
+            />
+          </FormControl>
+
+          <FormControl>
+            <InputLabel htmlFor="address">Address</InputLabel>
+            <OutlinedInput
+              id="address"
+              label="Address"
+              {...register('address', { required: true })}
+              defaultValue={initialValues?.address || ""}
+            />
+          </FormControl>
+        </Box>
+
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: 2,
+          '& .MuiFormControl-root': { flex: 1 }
+        }}>
+          <FormControl>
+            <InputLabel htmlFor="part">Part & Brand</InputLabel>
+            <Select
+              value={selectedPart}
+              onChange={handlePartChange}
+              input={<OutlinedInput label="Part & Brand" />}
+            >
+              {existingParts.map((part) => (
+                <MenuItem key={part._id} value={`${part.partName}|${part.brandName}`}>
+                  {`${part.partName} - ${part.brandName}`}
+                </MenuItem>
+              ))}
+              <MenuItem value="new">Add New Part</MenuItem>
+            </Select>
+          </FormControl>
+
+          {selectedPart === 'new' && (
+            <>
+              <FormControl>
+                <InputLabel htmlFor="newPartName">New Part Name</InputLabel>
+                <OutlinedInput
+                  id="newPartName"
+                  label="New Part Name"
+                  value={newPartName}
+                  onChange={(e) => setNewPartName(e.target.value)}
                 />
               </FormControl>
-
-              {/* Date Field */}
-              <FormControl sx={{marginRight: '10px', flex: 1}}>
-                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Date</FormHelperText>
-                <TextField
-                  fullWidth
-                  required
-                  type="date"
-                  variant="outlined"
-                  color="info"
-                  {...register('date', { required: true })}
-                  defaultValue={initialValues?.date || ""}
+              <FormControl>
+                <InputLabel htmlFor="newBrandName">New Brand Name</InputLabel>
+                <OutlinedInput
+                  id="newBrandName"
+                  label="New Brand Name"
+                  value={newBrandName}
+                  onChange={(e) => setNewBrandName(e.target.value)}
                 />
               </FormControl>
-              </Box>
-                {/* Supplier Name Field */}
-                  <FormControl sx={{ flex: 1}}>
-                    <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Supplier Name</FormHelperText>
-                    <TextField
-                      fullWidth
-                      required
-                      variant="outlined"
-                      color="info"
-                      {...register('supplierName', { required: true })}
-                      defaultValue={initialValues?.supplierName || ""}
-                    />
-                  </FormControl>
+            </>
+          )}
         </Box>
-        <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
-          <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '40%'}}>
-            {/* Reference Field */}
-            <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Reference</FormHelperText>
-              <TextField
-                fullWidth
-                required
-                variant="outlined"
-                color="info"
-                {...register('reference', { required: true })}
-                defaultValue={initialValues?.reference || ""}
-              />
-            </FormControl>
 
-            {/* TIN Field */}
-            <FormControl sx={{marginRight: '10px',flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>TIN</FormHelperText>
-              <TextField
-                fullWidth
-                required
-                variant="outlined"
-                color="info"
-                {...register('tin', { required: true })}
-                defaultValue={initialValues?.tin || ""}
-              />
-            </FormControl>
-            </Box>
-            {/* Address Field */}
-            <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Address</FormHelperText>
-              <TextField
-                fullWidth
-                required
-                variant="outlined"
-                color="info"
-                {...register('address', { required: true })}
-                defaultValue={initialValues?.address || ""}
-              />
-            </FormControl>
-        </Box>
-        <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
-        <Box style={{display: 'flex', width: '40%'}}>
-            {/* Part Selection */}
-            <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16}}>Part & Brand</FormHelperText>
-              <Select
-                fullWidth
-                value={selectedPart}
-                onChange={handlePartChange}
-              >
-                {existingParts.map((part) => (
-                  <MenuItem key={part._id} value={`${part.partName}|${part.brandName}`}>
-                    {`${part.partName} - ${part.brandName}`}
-                  </MenuItem>
-                ))}
-                <MenuItem value="new">Add New Part</MenuItem>
-              </Select>
-            </FormControl>
-            </Box>
-            {/* New Part Input Fields */}
-            {selectedPart === 'new' && (
-              <>
-                <FormControl sx={{marginRight: '10px', flex: 1}}>
-                  <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>New Part Name</FormHelperText>
-                  <TextField
-                    fullWidth
-                    required
-                    variant="outlined"
-                    color="info"
-                    value={newPartName}
-                    onChange={(e) => setNewPartName(e.target.value)}
-                  />
-                </FormControl>
-                <FormControl sx={{marginRight: '10px', flex: 1}}>
-                  <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>New Brand Name</FormHelperText>
-                  <TextField
-                    fullWidth
-                    required
-                    variant="outlined"
-                    color="info"
-                    value={newBrandName}
-                    onChange={(e) => setNewBrandName(e.target.value)}
-                  />
-                </FormControl>
-              </>
-            )}
-        </Box>
-        <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
-        <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '40%'}}>
-          {/* Description Field */}
-          <FormControl sx={{marginRight: '10px', flex: 1}}>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Description</FormHelperText>
-            <TextField
-              fullWidth
-              required
-              variant="outlined"
-              color="info"
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: 2,
+          '& .MuiFormControl-root': { flex: 1 }
+        }}>
+          <FormControl>
+            <InputLabel htmlFor="description">Description</InputLabel>
+            <OutlinedInput
+              id="description"
+              label="Description"
               {...register('description', { required: true })}
               defaultValue={initialValues?.description || ""}
             />
           </FormControl>
-          </Box>
-          <Box style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', width: '60%'}}>
-            {/* Quantity Bought Field */}
-            <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Quantity Bought</FormHelperText>
-              <TextField
-                fullWidth
-                required
-                type="number"
-                variant="outlined"
-                color="info"
-                {...register('quantityBought', { required: true })}
-                defaultValue={initialValues?.quantityBought || 0}
-              />
-            </FormControl>
 
-            {/* Amount Field */}
-            <FormControl sx={{marginRight: '10px', flex: 1}}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Amount</FormHelperText>
-              <TextField
-                fullWidth
-                required
-                type="number"
-                variant="outlined"
-                color="info"
-                {...register('amount', { required: true })}
-                defaultValue={initialValues?.amount || 0}
-              />
-            </FormControl>
+          <FormControl>
+            <InputLabel htmlFor="quantityBought">Quantity Bought</InputLabel>
+            <OutlinedInput
+              id="quantityBought"
+              type="number"
+              label="Quantity Bought"
+              {...register('quantityBought', { required: true })}
+              defaultValue={initialValues?.quantityBought || 0}
+            />
+          </FormControl>
+
+          <FormControl>
+            <InputLabel htmlFor="amount">Amount</InputLabel>
+            <OutlinedInput
+              id="amount"
+              type="number"
+              label="Amount"
+              {...register('amount', { required: true })}
+              defaultValue={initialValues?.amount || 0}
+            />
+          </FormControl>
+        </Box>
+
+        <Box 
+          display="flex" 
+          justifyContent="center" 
+          gap={2} 
+          mt={3}
+        >
+          <Tooltip title="Publish Deployment" arrow>
+            <Button
+              type="submit"
+              sx={{
+                bgcolor: 'primary.light',
+                color: 'primary.dark',
+                display: 'flex',
+                alignItems: 'center',
+                width: '120px',
+                p: 1.5,
+                '&:hover': {
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease-in-out',
+                borderRadius: 5, // Optional: adjust for button shape
+              }}
+            >
+              <Publish sx={{ mr: 1 }} /> {/* Margin right for spacing */}
+              Publish
+            </Button>
+          </Tooltip>
+          <Tooltip title="Close Deployment" arrow>
+            <Button
+              onClick={() => navigate(`/deployments/`)}
+              sx={{
+                bgcolor: 'error.light',
+                color: 'error.dark',
+                display: 'flex',
+                alignItems: 'center',
+                width: '120px',
+                p: 1.5,
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease-in-out',
+                borderRadius: 5, // Optional: adjust for button shape
+              }}
+            >
+              <Close sx={{ mr: 1 }} /> {/* Margin right for spacing */}
+              Close
+            </Button>
+          </Tooltip>
           </Box>
-        </Box>
-        <Box>
-          {/* Submit Button */}
-          <CustomButton
-            type="submit"
-            title={formLoading ? 'Submitting...' : 'Submit'}
-            backgroundColor="#fff000"
-            color="#141414"
-          />
-        </Box>
-        </form>
-        </Paper>
-    </Box>
+      </form>
+    </Paper>
   );
 };
 

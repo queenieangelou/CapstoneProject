@@ -1,16 +1,16 @@
-import React, { useMemo } from 'react';
-import { DataGrid, GridRenderCellParams, GridColDef, GridDeleteIcon } from '@mui/x-data-grid';
-import { Add, Edit, Visibility } from '@mui/icons-material';
-import { Box, Stack, TextField, Typography, Paper, Switch, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { DataGrid, GridRenderCellParams, GridColDef, Box, Paper, Typography, CircularProgress, IconButton, Tooltip, TextField, Stack, Button } from '@pankod/refine-mui';
+import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
+import { Switch, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete, useUpdate } from '@pankod/refine-core';
-import CustomButton from 'components/common/CustomButton';
-import { TableButton } from 'components';
 
 const AllDeployments = () => {
     const { mutate: deleteDeployment } = useDelete();
     const { mutate: updateDeployment } = useUpdate();
     const navigate = useNavigate();
+
+    const [pageSize, setPageSize] = useState<number>(5);
 
     const { 
         tableQueryResult: { data, isLoading, isError },
@@ -77,7 +77,7 @@ const AllDeployments = () => {
         const confirmUpdate = (message: string) => window.confirm(message);
         
         if (confirmUpdate(`Are you sure you want to ${action} the ${statusName} status?`)) {
-            const today = new Date().toISOString();
+            const today = new Date().toLocaleDateString('en-CA');
             const updateData: any = {
                 [field]: newValue,
             };
@@ -140,18 +140,90 @@ const AllDeployments = () => {
     };
 
     const columns: GridColDef[] = [
-        { field: 'seq', headerName: 'Seq' },
-        { field: 'date', headerName: 'Date' },
-        { field: 'clientName', headerName: 'Client Name' },
-        { field: 'vehicleModel', headerName: 'Vehicle Model', width: 110 },
-        { field:  'arrivalDate', headerName: 'arrivalDate' },
-        { field: 'partName', headerName: 'Part' },
-        { field: 'brandName', headerName: 'Brand' },
-        { field: 'quantityUsed', headerName: 'Quantity Used' },
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 175,
+            renderCell: (params) => (
+            <Stack direction="row" spacing={1}>
+                <Tooltip title="View">
+                <IconButton
+                    onClick={() => navigate(`/deployments/show/${params.row.id}`)}
+                    size="small"
+                    sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.dark',
+                        p: 1.5,
+                        width: 36, // Set fixed width
+                        height: 36, // Set fixed height
+                        '&:hover': {
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out'
+                      }}
+                >
+                    <Visibility />
+                </IconButton>
+                </Tooltip>
+                <Tooltip title="Edit">
+                <IconButton
+                    onClick={() => navigate(`/deployments/edit/${params.row.id}`)}
+                    size="small"
+                    sx={{
+                        bgcolor: 'warning.light',
+                        color: 'warning.dark',
+                        p: 1.5,
+                        width: 36, // Set fixed width
+                        height: 36, // Set fixed height
+                        '&:hover': {
+                          bgcolor: 'warning.main',
+                          color: 'white',
+                          transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out'
+                      }}
+                >
+                    <Edit />
+                </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete">
+                <IconButton
+                    onClick={() => handleDeleteDeployment(params.row.id)}
+                    size="small"
+                    sx={{
+                        bgcolor: 'error.light',
+                        color: 'error.dark',
+                        p: 1.5,
+                        width: 36, // Set fixed width
+                        height: 36, // Set fixed height
+                        '&:hover': {
+                          bgcolor: 'error.main',
+                          color: 'white',
+                          transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out'
+                      }}
+                >
+                    <Delete />
+                </IconButton>
+                </Tooltip>
+            </Stack>
+            ),
+        },
+        { field: 'seq', headerName: 'Seq', flex: 1 },
+        { field: 'date', headerName: 'Date', flex: 1 },
+        { field: 'clientName', headerName: 'Client Name', flex: 1 },
+        { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1 },
+        { field:  'arrivalDate', headerName: 'arrivalDate', flex: 1 },
+        { field: 'partName', headerName: 'Part', flex: 1 },
+        { field: 'brandName', headerName: 'Brand', flex: 1 },
+        { field: 'quantityUsed', headerName: 'Quantity', type: 'number', flex: 1 },
         { 
             field: 'deploymentStatus', 
-            headerName: 'Deployment Status',
-            width: 150,
+            headerName: 'Deployed',
+            flex: 1,
             renderCell: (params: GridRenderCellParams) => (
                 <Switch
                     checked={params.value}
@@ -162,13 +234,13 @@ const AllDeployments = () => {
         },
         { 
             field: 'deploymentDate', 
-            headerName: 'Deployment Date',
-            width: 150,
+            headerName: 'Deployed Date',
+            flex: 1,
         },
         { 
             field: 'releaseStatus', 
-            headerName: 'Release Status',
-            width: 150,
+            headerName: 'Released',
+            flex: 1,
             renderCell: (params: GridRenderCellParams) => (
                 <Switch
                     checked={params.value}
@@ -179,49 +251,19 @@ const AllDeployments = () => {
         },
         { 
             field: 'releaseDate', 
-            headerName: 'Release Date',
-            width: 150,
+            headerName: 'Released Date',
+            flex: 1,
         },
-        {
-            field: 'actions',
-            headerName: 'Actions',
-            sortable: false,
-            width: 250,
-            renderCell: (params: GridRenderCellParams) => (
-                <Stack direction="row" spacing={1}>
-                    <TableButton
-                        title=""
-                        icon={< Visibility/>}
-                        handleClick={() => navigate(`/deployments/show/${params.row.id}`)}
-                        backgroundColor="#475BE8"
-                        color="#FCFCFC"
-                    />
-                    <TableButton
-                        title=""
-                        icon={< Edit/>}
-                        handleClick={() => navigate(`/deployments/edit/${params.row.id}`)}
-                        backgroundColor="#FFA726"
-                        color="#FFF"
-                    />
-                    <TableButton
-                        title=""
-                        icon={< GridDeleteIcon/>}
-                        handleClick={() => handleDeleteDeployment(params.row.id)}
-                        backgroundColor="#d42e2e"
-                        color="#FFF"
-                    />
-                </Stack>
-            ),
-        },
-    ];
+];
 
     const rows = filteredRows.map((deployment) => ({
         id: deployment._id,
+        _id: deployment._id,
         seq: deployment.seq,
         date: new Date(deployment.date).toLocaleDateString(),
         clientName: deployment.clientName,
         vehicleModel: deployment.vehicleModel,
-        arrivalDate: deployment.arrivalDate,
+        arrivalDate: new Date(deployment.arrivalDate).toLocaleDateString(),
         partName: deployment.part?.partName,
         brandName: deployment.part?.brandName,
         quantityUsed: deployment.quantityUsed,
@@ -231,80 +273,100 @@ const AllDeployments = () => {
         releaseDate: deployment.releaseDate ? new Date(deployment.releaseDate).toLocaleDateString() : 'N/A',
     }));
 
-    if (isLoading) return <Typography>Loading...</Typography>;
-    if (isError) return <Typography>Error occurred while fetching deployments.</Typography>;
+    if (isLoading) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+                <CircularProgress />
+            </Box>
+        );
+    }
+    
+    if (isError) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+                <Typography variant="h6" color="error">
+                    Error loading deployments data
+                </Typography>
+            </Box>
+        );
+    }
 
     return (
-        <Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap'}}>
-                <Stack direction="column" spacing={2}>
-                    <Typography fontSize={25} fontWeight={700} color="#11142D">
-                        {!allDeployments.length ? 'There are no deployments' : 'All Deployments'}
-                    </Typography>
+        <Paper elevation={3} sx={{ padding: '20px', margin: '20px auto', maxWidth: '1900px' }}>
+            <Typography 
+                variant="h4" 
+                sx={{ 
+                textAlign: 'left',
+                mb: 4,
+                fontWeight: 600,
+                }}
+            >
+                {!allDeployments.length ? 'There are no deployments' : 'All Deployments'}
+            </Typography>
 
-                    <Box mb={2} mt={3} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-                        <Box display="flex" gap={2} flex={1}>
-                            <FormControl sx={{ minWidth: 200 }}>
-                                <InputLabel>Search By</InputLabel>
-                                <Select
-                                    value={currentFilterValues.searchField}
-                                    label="Search By"
-                                    onChange={(e) => handleSearch(e.target.value, currentFilterValues.searchValue)}
-                                >
-                                    {searchFields.map((field) => (
-                                        <MenuItem key={field.value} value={field.value}>
-                                            {field.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                            <TextField
-                                variant="outlined"
-                                color="info"
-                                placeholder={`Search by ${searchFields.find(f => f.value === currentFilterValues.searchField)?.label}`}
-                                value={currentFilterValues.searchValue}
-                                onChange={(e) => handleSearch(currentFilterValues.searchField, e.currentTarget.value)}
-                                sx={{ minWidth: '200px', flex: 1 }}
-                            />
-                        </Box>
-                        <CustomButton
-                            title="Add Deployment"
-                            handleClick={() => navigate('/deployments/create')}
-                            backgroundColor="#fff200"
-                            color="#595959"
-                            icon={<Add />}
-                        />
-                    </Box>
-                    <Paper elevation={3} sx={{ padding: '20px', margin: '20px auto', width: '100%' }}>
-                        <Box sx={{ height: 650, width: '100%' }}>
-                            <DataGrid
-                                rows={rows}
-                                columns={columns}
-                                checkboxSelection={false}
-                                sx={{
-                                    '& .MuiDataGrid-cell': {
-                                        whiteSpace: 'normal',
-                                        lineHeight: 'normal',
-                                        padding: '8px',
-                                    },
-                                    '& .MuiDataGrid-row': {
-                                        maxHeight: 'none !important',
-                                    },
-                                    '& .MuiDataGrid-main': {
-                                        overflow: 'hidden',
-                                    },
-                                }}
-                                initialState={{
-                                    pagination: { paginationModel: { pageSize: 10 } },
-                                }}
-                                pageSizeOptions={[10, 25, 50]}
-                                getRowHeight={() => 'auto'}
-                            />
-                        </Box>
-                    </Paper>
-                </Stack>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, gap: 2, flexDirection: { xs: 'column', sm: 'row' }  }}>
+                <Box sx={{ display: 'flex', mb: 0, gap: 1, flexDirection: { xs: 'column', sm: 'row' }  }}>
+                <FormControl sx={{ minWidth: 200 }}>
+                <InputLabel>Search By</InputLabel>
+                    <Select
+                        size="small"
+                        value={currentFilterValues.searchField}
+                        label="Search By"
+                        onChange={(e) => handleSearch(e.target.value, currentFilterValues.searchValue)}
+                    >
+                        {searchFields.map((field) => (
+                            <MenuItem key={field.value} value={field.value}>
+                                {field.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    </FormControl>
+                    <TextField
+                        variant="outlined"
+                        size="small"
+                        placeholder={`Search by ${searchFields.find(f => f.value === currentFilterValues.searchField)?.label}`}
+                        value={currentFilterValues.searchValue}
+                        onChange={(e) => handleSearch(currentFilterValues.searchField, e.currentTarget.value)}
+                        sx={{ minWidth: '250px' }}
+                    />
+                </Box>
+                <Tooltip title="Add Deployment" arrow>
+                    <Button
+                    onClick={() => navigate(`/deployments/create`)}
+                    sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.dark',
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '120px',
+                        p: 1.5,
+                        '&:hover': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out',
+                        borderRadius: 5, // Optional: adjust for button shape
+                    }}
+                    >
+                    <Add sx={{ mr: 1 }} /> {/* Margin right for spacing */}
+                    Add
+                    </Button>
+                </Tooltip>
             </Box>
+
+            <Box sx={{ height: 660, width: '100%' }}>
+            <DataGrid
+                rows={rows}
+                columns={columns}
+                pageSize={pageSize}
+                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                rowsPerPageOptions={[5, 10, 20]}
+                checkboxSelection={false}
+                disableSelectionOnClick
+            />
         </Box>
+    </Paper>
     );
 };
 

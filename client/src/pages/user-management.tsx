@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React from 'react';
+import React, { useState } from 'react';
 import { useList, useUpdate, useDelete } from '@pankod/refine-core';
 import { 
   DataGrid, 
@@ -21,6 +21,8 @@ const UserManagement = () => {
   
     const { mutate: updateUser } = useUpdate();
     const { mutate: deleteUser } = useDelete();
+
+    const [pageSize, setPageSize] = useState<number>(5);
   
     const users = data?.data ?? [];
   
@@ -59,8 +61,6 @@ const UserManagement = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', width: 150 },
-    { field: 'email', headerName: 'Email', width: 200 },
     {
       field: 'avatar',
       headerName: 'Avatar',
@@ -69,6 +69,9 @@ const UserManagement = () => {
         <img src={params.value} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%' }} />
       ),
     },
+    { field: 'name', headerName: 'Name', flex:1 },
+    { field: 'email', headerName: 'Email', flex: 1 },
+
     { 
       field: 'isAdmin', 
       headerName: 'Role', 
@@ -91,10 +94,23 @@ const UserManagement = () => {
       headerName: 'Actions',
       width: 100,
       renderCell: (params) => (
-        <Tooltip title="Delete User">
+        <Tooltip title="Delete User" arrow>
           <IconButton
             onClick={() => handleDeleteUser(params.row._id)}
-            color="error"
+            size="small"
+            sx={{
+                bgcolor: 'error.light',
+                color: 'error.dark',
+                p: 1.5,
+                width: 36, // Set fixed width
+                height: 36, // Set fixed height
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
           >
             <DeleteIcon />
           </IconButton>
@@ -122,16 +138,24 @@ const UserManagement = () => {
   }
 
   return (
-    <Paper elevation={3} style={{ padding: '20px', margin: '20px auto', maxWidth: '900px' }}>
-      <Typography variant="h4" gutterBottom align="center">
+    <Paper elevation={3} style={{ padding: '20px', margin: '20px auto', maxWidth: '2000px' }}>
+      <Typography 
+          variant="h4" 
+          sx={{ 
+          textAlign: 'left',
+          mb: 4,
+          fontWeight: 600,
+          }}
+      >
         User Management
       </Typography>
-      <Box style={{ height: 400, width: '100%' }}>
+      <Box sx={{ height: 660, width: '100%' }}>
         <DataGrid
           rows={users}
           columns={columns}
           getRowId={(row) => row._id}
-          pageSize={5}
+          pageSize={pageSize}
+          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
           rowsPerPageOptions={[5, 10, 20]}
           checkboxSelection={false}
           disableSelectionOnClick

@@ -4,6 +4,7 @@ import { useGetIdentity, useOne, useList } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import DeploymentForm from 'components/common/DeploymentForm';
+import { Box, CircularProgress } from '@pankod/refine-mui';
 
 const EditDeployment = () => {
   const navigate = useNavigate();
@@ -43,7 +44,11 @@ const EditDeployment = () => {
   };
 
   if (isDeploymentLoading || isPartsLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
   }
   return (
     <DeploymentForm
