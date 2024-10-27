@@ -1,5 +1,5 @@
 /* eslint-disable no-shadow */
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   Box,
   Drawer,
@@ -35,18 +35,24 @@ import {
   useRefineContext,
 } from '@pankod/refine-core';
 import { useLocation } from '@pankod/refine-react-router-v6';
-
+import { ColorModeContext } from 'contexts';
 import { Title as DefaultTitle } from '../title';
 
 export const Sider: typeof DefaultSider = ({ render }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [opened, setOpened] = useState(false);
   const [viewHeight, setViewHeight] = useState('100vh');
-
+  
   const { pathname } = useLocation();
 
   console.log('pathname', pathname);
   
+  const { mode } = useContext(ColorModeContext);
+  // Background gradients for dark and light modes - keeping yellow theme
+  const backgroundGradient = mode === 'dark'
+    ? 'linear-gradient(0deg, rgba(18,18,18,1)  10%, rgba(51,48,0,1) 40%, rgba(102,97,0,1) 80%, rgba(255,240,0,1) 100%)'
+    : 'linear-gradient(0deg, rgba(255,255,255,1) 10%, rgba(255,251,214,1) 40%, rgba(255,246,153,1) 80%, rgba(255,240,0,1) 100%)';
+
   // Dynamic height calculation
   useEffect(() => {
     const updateHeight = () => {
@@ -143,7 +149,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
                   sx={{
                     justifyContent: 'center',
                     minWidth: 36,
-                    color: 'primary.contrastText',
+                    color: mode === 'dark' ? '#fff' : '#141414',
                   }}
                 >
                   {icon ?? <ListOutlined />}
@@ -154,6 +160,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
                     noWrap: true,
                     fontSize: '16px',
                     fontWeight: isSelected ? 'bold' : 'normal',
+                    color: mode === 'dark' ? '#fff' : '#141414',
                   }}
                 />
                 {!collapsed && (isOpen ? <ExpandLess /> : <ExpandMore />)}
@@ -211,7 +218,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
               sx={{
                 justifyContent: 'center',
                 minWidth: 36,
-                color: isSelected ? '#141414' : '#ffffff',
+                color: isSelected ? '#141414' : (mode === 'dark' ? '#fff' : '#141414'),
               }}
             >
               {icon ?? <ListOutlined />}
@@ -222,7 +229,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
                 noWrap: true,
                 fontSize: '16px',
                 fontWeight: isSelected ? 'bold' : 'normal',
-                color: isSelected ? '#141414' : '#ffffff',
+                color: isSelected ? '#141414' : (mode === 'dark' ? '#fff' : '#141414'),
                 marginLeft: '10px',
               }}
             />
@@ -267,7 +274,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
             sx={{
               justifyContent: 'center',
               minWidth: 36,
-              color: pathname === '/' ? '#141414' : '#fcfcfc',
+              color: pathname === '/' ? '#141414' : (mode === 'dark' ? '#fff' : '#141414'),
             }}
           >
             <Dashboard />
@@ -278,7 +285,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
               noWrap: true,
               fontSize: '16px',
               fontWeight: pathname === '/' ? 'bold' : 'normal',
-              color: pathname === '/' ? '#141414' : '#fcfcfc',
+              color: pathname === '/' ? '#141414' : (mode === 'dark' ? '#fff' : '#141414'),
               marginLeft: '10px',
             }}
           />
@@ -309,7 +316,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           sx={{
             justifyContent: 'center',
             minWidth: 36,
-            color: '#fcfcfc',
+            color: mode === 'dark' ? '#fff' : '#141414',
           }}
         >
           <Logout />
@@ -319,8 +326,8 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           primaryTypographyProps={{
             noWrap: true,
             fontSize: '16px',
+            color: mode === 'dark' ? '#fff' : '#141414',
           }}
-          sx={{color: '#fcfcfc',}}
         />
       </ListItemButton>
     </Tooltip>
@@ -380,7 +387,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           width: { sm: drawerWidth() },
           display: 'flex',
           height: viewHeight,
-          overflow: 'hidden', // Prevent scroll on the outer container
+          overflow: 'hidden',
         }}
       >
         <Drawer
@@ -395,8 +402,8 @@ export const Sider: typeof DefaultSider = ({ render }) => {
             '& .MuiDrawer-paper': {
               width: 256,
               height: viewHeight,
-              background: 'linear-gradient(0deg, rgba(20,20,20,1) 10%, rgba(52,50,17,1) 40%, rgba(135,128,10,1) 80%, rgba(255,240,0,1) 100%)',
-              overflow: 'hidden',  // Prevent scroll on the temporary drawer
+              background: backgroundGradient,
+              overflow: 'hidden',
             },
           }}
         >
@@ -429,9 +436,9 @@ export const Sider: typeof DefaultSider = ({ render }) => {
             '& .MuiDrawer-paper': {
               width: drawerWidth(),
               height: viewHeight,
-              background: 'linear-gradient(0deg, rgba(20,20,20,1) 10%, rgba(52,50,17,1) 40%, rgba(135,128,10,1) 80%, rgba(255,240,0,1) 100%)',
+              background: backgroundGradient,
               transition: 'width 200ms cubic-bezier(0.4, 0, 0.6, 1) 0ms',
-              overflow: 'hidden',  // Prevent scroll on the permanent drawer
+              overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
             },
@@ -468,11 +475,11 @@ export const Sider: typeof DefaultSider = ({ render }) => {
                   background: 'transparent',
                 },
                 '&::-webkit-scrollbar-thumb': {
-                  background: '#ffffff3d',
+                  background: mode === 'dark' ? '#ffffff3d' : '#1414143d',
                   borderRadius: '3px',
                 },
                 '&::-webkit-scrollbar-thumb:hover': {
-                  background: '#ffffff5d',
+                  background: mode === 'dark' ? '#ffffff5d' : '#1414145d',
                 },
               }}
             >
@@ -481,15 +488,15 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           </Box>
           <Button
             sx={{
-              background: '#fff000',
-              color: '#141414',
+              background: mode === 'dark' ? '#333' : '#fff000',
+              color: mode === 'dark' ? '#fff' : '#141414',
               textAlign: 'center',
               borderRadius: 0,
               borderTop: '1px solid #ffffff1a',
               height: '40px',
               minHeight: '40px',
               '&:hover': {
-                background: '#c3b800',
+                background: mode === 'dark' ? '#444' : '#c3b800',
               },
             }}
             fullWidth
@@ -506,13 +513,16 @@ export const Sider: typeof DefaultSider = ({ render }) => {
             top: '64px',
             left: '0px',
             borderRadius: '0 6px 6px 0',
-            bgcolor: '#fff900',
+            bgcolor: mode === 'dark' ? '#333' : '#fff000',
             zIndex: 1199,
             width: '36px',
           }}
         >
           <IconButton
-            sx={{ color: 'black', width: '36px' }}
+            sx={{ 
+              color: mode === 'dark' ? '#fff' : '#141414', 
+              width: '36px' 
+            }}
             onClick={() => setOpened((prev) => !prev)}
           >
             <MenuRounded />
