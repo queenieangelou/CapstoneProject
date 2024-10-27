@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState,useEffect } from 'react';
 import { DataGrid, GridRenderCellParams, GridColDef, Box, Paper, Typography, CircularProgress, IconButton, Tooltip, TextField, Stack, Button } from '@pankod/refine-mui';
 import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
 import { Switch, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
@@ -9,13 +9,28 @@ const AllDeployments = () => {
     const { mutate: deleteDeployment } = useDelete();
     const { mutate: updateDeployment } = useUpdate();
     const navigate = useNavigate();
-
+    const [containerHeight, setContainerHeight] = useState('auto');
     const [pageSize, setPageSize] = useState<number>(5);
 
     const { 
         tableQueryResult: { data, isLoading, isError },
         filters, setFilters
     } = useTable();
+
+      // Dynamic height calculation
+    useEffect(() => {
+        const calculateHeight = () => {
+        const windowHeight = window.innerHeight;
+        const headerHeight = 64; // Adjust based on your header height
+        const marginAndPadding = 80; // Adjust based on your layout
+        const availableHeight = windowHeight - headerHeight - marginAndPadding;
+        setContainerHeight(`${availableHeight}px`);
+        };
+
+        calculateHeight();
+        window.addEventListener('resize', calculateHeight);
+        return () => window.removeEventListener('resize', calculateHeight);
+    }, []);
 
     const allDeployments = data?.data ?? [];
 
@@ -140,19 +155,18 @@ const AllDeployments = () => {
     };
 
     const columns: GridColDef[] = [
-        { field: 'seq', headerName: 'Seq', flex: 1, minWidth: 100 },
-        { field: 'date', headerName: 'Date', flex: 1, minWidth: 100 },
-        { field: 'clientName', headerName: 'Client Name', flex: 1, minWidth: 150 },
-        { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1, minWidth: 150 },
-        { field: 'arrivalDate', headerName: 'arrivalDate', flex: 1, minWidth: 120 },
-        { field: 'partName', headerName: 'Part', flex: 1, minWidth: 120 },
-        { field: 'brandName', headerName: 'Brand', flex: 1, minWidth: 120 },
-        { field: 'quantityUsed', headerName: 'Quantity', type: 'number', flex: 1, minWidth: 100 },
+        { field: 'seq', headerName: 'Seq', flex: 1 },
+        { field: 'date', headerName: 'Date', flex: 1 },
+        { field: 'clientName', headerName: 'Client Name', flex: 1 },
+        { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1 },
+        { field:  'arrivalDate', headerName: 'arrivalDate', flex: 1 },
+        { field: 'partName', headerName: 'Part', flex: 1 },
+        { field: 'brandName', headerName: 'Brand', flex: 1 },
+        { field: 'quantityUsed', headerName: 'Quantity', type: 'number', flex: 1 },
         { 
             field: 'deploymentStatus', 
             headerName: 'Deployed',
             flex: 1,
-            minWidth: 120,
             renderCell: (params: GridRenderCellParams) => (
                 <Switch
                     checked={params.value}
@@ -165,13 +179,11 @@ const AllDeployments = () => {
             field: 'deploymentDate', 
             headerName: 'Deployed Date',
             flex: 1,
-            minWidth: 120,
         },
         { 
             field: 'releaseStatus', 
             headerName: 'Released',
             flex: 1,
-            minWidth: 120,
             renderCell: (params: GridRenderCellParams) => (
                 <Switch
                     checked={params.value}
@@ -184,81 +196,81 @@ const AllDeployments = () => {
             field: 'releaseDate', 
             headerName: 'Released Date',
             flex: 1,
-            minWidth: 120,
         },
         {
             field: 'actions',
             headerName: 'Actions',
-            width: 120,
+            align: 'center',
+            flex: 1,
             renderCell: (params) => (
-                <Stack direction="row" spacing={0.5} justifyContent="center" className="actions-column">
-                    <Tooltip title="View">
-                        <IconButton
-                            onClick={() => navigate(`/deployments/show/${params.row.id}`)}
-                            size="small"
-                            sx={{
-                                bgcolor: 'primary.light',
-                                color: 'primary.dark',
-                                p: 0.5,
-                                width: 32,
-                                height: 32,
-                                '&:hover': {
-                                    bgcolor: 'primary.main',
-                                    color: 'white',
-                                    transform: 'scale(1.05)',
-                                },
-                                transition: 'all 0.2s ease-in-out'
-                            }}
-                        >
-                            <Visibility />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit">
-                        <IconButton
-                            onClick={() => navigate(`/deployments/edit/${params.row.id}`)}
-                            size="small"
-                            sx={{
-                                bgcolor: 'warning.light',
-                                color: 'warning.dark',
-                                p: 0.5,
-                                width: 32,
-                                height: 32,
-                                '&:hover': {
-                                    bgcolor: 'warning.main',
-                                    color: 'white',
-                                    transform: 'scale(1.05)',
-                                },
-                                transition: 'all 0.2s ease-in-out'
-                            }}
-                        >
-                            <Edit />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <IconButton
-                            onClick={() => handleDeleteDeployment(params.row.id)}
-                            size="small"
-                            sx={{
-                                bgcolor: 'error.light',
-                                color: 'error.dark',
-                                p: 0.5,
-                                width: 32,
-                                height: 32,
-                                '&:hover': {
-                                    bgcolor: 'error.main',
-                                    color: 'white',
-                                    transform: 'scale(1.05)',
-                                },
-                                transition: 'all 0.2s ease-in-out'
-                            }}
-                        >
-                            <Delete />
-                        </IconButton>
-                    </Tooltip>
-                </Stack>
+            <Stack direction="row" spacing={1}>
+                <Tooltip title="View">
+                <IconButton
+                    onClick={() => navigate(`/deployments/show/${params.row.id}`)}
+                    size="small"
+                    sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.dark',
+                        p: 0.5,
+                        width: 32, // Set fixed width
+                        height: 32, // Set fixed height
+                        '&:hover': {
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out'
+                        }}
+                >
+                    <Visibility />
+                </IconButton>
+                </Tooltip>
+                <Tooltip title="Edit">
+                <IconButton
+                    onClick={() => navigate(`/deployments/edit/${params.row.id}`)}
+                    size="small"
+                    sx={{
+                        bgcolor: 'warning.light',
+                        color: 'warning.dark',
+                        p: 0.5,
+                        width: 32, // Set fixed width
+                        height: 32, // Set fixed height
+                        '&:hover': {
+                            bgcolor: 'warning.main',
+                            color: 'white',
+                            transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out'
+                        }}
+                >
+                    <Edit />
+                </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete">
+                <IconButton
+                    onClick={() => handleDeleteDeployment(params.row.id)}
+                    size="small"
+                    sx={{
+                        bgcolor: 'error.light',
+                        color: 'error.dark',
+                        p: 0.5,
+                        width: 32, // Set fixed width
+                        height: 32, // Set fixed height
+                        '&:hover': {
+                            bgcolor: 'error.main',
+                            color: 'white',
+                            transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out'
+                        }}
+                >
+                    <Delete />
+                </IconButton>
+                </Tooltip>
+            </Stack>
             ),
         },
-    ];
+];
 
     const rows = filteredRows.map((deployment) => ({
         id: deployment._id,
@@ -296,20 +308,38 @@ const AllDeployments = () => {
     }
 
     return (
-        <Paper elevation={3} sx={{ padding: '20px', margin: '20px auto', maxWidth: '1900px' }}>
+        <Paper 
+            elevation={3} 
+            sx={{ 
+            height: containerHeight,
+            display: 'flex',
+            flexDirection: 'column',
+            m: 2,
+            overflow: 'hidden'
+            }}
+        >
             <Typography 
-                variant="h4" 
-                sx={{ 
-                textAlign: 'left',
-                mb: 4,
+            variant="h4" 
+            sx={{ 
+                p: 2,
                 fontWeight: 600,
-                }}
+            }}
             >
                 {!allDeployments.length ? 'There are no deployments' : 'All Deployments'}
             </Typography>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, gap: 2, flexDirection: { xs: 'column', sm: 'row' }  }}>
-                <Box sx={{ display: 'flex', mb: 0, gap: 1, flexDirection: { xs: 'column', sm: 'row' }  }}>
+            <Box sx={{ 
+                p: 2,
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                gap: 2, 
+                flexDirection: { xs: 'column', sm: 'row' } 
+            }}>
+                <Box sx={{ 
+                display: 'flex', 
+                gap: 1, 
+                flexDirection: { xs: 'column', sm: 'row' } 
+                }}>
                 <FormControl sx={{ minWidth: 200 }}>
                 <InputLabel>Search By</InputLabel>
                     <Select
@@ -360,42 +390,28 @@ const AllDeployments = () => {
             </Box>
 
             <Box sx={{ 
-                height: 660, 
+                flex: 1,
                 width: '100%',
-                position: 'relative',
-                '& .MuiDataGrid-root': {
-                    overflow: 'visible',
-                    '& .MuiDataGrid-columnHeader:last-child': {
-                        position: 'sticky',
-                        right: 0,
-                        background: '#fff',
-                        boxShadow: '-5px 0 5px rgba(0,0,0,0.1)',
-                        zIndex: 1,
-                    },
-                    '& .MuiDataGrid-cell:last-child': {
-                        position: 'sticky',
-                        right: 0,
-                        background: '#fff',
-                        boxShadow: '-5px 0 5px rgba(0,0,0,0.1)',
-                        zIndex: 1,
-                    }
-                },
-                '& .actions-column': {
-                    backgroundColor: '#fff',
-                }
+                overflow: 'hidden'
             }}>
                 <DataGrid
-                    rows={rows}
-                    columns={columns}
-                    pageSize={pageSize}
-                    onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                    rowsPerPageOptions={[5, 10, 20]}
-                    checkboxSelection={false}
-                    disableSelectionOnClick
-                    style={{ minWidth: '100%' }}
+                rows={rows}
+                columns={columns}
+                pageSize={pageSize}
+                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                rowsPerPageOptions={[5, 10, 20]}
+                checkboxSelection={false}
+                disableSelectionOnClick
+                autoHeight={false}
+                sx={{
+                    height: '100%',
+                    '& .MuiDataGrid-main': {
+                    overflow: 'hidden'
+                    }
+                }}
                 />
-            </Box>
-        </Paper>
+        </Box>
+    </Paper>
     );
 };
 

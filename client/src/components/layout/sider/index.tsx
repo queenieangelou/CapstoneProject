@@ -1,6 +1,5 @@
 /* eslint-disable no-shadow */
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Drawer,
@@ -19,8 +18,6 @@ import {
   Logout,
   ExpandLess,
   ExpandMore,
-  ChevronLeft,
-  ChevronRight,
   MenuRounded,
   Dashboard,
   ChevronRightOutlined,
@@ -44,10 +41,23 @@ import { Title as DefaultTitle } from '../title';
 export const Sider: typeof DefaultSider = ({ render }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [opened, setOpened] = useState(false);
+  const [viewHeight, setViewHeight] = useState('100vh');
 
   const { pathname } = useLocation();
 
   console.log('pathname', pathname);
+  
+  // Dynamic height calculation
+  useEffect(() => {
+    const updateHeight = () => {
+      const windowHeight = window.innerHeight;
+      setViewHeight(`${windowHeight}px`);
+    };
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
 
   const drawerWidth = () => {
     if (collapsed) return 64;
@@ -337,11 +347,19 @@ export const Sider: typeof DefaultSider = ({ render }) => {
   };
 
   const drawer = (
-    <MuiList disablePadding sx={{ mt: 1, color: '#919080' }}>
+    <MuiList 
+      disablePadding 
+      sx={{ 
+        mt: 1, 
+        color: '#919080',
+        overflowY: 'auto',  // Allow vertical scroll only in this inner container
+        overflowX: 'hidden'
+      }}
+    >
       {renderSider()}
     </MuiList>
   );
-
+  
   return (
     <>
       <Box
@@ -361,6 +379,8 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           zIndex: 1101,
           width: { sm: drawerWidth() },
           display: 'flex',
+          height: viewHeight,
+          overflow: 'hidden', // Prevent scroll on the outer container
         }}
       >
         <Drawer
@@ -368,13 +388,15 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           open={opened}
           onClose={() => setOpened(false)}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             display: { sm: 'block', md: 'none' },
             '& .MuiDrawer-paper': {
               width: 256,
+              height: viewHeight,
               background: 'linear-gradient(0deg, rgba(20,20,20,1) 10%, rgba(52,50,17,1) 40%, rgba(135,128,10,1) 80%, rgba(255,240,0,1) 100%)',
+              overflow: 'hidden',  // Prevent scroll on the temporary drawer
             },
           }}
         >
@@ -388,7 +410,16 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           >
             <RenderToTitle collapsed={false} />
           </Box>
-          {drawer}
+          <Box
+            sx={{
+              flex: 1,
+              overflow: 'hidden', // Prevent overflow on the main Box
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {drawer}
+          </Box>
         </Drawer>
         <Drawer
           variant="permanent"
@@ -396,10 +427,13 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           sx={{
             display: { xs: 'none', md: 'block' },
             '& .MuiDrawer-paper': {
-              width: drawerWidth,
+              width: drawerWidth(),
+              height: viewHeight,
               background: 'linear-gradient(0deg, rgba(20,20,20,1) 10%, rgba(52,50,17,1) 40%, rgba(135,128,10,1) 80%, rgba(255,240,0,1) 100%)',
-              overflow: 'hidden',
               transition: 'width 200ms cubic-bezier(0.4, 0, 0.6, 1) 0ms',
+              overflow: 'hidden',  // Prevent scroll on the permanent drawer
+              display: 'flex',
+              flexDirection: 'column',
             },
           }}
           open
@@ -416,12 +450,34 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           </Box>
           <Box
             sx={{
-              flexGrow: 1,
-              overflowX: 'hidden',
-              overflowY: 'auto',
+              flex: 1,
+              overflow: 'hidden',  // Prevent overflow here
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            {drawer}
+            <Box
+              sx={{
+                flexGrow: 1,
+                overflowX: 'hidden',
+                overflowY: 'auto',  // Set scroll here only
+                '&::-webkit-scrollbar': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#ffffff3d',
+                  borderRadius: '3px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  background: '#ffffff5d',
+                },
+              }}
+            >
+              {drawer}
+            </Box>
           </Box>
           <Button
             sx={{
@@ -430,6 +486,8 @@ export const Sider: typeof DefaultSider = ({ render }) => {
               textAlign: 'center',
               borderRadius: 0,
               borderTop: '1px solid #ffffff1a',
+              height: '40px',
+              minHeight: '40px',
               '&:hover': {
                 background: '#c3b800',
               },

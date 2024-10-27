@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { LayoutProps } from '@pankod/refine-core';
 import { Box } from '@pankod/refine-mui';
 
@@ -15,19 +15,35 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const SiderToRender = Sider ?? DefaultSider;
   const HeaderToRender = Header ?? DefaultHeader;
-
   const { mode } = useContext(ColorModeContext); // Access the current theme mode
 
+  const [viewHeight, setViewHeight] = useState('100vh');
+
+  // Adjust container height based on window size and scaling
+  useEffect(() => {
+    const updateHeight = () => {
+      const windowHeight = window.innerHeight;
+      setViewHeight(`${windowHeight}px`);
+    };
+
+    // Initial setup
+    updateHeight();
+
+    // Update on resize
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+
   return (
-    <Box display="flex" flexDirection="row">
+    <Box display="flex" flexDirection="row" height={viewHeight} overflow="hidden">
       <SiderToRender />
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          minHeight: '100vh',
-          bgcolor: mode === 'dark' ? '#121212' : '#FFFFFF', // Dark mode background for the main container
+          height: '100%',
+          bgcolor: mode === 'dark' ? '#121212' : '#FFFFFF',
         }}
       >
         <HeaderToRender />
@@ -36,9 +52,10 @@ export const Layout: React.FC<LayoutProps> = ({
           sx={{
             p: { xs: 1, md: 2, lg: 3 },
             flexGrow: 1,
-            bgcolor: mode === 'dark' ? '#1E1E1E' : '#F4F4F4', // Dark mode background for the content
-            color: mode === 'dark' ? '#FFFFFF' : '#000000', // Text color for dark mode
-            transition: 'background 0.3s ease, color 0.3s ease', // Smooth transitions for color changes
+            bgcolor: mode === 'dark' ? '#1E1E1E' : '#F4F4F4',
+            color: mode === 'dark' ? '#FFFFFF' : '#000000',
+            overflow: 'auto',
+            height: '100%',
           }}
         >
           {children}
