@@ -140,90 +140,19 @@ const AllDeployments = () => {
     };
 
     const columns: GridColDef[] = [
-        {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 175,
-            renderCell: (params) => (
-            <Stack direction="row" spacing={1}>
-                <Tooltip title="View">
-                <IconButton
-                    onClick={() => navigate(`/deployments/show/${params.row.id}`)}
-                    size="small"
-                    sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.dark',
-                        p: 1.5,
-                        width: 36, // Set fixed width
-                        height: 36, // Set fixed height
-                        '&:hover': {
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          transform: 'scale(1.05)',
-                        },
-                        transition: 'all 0.2s ease-in-out'
-                      }}
-                >
-                    <Visibility />
-                </IconButton>
-                </Tooltip>
-                <Tooltip title="Edit">
-                <IconButton
-                    onClick={() => navigate(`/deployments/edit/${params.row.id}`)}
-                    size="small"
-                    sx={{
-                        bgcolor: 'warning.light',
-                        color: 'warning.dark',
-                        p: 1.5,
-                        width: 36, // Set fixed width
-                        height: 36, // Set fixed height
-                        '&:hover': {
-                          bgcolor: 'warning.main',
-                          color: 'white',
-                          transform: 'scale(1.05)',
-                        },
-                        transition: 'all 0.2s ease-in-out'
-                      }}
-                >
-                    <Edit />
-                </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete">
-                <IconButton
-                    onClick={() => handleDeleteDeployment(params.row.id)}
-                    size="small"
-                    sx={{
-                        bgcolor: 'error.light',
-                        color: 'error.dark',
-                        p: 1.5,
-                        width: 36, // Set fixed width
-                        height: 36, // Set fixed height
-                        '&:hover': {
-                          bgcolor: 'error.main',
-                          color: 'white',
-                          transform: 'scale(1.05)',
-                        },
-                        transition: 'all 0.2s ease-in-out'
-                      }}
-                >
-                    <Delete />
-                </IconButton>
-                </Tooltip>
-            </Stack>
-            ),
-        },
-        { field: 'seq', headerName: 'Seq', flex: 1 },
-        { field: 'date', headerName: 'Date', flex: 1 },
-        { field: 'clientName', headerName: 'Client Name', flex: 1 },
-        { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1 },
-        { field:  'arrivalDate', headerName: 'arrivalDate', flex: 1 },
-        { field: 'partName', headerName: 'Part', flex: 1 },
-        { field: 'brandName', headerName: 'Brand', flex: 1 },
-        { field: 'quantityUsed', headerName: 'Quantity', type: 'number', flex: 1 },
+        { field: 'seq', headerName: 'Seq', flex: 1, minWidth: 100 },
+        { field: 'date', headerName: 'Date', flex: 1, minWidth: 100 },
+        { field: 'clientName', headerName: 'Client Name', flex: 1, minWidth: 150 },
+        { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1, minWidth: 150 },
+        { field: 'arrivalDate', headerName: 'arrivalDate', flex: 1, minWidth: 120 },
+        { field: 'partName', headerName: 'Part', flex: 1, minWidth: 120 },
+        { field: 'brandName', headerName: 'Brand', flex: 1, minWidth: 120 },
+        { field: 'quantityUsed', headerName: 'Quantity', type: 'number', flex: 1, minWidth: 100 },
         { 
             field: 'deploymentStatus', 
             headerName: 'Deployed',
             flex: 1,
+            minWidth: 120,
             renderCell: (params: GridRenderCellParams) => (
                 <Switch
                     checked={params.value}
@@ -236,11 +165,13 @@ const AllDeployments = () => {
             field: 'deploymentDate', 
             headerName: 'Deployed Date',
             flex: 1,
+            minWidth: 120,
         },
         { 
             field: 'releaseStatus', 
             headerName: 'Released',
             flex: 1,
+            minWidth: 120,
             renderCell: (params: GridRenderCellParams) => (
                 <Switch
                     checked={params.value}
@@ -253,8 +184,81 @@ const AllDeployments = () => {
             field: 'releaseDate', 
             headerName: 'Released Date',
             flex: 1,
+            minWidth: 120,
         },
-];
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 120,
+            renderCell: (params) => (
+                <Stack direction="row" spacing={0.5} justifyContent="center" className="actions-column">
+                    <Tooltip title="View">
+                        <IconButton
+                            onClick={() => navigate(`/deployments/show/${params.row.id}`)}
+                            size="small"
+                            sx={{
+                                bgcolor: 'primary.light',
+                                color: 'primary.dark',
+                                p: 0.5,
+                                width: 32,
+                                height: 32,
+                                '&:hover': {
+                                    bgcolor: 'primary.main',
+                                    color: 'white',
+                                    transform: 'scale(1.05)',
+                                },
+                                transition: 'all 0.2s ease-in-out'
+                            }}
+                        >
+                            <Visibility />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Edit">
+                        <IconButton
+                            onClick={() => navigate(`/deployments/edit/${params.row.id}`)}
+                            size="small"
+                            sx={{
+                                bgcolor: 'warning.light',
+                                color: 'warning.dark',
+                                p: 0.5,
+                                width: 32,
+                                height: 32,
+                                '&:hover': {
+                                    bgcolor: 'warning.main',
+                                    color: 'white',
+                                    transform: 'scale(1.05)',
+                                },
+                                transition: 'all 0.2s ease-in-out'
+                            }}
+                        >
+                            <Edit />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                        <IconButton
+                            onClick={() => handleDeleteDeployment(params.row.id)}
+                            size="small"
+                            sx={{
+                                bgcolor: 'error.light',
+                                color: 'error.dark',
+                                p: 0.5,
+                                width: 32,
+                                height: 32,
+                                '&:hover': {
+                                    bgcolor: 'error.main',
+                                    color: 'white',
+                                    transform: 'scale(1.05)',
+                                },
+                                transition: 'all 0.2s ease-in-out'
+                            }}
+                        >
+                            <Delete />
+                        </IconButton>
+                    </Tooltip>
+                </Stack>
+            ),
+        },
+    ];
 
     const rows = filteredRows.map((deployment) => ({
         id: deployment._id,
@@ -355,18 +359,43 @@ const AllDeployments = () => {
                 </Tooltip>
             </Box>
 
-            <Box sx={{ height: 660, width: '100%' }}>
-            <DataGrid
-                rows={rows}
-                columns={columns}
-                pageSize={pageSize}
-                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                rowsPerPageOptions={[5, 10, 20]}
-                checkboxSelection={false}
-                disableSelectionOnClick
-            />
-        </Box>
-    </Paper>
+            <Box sx={{ 
+                height: 660, 
+                width: '100%',
+                position: 'relative',
+                '& .MuiDataGrid-root': {
+                    overflow: 'visible',
+                    '& .MuiDataGrid-columnHeader:last-child': {
+                        position: 'sticky',
+                        right: 0,
+                        background: '#fff',
+                        boxShadow: '-5px 0 5px rgba(0,0,0,0.1)',
+                        zIndex: 1,
+                    },
+                    '& .MuiDataGrid-cell:last-child': {
+                        position: 'sticky',
+                        right: 0,
+                        background: '#fff',
+                        boxShadow: '-5px 0 5px rgba(0,0,0,0.1)',
+                        zIndex: 1,
+                    }
+                },
+                '& .actions-column': {
+                    backgroundColor: '#fff',
+                }
+            }}>
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    pageSize={pageSize}
+                    onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                    rowsPerPageOptions={[5, 10, 20]}
+                    checkboxSelection={false}
+                    disableSelectionOnClick
+                    style={{ minWidth: '100%' }}
+                />
+            </Box>
+        </Paper>
     );
 };
 
