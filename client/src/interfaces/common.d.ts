@@ -80,3 +80,12 @@ interface FormPropsDeployment {
   existingParts: Parts[],
   initialValues?: Record<string, any>;
 }
+
+export interface FormPropsExpense {
+  type: string,
+  register: any,
+  onFinish: (values: FieldValues) => Promise<void | CreateResponse<BaseRecord> | UpdateResponse<BaseRecord>>,
+  formLoading: boolean,
+  handleSubmit: FormEventHandler<HTMLFormElement> | undefined,
+  onFinishHandler: (data: FieldValues) => Promise<void>,
+}

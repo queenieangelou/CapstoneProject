@@ -54,6 +54,10 @@ import DeploymentDetails from 'pages/deployment-details';
 import CreateDeployment from 'pages/create-deployment';
 import EditDeployment from 'pages/edit-deployment';
 import ClientPortal from 'pages/client-portal';
+import AllExpenses from 'pages/all-expenses';
+import CreateExpense from 'pages/create-expense';
+import EditExpense from 'pages/edit-expense';
+import ExpenseDetails from 'pages/expense-details';
 
 const axiosInstance = axios.create();
 axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
@@ -204,6 +208,14 @@ const App = () => {
       create: CreateDeployment,
       edit: EditDeployment,
       icon: <NoCrashOutlined />,
+    },
+    {
+      name: 'expenses', // LINK
+      list: AllExpenses,
+      show: ExpenseDetails,
+      create: CreateExpense,
+      edit: EditExpense,
+      icon: <AttachMoneyOutlined/>,
     },
     {
       name: 'sales', // LINK
