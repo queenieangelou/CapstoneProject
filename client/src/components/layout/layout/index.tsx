@@ -44,6 +44,7 @@ export const Layout: React.FC<LayoutProps> = ({
           flex: 1,
           height: '100%',
           bgcolor: mode === 'dark' ? '#121212' : '#FFFFFF',
+          transition: 'background 0.2s ease, color 0.2s ease',
         }}
       >
         <HeaderToRender />
@@ -54,6 +55,7 @@ export const Layout: React.FC<LayoutProps> = ({
             flexGrow: 1,
             bgcolor: mode === 'dark' ? '#1E1E1E' : '#F4F4F4',
             color: mode === 'dark' ? '#FFFFFF' : '#000000',
+            transition: 'background 0.2s ease, color 0.2s ease',
             overflow: 'auto',
             height: '100%',
           }}
