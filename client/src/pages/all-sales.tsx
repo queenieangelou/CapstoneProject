@@ -10,12 +10,18 @@ const AllSales = () => {
   const navigate = useNavigate();
   const { mutate } = useDelete();
   const [containerHeight, setContainerHeight] = useState('auto');
-  const [pageSize, setPageSize] = useState<number>(5);
 
-  const {
+  const { 
     tableQueryResult: { data, isLoading, isError },
     filters, setFilters,
-  } = useTable();
+    current, setCurrent,
+    pageSize, setPageSize,
+} = useTable({
+    resource: 'sales',
+    initialPageSize: 5,    // Initial page size
+    initialCurrent: 1,      // Initial page number
+    hasPagination: true,    // Enable pagination
+});
 
   // Dynamic height calculation
   useEffect(() => {
@@ -305,21 +311,25 @@ const filteredRows = allSales.filter((sale) => {
         overflow: 'hidden'
       }}>
         <DataGrid
-          rows={rows}
-          columns={columns}
-          pageSize={pageSize}
-          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-          rowsPerPageOptions={[5, 10, 20]}
-          checkboxSelection={false}
-          disableSelectionOnClick
-          autoHeight={false}
-          sx={{
-            height: '100%',
-            '& .MuiDataGrid-main': {
-              overflow: 'hidden'
-            }
-          }}
-        />
+                    rows={rows}
+                    columns={columns}
+                    pageSize={pageSize}
+                    page={current - 1}
+                    onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                    onPageChange={(newPage) => setCurrent(newPage + 1)}
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                    paginationMode="server"
+                    rowCount={data?.total ?? 0}
+                    checkboxSelection={false}
+                    disableSelectionOnClick
+                    autoHeight={false}
+                    sx={{
+                        height: '100%',
+                        '& .MuiDataGrid-main': {
+                            overflow: 'hidden'
+                        }
+                    }}
+                />
       </Box>
     </Paper>
   );

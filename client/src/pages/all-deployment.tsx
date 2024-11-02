@@ -9,22 +9,29 @@ const AllDeployments = () => {
     const { mutate: deleteDeployment } = useDelete();
     const { mutate: updateDeployment } = useUpdate();
     const navigate = useNavigate();
-    const [containerHeight, setContainerHeight] = useState('auto');
-    const [pageSize, setPageSize] = useState<number>(5);
 
     const { 
         tableQueryResult: { data, isLoading, isError },
-        filters, setFilters
-    } = useTable();
+        filters, setFilters,
+        current, setCurrent,
+        pageSize, setPageSize,
+    } = useTable({
+        resource: 'deployments',
+        initialPageSize: 5,    // Initial page size
+        initialCurrent: 1,      // Initial page number
+        hasPagination: true,    // Enable pagination
+    });
+
+    const [containerHeight, setContainerHeight] = useState('auto');
 
       // Dynamic height calculation
     useEffect(() => {
         const calculateHeight = () => {
-        const windowHeight = window.innerHeight;
-        const headerHeight = 64; // Adjust based on your header height
-        const marginAndPadding = 80; // Adjust based on your layout
-        const availableHeight = windowHeight - headerHeight - marginAndPadding;
-        setContainerHeight(`${availableHeight}px`);
+            const windowHeight = window.innerHeight;
+            const headerHeight = 64;
+            const marginAndPadding = 80;
+            const availableHeight = windowHeight - headerHeight - marginAndPadding;
+            setContainerHeight(`${availableHeight}px`);
         };
 
         calculateHeight();
@@ -33,7 +40,7 @@ const AllDeployments = () => {
     }, []);
 
     const allDeployments = data?.data ?? [];
-
+    
     const currentFilterValues = useMemo(() => {
         const logicalFilters = filters.flatMap((item) => ('field' in item ? item : []));
         return {
@@ -395,20 +402,24 @@ const AllDeployments = () => {
                 overflow: 'hidden'
             }}>
                 <DataGrid
-                rows={rows}
-                columns={columns}
-                pageSize={pageSize}
-                onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                rowsPerPageOptions={[5, 10, 20]}
-                checkboxSelection={false}
-                disableSelectionOnClick
-                autoHeight={false}
-                sx={{
-                    height: '100%',
-                    '& .MuiDataGrid-main': {
-                    overflow: 'hidden'
-                    }
-                }}
+                    rows={rows}
+                    columns={columns}
+                    pageSize={pageSize}
+                    page={current - 1}
+                    onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                    onPageChange={(newPage) => setCurrent(newPage + 1)}
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                    paginationMode="server"
+                    rowCount={data?.total ?? 0}
+                    checkboxSelection={false}
+                    disableSelectionOnClick
+                    autoHeight={false}
+                    sx={{
+                        height: '100%',
+                        '& .MuiDataGrid-main': {
+                            overflow: 'hidden'
+                        }
+                    }}
                 />
         </Box>
     </Paper>

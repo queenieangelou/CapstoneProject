@@ -10,12 +10,16 @@ import {
   Box,
   Alert,
   Container,
-  CircularProgress
+  CircularProgress,
+  Paper
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import Header from 'components/client-portal/Header';
+import Footer from 'components/client-portal/Footer';
+
 
 interface SearchResult {
   clientName: string;
@@ -64,8 +68,9 @@ const ClientPortal: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box textAlign="center" mb={4}>
+    <Box> 
+      <Header/>
+      <Box justifyContent="center" textAlign="center" mb={4} width={'100%'}>
         <Typography variant="h3" component="h1" gutterBottom>
           Vehicle Service Status Portal
         </Typography>
@@ -102,93 +107,58 @@ const ClientPortal: React.FC = () => {
 
         {/* Results Section */}
         {searchResult && (
-          <Card sx={{ mb: 4 }}>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                Vehicle Status
-              </Typography>
-              <Typography variant="subtitle2" color="text.secondary" mb={3}>
-                Current service status and details
-              </Typography>
+          <Box justifyContent="center" flex={'flex-wrap'} flexDirection={'row'} display={'flex'}>
+            <Paper elevation={3} sx={{ maxWidth: '1000px'}}>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  Vehicle Status
+                </Typography>
+                <Typography variant="subtitle2" color="text.secondary" mb={3}>
+                  Current service status and details
+                </Typography>
 
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Client Name
-                  </Typography>
-                  <Typography color="text.secondary">
-                    {searchResult.clientName}
-                  </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Client Name
+                    </Typography>
+                    <Typography color="text.secondary">
+                      {searchResult.clientName}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Vehicle Model
+                    </Typography>
+                    <Typography color="text.secondary">
+                      {searchResult.vehicle}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Status
+                    </Typography>
+                    <Typography color="text.secondary">
+                      {searchResult.status}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Release Date
+                    </Typography>
+                    <Typography color="text.secondary">
+                      {searchResult.estimatedCompletion}
+                    </Typography>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Vehicle Model
-                  </Typography>
-                  <Typography color="text.secondary">
-                    {searchResult.vehicle}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Status
-                  </Typography>
-                  <Typography color="text.secondary">
-                    {searchResult.status}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Release Date
-                  </Typography>
-                  <Typography color="text.secondary">
-                    {searchResult.estimatedCompletion}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Paper>
+            </Box>
         )}
-
-        {/* Contact Section */}
-        <Card>
-          <CardContent>
-            <Typography variant="h5" gutterBottom>
-              Need Help?
-            </Typography>
-            <Typography variant="subtitle2" color="text.secondary" mb={3}>
-              Contact our support team
-            </Typography>
-
-            <Grid container spacing={2} justifyContent="center">
-              <Grid item xs={12}>
-                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                  <PhoneIcon color="primary" />
-                  <Typography>
-                    Call us: (555) 123-4567
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12}>
-                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                  <EmailIcon color="primary" />
-                  <Typography>
-                    Email: support@autorepair.com
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12}>
-                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                  <AccessTimeIcon color="primary" />
-                  <Typography>
-                    Business Hours: Mon-Fri 8AM-6PM
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+        <Footer/>
       </Box>
-    </Container>
+    </Box>
+      
   );
 };
 
