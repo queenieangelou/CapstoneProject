@@ -41,6 +41,11 @@ const UserSchema = new mongoose.Schema({
     ref: 'Deployment',
     default: []
   },
+  allExpenses: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Expense',
+    default: []
+  },
 
 });
 

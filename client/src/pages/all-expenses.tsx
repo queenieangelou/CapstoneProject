@@ -38,7 +38,6 @@ const AllExpenses = () => {
     return () => window.removeEventListener('resize', calculateHeight);
   }, []);
 
-
   const allExpenses = data?.data ?? [];
 
   const currentFilterValues = useMemo(() => {
@@ -281,7 +280,7 @@ const filteredRows = allExpenses.filter((expense) => {
             sx={{ minWidth: '250px' }}
           />
         </Box>
-          <Tooltip title="Add Expenses" arrow>
+          <Tooltip title="Add Expense" arrow>
             <Button
             onClick={() => navigate(`/expenses/create`)}
             sx={{
