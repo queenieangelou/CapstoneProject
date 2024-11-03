@@ -3,7 +3,7 @@ import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
 import { Box, CircularProgress, Button, Paper, Stack, Tooltip, Typography } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 
-const SaleDetails = () => {
+const ExpenseDetails = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
   const { id } = useParams();
@@ -29,9 +29,7 @@ const SaleDetails = () => {
     );
   }
 
-  const isCurrentUser = user?.email === expenseDetails?.creator?.email;
-
-  const handleDeleteSale = () => {
+  const handleDeleteExpense = () => {
     const response = window.confirm('Are you sure you want to delete this expense?');
     if (response) {
       mutate(
@@ -70,7 +68,7 @@ const SaleDetails = () => {
           fontWeight: 600,
           }}
       >
-        Sale Details
+        Expense Details
       </Typography>
 
       <Box display="flex" flexDirection={{ xs: 'column', lg: 'row' }} gap={4}>
@@ -114,14 +112,13 @@ const SaleDetails = () => {
             </Typography>
           </Stack>
 
-          {isCurrentUser && (
             <Box 
               display="flex" 
               justifyContent="center" 
               gap={2} 
               mt={3}
             >
-              <Tooltip title="Edit Sale" arrow>
+              <Tooltip title="Edit Expense" arrow>
                 <Button
                   onClick={() => navigate(`/expenses/edit/${expenseDetails._id}`)}
                   sx={{
@@ -144,9 +141,9 @@ const SaleDetails = () => {
                   Edit
                 </Button>
               </Tooltip>
-              <Tooltip title="Delete Sale" arrow>
+              <Tooltip title="Delete Expense" arrow>
                 <Button
-                  onClick={handleDeleteSale}
+                  onClick={handleDeleteExpense}
                   sx={{
                     bgcolor: 'error.light',
                     color: 'error.dark',
@@ -168,7 +165,6 @@ const SaleDetails = () => {
                 </Button>
               </Tooltip>
             </Box>
-          )}
         </Box>
 
         {/* Creator Information Section */}
@@ -223,4 +219,4 @@ const SaleDetails = () => {
   );
 };
 
-export default SaleDetails;
+export default ExpenseDetails;

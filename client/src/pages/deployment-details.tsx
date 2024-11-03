@@ -31,8 +31,6 @@ const DeploymentDetails = () => {
     );
   }
 
-  const isCurrentUser = user?.email === deploymentDetails?.creator?.email;
-
   const handleDeleteDeployment = () => {
     const response = window.confirm('Are you sure you want to delete this deployment?');
     if (response) {
@@ -129,7 +127,6 @@ const DeploymentDetails = () => {
             )}
           </Stack>
 
-          {isCurrentUser && (
             <Box 
               display="flex" 
               justifyContent="center" 
@@ -183,7 +180,6 @@ const DeploymentDetails = () => {
                 </Button>
               </Tooltip>
             </Box>
-          )}
         </Box>
 
         {/* Creator Information Section */}

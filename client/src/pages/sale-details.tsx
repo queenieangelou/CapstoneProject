@@ -29,8 +29,6 @@ const SaleDetails = () => {
     );
   }
 
-  const isCurrentUser = user?.email === saleDetails?.creator?.email;
-
   const handleDeleteSale = () => {
     const response = window.confirm('Are you sure you want to delete this sale?');
     if (response) {
@@ -114,7 +112,6 @@ const SaleDetails = () => {
             </Typography>
           </Stack>
 
-          {isCurrentUser && (
             <Box 
               display="flex" 
               justifyContent="center" 
@@ -168,7 +165,6 @@ const SaleDetails = () => {
                 </Button>
               </Tooltip>
             </Box>
-          )}
         </Box>
 
         {/* Creator Information Section */}

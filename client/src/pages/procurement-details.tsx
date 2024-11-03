@@ -29,8 +29,6 @@ const ProcurementDetails = () => {
     );
   }
 
-  const isCurrentUser = user?.email === procurementDetails?.creator?.email;
-
   const handleDeleteProcurement = () => {
     const response = window.confirm('Are you sure you want to delete this procurement?');
     if (response) {
@@ -123,7 +121,6 @@ const ProcurementDetails = () => {
             </Typography>
           </Stack>
 
-          {isCurrentUser && (
             <Box 
               display="flex" 
               justifyContent="center" 
@@ -177,7 +174,6 @@ const ProcurementDetails = () => {
                 </Button>
               </Tooltip>
             </Box>
-          )}
         </Box>
 
         {/* Creator Information Section */}
