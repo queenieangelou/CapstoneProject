@@ -52,17 +52,13 @@ const getSaleDetail = async (req, res) => {
 };
 
 const createSale = async (req, res) => {
-  console.log('Received sale creation request with body:', req.body);
   try {
     const {
       seq, date, clientName, tin, amount, netOfVAT, outputVAT, email,
     } = req.body;
 
-    console.log('Parsed sale data:', { seq, date, clientName, tin, amount, netOfVAT, outputVAT, email });
-
     // Validate required fields
     if (!seq || !date || !clientName || !tin || !amount) {
-      console.log('Validation failed: Missing required fields');
       return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -73,7 +69,6 @@ const createSale = async (req, res) => {
       const user = await User.findOne({ email }).session(session);
 
       if (!user) {
-        console.log('User not found for email:', email);
         throw new Error('User not found');
       }
 

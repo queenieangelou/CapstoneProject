@@ -52,17 +52,13 @@ const getExpenseDetail = async (req, res) => {
 };
 
 const createExpense = async (req, res) => {
-  console.log('Received expense creation request with body:', req.body);
   try {
     const {
       seq, date, clientName, tin, amount, netOfVAT, outputVAT, email,
     } = req.body;
 
-    console.log('Parsed expense data:', { seq, date, clientName, tin, amount, netOfVAT, outputVAT, email });
-
     // Validate required fields
     if (!seq || !date || !clientName || !tin || !amount) {
-      console.log('Validation failed: Missing required fields');
       return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -73,7 +69,6 @@ const createExpense = async (req, res) => {
       const user = await User.findOne({ email }).session(session);
 
       if (!user) {
-        console.log('User not found for email:', email);
         throw new Error('User not found');
       }
 
