@@ -8,25 +8,16 @@ import ExpenseForm from 'components/common/ExpenseForm';
 const CreateExpense = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
-
-  const { refineCore: { onFinish, formLoading }, register, handleSubmit, watch } = useForm();
+  const { 
+    refineCore: { onFinish, formLoading }, register, handleSubmit, watch, setValue} = useForm({
+  });
 
   const onFinishHandler = async (data: FieldValues) => {
-
-      const amount = parseFloat(data.amount) || 0;
-      const VAT_RATE = 0.12;
-      const netOfVAT = amount / (1 + VAT_RATE);
-      const outputVAT = amount - netOfVAT;
-
-      await onFinish({
-        ...data,
-        amount,
-        netOfVAT: parseFloat(netOfVAT.toFixed(2)),
-        outputVAT: parseFloat(outputVAT.toFixed(2)),
-        email: user.email,
-      });
-
-      navigate('/expenses');
+    await onFinish({
+      ...data,
+      email: user.email,
+    });
+    navigate('/expenses');
   };
 
   return (

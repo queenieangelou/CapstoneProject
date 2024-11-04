@@ -77,39 +77,64 @@ const ExpenseDetails = () => {
           <Stack 
             spacing={2.5} 
             sx={{
-              px: 3,
-              mb: 4,
-              '& .MuiTypography-root': {
-                position: 'relative',
-                paddingBottom: '8px',
-                borderBottom: '1px solid rgba(0,0,0,0.06)',
-                '&:last-child': {
-                  borderBottom: 'none'
-                }
+            px: 3,
+            mb: 4,
+            '& .MuiTypography-root': {
+              position: 'relative',
+              paddingBottom: '8px',
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
+              '&:last-child': {
+                borderBottom: 'none'
               }
+            }
             }}
           >
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong>Sequence:</strong> {expenseDetails.seq}
             </Typography>
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Date:</strong> {expenseDetails.date}
+              <strong>Date:</strong> {new Date(expenseDetails.date).toLocaleDateString()}
+            </Typography>
+            {!expenseDetails.noValidReceipt && (
+              <>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Supplier Name:</strong> {expenseDetails.supplierName}
+                </Typography>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Reference:</strong> {expenseDetails.ref}
+                </Typography>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>TIN:</strong> {expenseDetails.tin}
+                </Typography>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Address:</strong> {expenseDetails.address}
+                </Typography>
+              </>
+            )}
+            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <strong>Description:</strong> {expenseDetails.description}
             </Typography>
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Client Name:</strong> {expenseDetails.clientName}
+              <strong>Amount:</strong> {expenseDetails.amount?.toFixed(2)}
             </Typography>
+            {!expenseDetails.isNonVat && !expenseDetails.noValidReceipt && (
+              <>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Net of VAT:</strong> {expenseDetails.netOfVAT?.toFixed(2)}
+                </Typography>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Input VAT:</strong> {expenseDetails.inputVAT?.toFixed(2)}
+                </Typography>
+              </>
+            )}
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>TIN:</strong> {expenseDetails.tin}
+              <strong>Total:</strong> {expenseDetails.total?.toFixed(2)}
             </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Amount:</strong> {expenseDetails.amount}
-            </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Net of VAT:</strong> {expenseDetails.netOfVAT}
-            </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Output VAT:</strong> {expenseDetails.outputVAT}
-            </Typography>
+            {!expenseDetails.noValidReceipt && (
+              <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <strong>Net:</strong> {expenseDetails.net?.toFixed(2)}
+              </Typography>
+            )}
           </Stack>
 
             <Box 

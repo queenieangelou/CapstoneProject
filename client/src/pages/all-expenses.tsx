@@ -1,3 +1,4 @@
+// AllExpenses.tsx
 /* eslint-disable */
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTable, useDelete } from '@pankod/refine-core';
@@ -113,11 +114,48 @@ const filteredRows = allExpenses.filter((expense) => {
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
     { field: 'date', headerName: 'Date', flex: 1 },
-    { field: 'clientName', headerName: 'Client Name', flex: 1 },
+    { field: 'supplierName', headerName: 'Supplier Name', flex: 1 },
+    { field: 'ref', headerName: 'Reference', flex: 1 },
     { field: 'tin', headerName: 'TIN', flex: 1 },
+    { field: 'address', headerName: 'Address', flex: 1 },
+    { field: 'description', headerName: 'Description', flex: 1 },
     { field: 'amount', headerName: 'Amount', type: 'number', flex: 1 },
     { field: 'netOfVAT', headerName: 'Net of VAT', type: 'number', flex: 1 },
-    { field: 'outputVAT', headerName: 'Output VAT', type: 'number', flex: 1 },
+    { field: 'inputVAT', headerName: 'Input VAT', type: 'number', flex: 1 },
+    { field: 'total', headerName: 'Total', type: 'number', flex: 1 },
+    { field: 'net', headerName: 'Net', type: 'number', flex: 1 },
+    { 
+      field: 'isNonVat', 
+      headerName: 'Non-VAT', 
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          variant="body2"
+          sx={{
+            color: params.row.isNonVat ? 'success.main' : 'text.secondary',
+            fontWeight: params.row.isNonVat ? 'bold' : 'normal'
+          }}
+        >
+          {params.row.isNonVat ? 'Yes' : 'No'}
+        </Typography>
+      )
+    },
+    { 
+      field: 'noValidReceipt', 
+      headerName: 'No Receipt', 
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          variant="body2"
+          sx={{
+            color: params.row.noValidReceipt ? 'warning.main' : 'text.secondary',
+            fontWeight: params.row.noValidReceipt ? 'bold' : 'normal'
+          }}
+        >
+          {params.row.noValidReceipt ? 'Yes' : 'No'}
+        </Typography>
+      )
+    },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -198,11 +236,18 @@ const filteredRows = allExpenses.filter((expense) => {
     _id: expense._id,
     seq: expense.seq,
     date: new Date(expense.date).toLocaleDateString(),
-    clientName: expense.clientName,
+    supplierName: expense.supplierName,
+    ref: expense.ref,
     tin: expense.tin,
-    amount: expense.amount,
-    netOfVAT: expense.netOfVAT,
-    outputVAT: expense.outputVAT,
+    address: expense.address,
+    description: expense.description,
+    amount: expense.amount?.toFixed(2),
+    netOfVAT: expense.netOfVAT?.toFixed(2),
+    inputVAT: expense.inputVAT?.toFixed(2),
+    total: expense.total?.toFixed(2),
+    net: expense.net?.toFixed(2),
+    isNonVat: expense.isNonVat,
+    noValidReceipt: expense.noValidReceipt
   }));
 
   if (isLoading) {

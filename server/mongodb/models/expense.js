@@ -10,11 +10,23 @@ const ExpenseSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  clientName: {
+  supplierName: {
+    type: String,
+    required: true,
+  },
+  ref: {
     type: String,
     required: true,
   },
   tin: {
+    type: String,
+    required: true,
+  },
+  address: {
+    type: String,
+    required: true,
+  },
+  description: {
     type: String,
     required: true,
   },
@@ -26,8 +38,24 @@ const ExpenseSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  outputVAT: {
+  inputVAT: {
     type: Number,
+    required: true,
+  },
+  total: {
+    type: Number,
+    required: true,
+  },
+  net: {
+    type: Number,
+    required: true,
+  },
+  isNonVat: {
+    type: Boolean,
+    required: true,
+  },
+  noValidReceipt: {
+    type: Boolean,
     required: true,
   },
   creator: {

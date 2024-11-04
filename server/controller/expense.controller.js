@@ -8,13 +8,13 @@ dotenv.config();
 
 const getAllExpenses = async (req, res) => {
   const {
-    _end, _order, _start, _sort, clientName_like = '',
+    _end, _order, _start, _sort, supplierName_like = '',
   } = req.query;
 
   const query = {};
 
-  if (clientName_like) {
-    query.clientName = { $regex: clientName_like, $options: 'i' };
+  if (supplierName_like) {
+    query.supplierName = { $regex: supplierName_like, $options: 'i' };
   }
 
   try {
@@ -54,14 +54,24 @@ const getExpenseDetail = async (req, res) => {
 const createExpense = async (req, res) => {
   try {
     const {
-      seq, date, clientName, tin, amount, netOfVAT, outputVAT, email,
+      seq,
+      date,
+      supplierName,
+      ref,
+      tin,
+      address,
+      description,
+      amount,
+      netOfVAT,
+      inputVAT,
+      total,
+      net,
+      isNonVat,
+      noValidReceipt,
+      email,
     } = req.body;
 
-    // Validate required fields
-    if (!seq || !date || !clientName || !tin || !amount) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
+    // Start a session for transaction
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -75,11 +85,18 @@ const createExpense = async (req, res) => {
       const newExpense = await Expense.create({
         seq,
         date,
-        clientName,
+        supplierName,
+        ref,
         tin,
+        address,
+        description,
         amount,
         netOfVAT,
-        outputVAT,
+        inputVAT,
+        total,
+        net,
+        isNonVat,
+        noValidReceipt,
         creator: user._id,
       });
 
@@ -106,25 +123,42 @@ const createExpense = async (req, res) => {
 const updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
-    const { seq, date, clientName, tin, amount, netOfVAT, outputVAT } = req.body;
-
-    // Input validation
-    if (typeof amount !== 'number' || isNaN(amount)) {
-      return res.status(400).json({ message: 'Invalid amount' });
-    }
+    const {
+      seq,
+      date,
+      supplierName,
+      ref,
+      tin,
+      address,
+      description,
+      amount,
+      netOfVAT,
+      inputVAT,
+      total,
+      net,
+      isNonVat,
+      noValidReceipt,
+    } = req.body;
 
     const updatedExpense = await Expense.findByIdAndUpdate(
       { _id: id },
       {
         seq,
         date,
-        clientName,
+        supplierName,
+        ref,
         tin,
+        address,
+        description,
         amount,
         netOfVAT,
-        outputVAT,
+        inputVAT,
+        total,
+        net,
+        isNonVat,
+        noValidReceipt,
       },
-      { new: true, runValidators: true }
+      { new: true }
     );
 
     if (!updatedExpense) {
@@ -143,7 +177,7 @@ const deleteExpense = async (req, res) => {
     const { id } = req.params;
 
     const expenseToDelete = await Expense.findById({ _id: id }).populate('creator');
-
+    
     if (!expenseToDelete) throw new Error('Expense not found');
 
     const session = await mongoose.startSession();
@@ -154,7 +188,7 @@ const deleteExpense = async (req, res) => {
 
     await expenseToDelete.creator.save({ session });
     await session.commitTransaction();
-
+    
     res.status(200).json({ message: 'Expense deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete expense, please try again later' });
