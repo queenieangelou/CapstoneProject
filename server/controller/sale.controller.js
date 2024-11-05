@@ -24,7 +24,8 @@ const getAllSales = async (req, res) => {
       .find(query)
       .limit(parseInt(_end) - parseInt(_start))
       .skip(parseInt(_start))
-      .sort({ [_sort]: _order });
+      .sort({ [_sort]: _order })
+      .populate('creator', 'name email');
 
     res.header('x-total-count', count);
     res.header('Access-Control-Expose-Headers', 'x-total-count');
@@ -36,128 +37,151 @@ const getAllSales = async (req, res) => {
 };
 
 const getSaleDetail = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const saleExists = await Sale.findOne({ _id: id }).populate('creator');
+    const { id } = req.params;
 
-    if (saleExists) {
-      res.status(200).json(saleExists);
-    } else {
-      res.status(404).json({ message: 'Sale does not exist' });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
     }
+    const sale = await Sale.findById(id).populate('creator', 'name email');
+
+    if (!sale) {
+      return res.status(404).json({ message: 'Sale does not exist' });
+    }
+    res.status(200).json(sale);
   } catch (err) {
     res.status(500).json({ message: 'Failed to get the sale details, please try again later' });
   }
 };
 
 const createSale = async (req, res) => {
-  try {
-    const {
-      seq, date, clientName, tin, amount, netOfVAT, outputVAT, email,
-    } = req.body;
+  const {
+    seq,
+    date,
+    clientName,
+    tin,
+    amount,
+    netOfVAT,
+    outputVAT,
+    email,
+  } = req.body;
 
-    // Validate required fields
-    if (!seq || !date || !clientName || !tin || !amount) {
-      return res.status(400).json({ message: 'All fields are required' });
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findOne({ email }).session(session);
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // Calculate VAT values
+    const calculatedNetOfVAT = amount * (100/112);
+    const calculatedOutputVAT = amount * (12/112);
 
-    try {
-      const user = await User.findOne({ email }).session(session);
+    const newSale = new Sale({
+      seq,
+      date,
+      clientName,
+      tin,
+      amount,
+      netOfVAT: Number(calculatedNetOfVAT.toFixed(2)),
+      outputVAT: Number(calculatedOutputVAT.toFixed(2)),
+      creator: user._id,
+    });
 
-      if (!user) {
-        throw new Error('User not found');
-      }
+    await newSale.save({ session });
 
-      const newSale = await Sale.create({
-        seq,
-        date,
-        clientName,
-        tin,
-        amount,
-        netOfVAT,
-        outputVAT,
-        creator: user._id,
-      });
-
+    // Update user's sales list if it exists
+    if (user.allSales) {
       user.allSales.push(newSale._id);
       await user.save({ session });
-
-      await session.commitTransaction();
-
-
-      res.status(200).json({ message: 'Sale created successfully', sale: newSale });
-    } catch (error) {
-      await session.abortTransaction();
-
-      throw error;
-    } finally {
-      session.endSession();
     }
-  } catch (error) {
 
+    await session.commitTransaction();
+
+    const populatedSale = await Sale.findById(newSale._id).populate('creator', 'name email');
+    
+    res.status(201).json({ message: 'Sale created successfully', sale: populatedSale });
+  } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({ message: 'Failed to create sale', error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
 const updateSale = async (req, res) => {
+  const { id } = req.params;
+  const {
+    seq,
+    date,
+    clientName,
+    tin,
+    amount,
+  } = req.body;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { id } = req.params;
-    const { seq, date, clientName, tin, amount, netOfVAT, outputVAT } = req.body;
-
-    // Input validation
-    if (typeof amount !== 'number' || isNaN(amount)) {
-      return res.status(400).json({ message: 'Invalid amount' });
-    }
-
-    const updatedSale = await Sale.findByIdAndUpdate(
-      { _id: id },
-      {
-        seq,
-        date,
-        clientName,
-        tin,
-        amount,
-        netOfVAT,
-        outputVAT,
-      },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedSale) {
+    const sale = await Sale.findById(id).session(session);
+    if (!sale) {
       return res.status(404).json({ message: 'Sale not found' });
     }
 
-    res.status(200).json(updatedSale);
-  } catch (error) {
+    // Calculate VAT values
+    const calculatedNetOfVAT = amount * (100/112);
+    const calculatedOutputVAT = amount * (12/112);
 
+    // Update fields
+    sale.seq = seq;
+    sale.date = date;
+    sale.clientName = clientName;
+    sale.tin = tin;
+    sale.amount = amount;
+    sale.netOfVAT = Number(calculatedNetOfVAT.toFixed(2));
+    sale.outputVAT = Number(calculatedOutputVAT.toFixed(2));
+
+    await sale.save({ session });
+    await session.commitTransaction();
+
+    const populatedSale = await Sale.findById(sale._id).populate('creator', 'name email');
+
+    res.status(200).json({ message: 'Sale updated successfully', sale: populatedSale });
+  } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({ message: 'Failed to update sale', error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
 const deleteSale = async (req, res) => {
+  const { id } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { id } = req.params;
+    const sale = await Sale.findById(id).populate('creator').session(session);
 
-    const saleToDelete = await Sale.findById({ _id: id }).populate('creator');
+    if (!sale) {
+      return res.status(404).json({ message: 'Sale not found' });
+    }
 
-    if (!saleToDelete) throw new Error('Sale not found');
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    saleToDelete.remove({ session });
-    saleToDelete.creator.allSales.pull(saleToDelete);
-
-    await saleToDelete.creator.save({ session });
+    // Remove sale from user's sales list if needed
+    if (sale.creator && sale.creator.allSales) {
+      sale.creator.allSales.pull(sale._id);
+      await sale.creator.save({ session });
+    }
+    await Sale.findByIdAndDelete(id).session(session);
     await session.commitTransaction();
-
     res.status(200).json({ message: 'Sale deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete sale, please try again later' });
+    await session.abortTransaction();
+    res.status(500).json({ message: 'Failed to delete sale, please try again later', error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 

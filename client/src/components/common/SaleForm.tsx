@@ -6,6 +6,7 @@ import {
   InputLabel,
   OutlinedInput,
   Paper,
+  TextField,
   Tooltip,
   Typography
 } from '@pankod/refine-mui';
@@ -13,8 +14,6 @@ import { FormPropsSale } from 'interfaces/common';
 import React, { useState } from 'react';
 import { Close, Publish } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-
-const VAT_RATE = 0.12;  // 12% VAT rate
 
 const getTodayDate = () => {
   const today = new Date();
@@ -24,46 +23,50 @@ const getTodayDate = () => {
   return `${year}-${month}-${day}`;
 };
 
-const SaleForm = ({ 
-  type, 
-  register, 
-  handleSubmit, 
-  formLoading, 
-  onFinishHandler 
-}: FormPropsSale) => {
-  const [amount, setAmount] = useState(0);
-  const [netOfVAT, setNetOfVAT] = useState(0);
-  const [outputVAT, setOutputVAT] = useState(0);
+const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, initialValues }: FormPropsSale) => {
+  const [amount, setAmount] = useState(initialValues?.amount || 0);
+  const [netOfVAT, setNetOfVAT] = useState(initialValues?.netOfVAT || 0);
+  const [outputVAT, setOutputVAT] = useState(initialValues?.outputVAT || 0);
   const navigate = useNavigate();
-  
-  const isError = false; // Replace this with your actual error state if needed
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputAmount = parseFloat(e.target.value);
-    setAmount(inputAmount);
+  // Function to calculate VAT components
+  const calculateVATComponents = (totalAmount: number) => {
+    // Net Amount = Amount × (100/112)
+    // VAT = Amount × (12/112)
+    const netAmount = totalAmount * (100/112);
+    const vatAmount = totalAmount * (12/112);
 
-    // Calculate netOfVAT and outputVAT
-    const calculatedNetOfVAT = inputAmount / (1 + VAT_RATE);
-    const calculatedOutputVAT = inputAmount - calculatedNetOfVAT;
+    return {
+      netAmount: Number(netAmount.toFixed(2)),
+      vatAmount: Number(vatAmount.toFixed(2))
+    };
+  };
 
-    setNetOfVAT(calculatedNetOfVAT);
-    setOutputVAT(calculatedOutputVAT);
+  const handleAmountChange = (e: { target: { value: string; }; }) => {
+    const newAmount = parseFloat(e.target.value) || 0;
+    setAmount(newAmount);
+
+    // Calculate VAT components
+    const { netAmount, vatAmount } = calculateVATComponents(newAmount);
+    setNetOfVAT(netAmount);
+    setOutputVAT(vatAmount);
+  };
+
+  const onSubmit = (data: any) => {
+    const updatedData = { 
+      ...data,
+      amount: parseFloat(amount),
+      outputVAT: parseFloat(outputVAT),
+      netOfVAT: parseFloat(netOfVAT)
+    };
+    
+    onFinishHandler(updatedData);
   };
 
   if (formLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (isError) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography variant="h6" color="error">
-          Error loading sales
-        </Typography>
       </Box>
     );
   }
@@ -100,7 +103,7 @@ const SaleForm = ({
           flexDirection: 'column', 
           gap: '24px' 
         }}
-        onSubmit={handleSubmit(onFinishHandler)}
+        onSubmit={handleSubmit(onSubmit)}
       >
         <Box sx={{ 
           display: 'flex', 
@@ -115,6 +118,7 @@ const SaleForm = ({
               type="number"
               label="Sequence Number"
               {...register('seq', { required: true })}
+              defaultValue={initialValues?.seq || 0}
             />
           </FormControl>
 
@@ -125,7 +129,7 @@ const SaleForm = ({
               type="date"
               label="Date"
               {...register('date', { required: true })}
-              defaultValue={getTodayDate()}
+              defaultValue={initialValues?.date || getTodayDate()}
             />
           </FormControl>
         </Box>
@@ -136,66 +140,51 @@ const SaleForm = ({
           gap: 2,
           '& .MuiFormControl-root': { flex: 1 }
         }}>
-          <FormControl>
-            <InputLabel htmlFor="clientName">Client Name</InputLabel>
-            <OutlinedInput
-              id="clientName"
-              label="Client Name"
-              {...register('clientName', { required: true })}
-            />
-          </FormControl>
-
-          <FormControl>
-            <InputLabel htmlFor="tin">TIN</InputLabel>
-            <OutlinedInput
-              id="tin"
-              label="TIN"
-              {...register('tin', { required: true })}
-            />
-          </FormControl>
+          <TextField
+            label="Client Name"
+            variant="outlined"
+            {...register('clientName', { required: true })}
+            defaultValue={initialValues?.clientName || ''}
+          />
+          <TextField
+            label="TIN"
+            variant="outlined"
+            {...register('tin', { required: true })}
+            defaultValue={initialValues?.tin || ''}
+          />
         </Box>
+
+        <TextField
+          label="Amount"
+          variant="outlined"
+          type="number"
+          value={amount}
+          onChange={handleAmountChange}
+          inputProps={{ step: "0.01" }}
+        />
 
         <Box sx={{ 
           display: 'flex', 
           flexDirection: { xs: 'column', sm: 'row' }, 
           gap: 2,
+          alignItems: 'center',
           '& .MuiFormControl-root': { flex: 1 }
         }}>
-          <FormControl>
-            <InputLabel htmlFor="amount">Amount</InputLabel>
-            <OutlinedInput
-              id="amount"
-              type="number"
-              label="Amount"
-              {...register('amount', { 
-                required: true,
-                valueAsNumber: true,
-                onChange: handleAmountChange
-              })}
-            />
-          </FormControl>
-
-          <FormControl>
-            <InputLabel htmlFor="netOfVAT">Net of VAT</InputLabel>
-            <OutlinedInput
-              id="netOfVAT"
-              type="number"
-              label="Net of VAT"
-              value={netOfVAT.toFixed(2)}
-              readOnly
-            />
-          </FormControl>
-
-          <FormControl>
-            <InputLabel htmlFor="outputVAT">Output VAT</InputLabel>
-            <OutlinedInput
-              id="outputVAT"
-              type="number"
-              label="Output VAT"
-              value={outputVAT.toFixed(2)}
-              readOnly
-            />
-          </FormControl>
+          <TextField
+            label="Net of VAT"
+            variant="outlined"
+            type="number"
+            value={netOfVAT.toFixed(2)}
+            InputProps={{ readOnly: true }}
+          />
+          <TextField
+            label="Output VAT"
+            variant="outlined"
+            type="number"
+            value={outputVAT.toFixed(2)}
+            InputProps={{ readOnly: true }}
+            inputProps={{ step: "0.01" }}
+          />
         </Box>
 
         <Box 
@@ -204,7 +193,7 @@ const SaleForm = ({
           gap={2} 
           mt={3}
         >
-          <Tooltip title="Publish Deployment" arrow>
+          <Tooltip title="Publish Sale" arrow>
             <Button
               type="submit"
               sx={{
@@ -220,16 +209,17 @@ const SaleForm = ({
                   transform: 'scale(1.05)',
                 },
                 transition: 'all 0.2s ease-in-out',
-                borderRadius: 5, // Optional: adjust for button shape
+                borderRadius: 5,
               }}
             >
-              <Publish sx={{ mr: 1 }} /> {/* Margin right for spacing */}
+              <Publish sx={{ mr: 1 }} />
               Publish
             </Button>
           </Tooltip>
-          <Tooltip title="Close Deployment" arrow>
+
+          <Tooltip title="Close Form" arrow>
             <Button
-              onClick={() => navigate(`/deployments/`)}
+              onClick={() => navigate('/sales')}
               sx={{
                 bgcolor: 'error.light',
                 color: 'error.dark',
@@ -243,14 +233,14 @@ const SaleForm = ({
                   transform: 'scale(1.05)',
                 },
                 transition: 'all 0.2s ease-in-out',
-                borderRadius: 5, // Optional: adjust for button shape
+                borderRadius: 5,
               }}
             >
-              <Close sx={{ mr: 1 }} /> {/* Margin right for spacing */}
+              <Close sx={{ mr: 1 }} />
               Close
             </Button>
           </Tooltip>
-          </Box>
+        </Box>
       </form>
     </Paper>
   );

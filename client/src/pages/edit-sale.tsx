@@ -1,30 +1,52 @@
-/* eslint-disable */
-import { useGetIdentity } from '@pankod/refine-core';
+
+// src/pages/edit-sale.tsx
+import React from 'react';
+import { useGetIdentity, useOne } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
-import { useNavigate } from '@pankod/refine-react-router-v6';
+import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import SaleForm from 'components/common/SaleForm';
+import { Box, CircularProgress } from '@pankod/refine-mui';
 
 const EditSale = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { data: user } = useGetIdentity();
+  
+  const { data: saleData, isLoading: isSaleLoading } = useOne({
+    resource: 'sales',
+    id: id as string,
+  });
 
-  const { refineCore: { onFinish, formLoading }, register, handleSubmit } = useForm();
+  const {
+    refineCore: { onFinish, formLoading },
+    register,
+    handleSubmit,
+    setValue,
+  } = useForm({
+    refineCoreProps: {
+      resource: 'sales',
+      id: id as string,
+      redirect: false,
+      onMutationSuccess: () => {
+        navigate('/sales');
+      },
+    },
+  });
 
   const onFinishHandler = async (data: FieldValues) => {
-    const amount = parseFloat(data.amount) || 0;
-      const VAT_RATE = 0.12;
-      const netOfVAT = amount / (1 + VAT_RATE);
-      const outputVAT = amount - netOfVAT;
     await onFinish({
       ...data,
-      amount,
-      netOfVAT: parseFloat(netOfVAT.toFixed(2)),
-      outputVAT: parseFloat(outputVAT.toFixed(2)),
       email: user.email,
     });
-
-    navigate('/sales');
   };
+
+  if (isSaleLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <SaleForm
@@ -34,6 +56,7 @@ const EditSale = () => {
       formLoading={formLoading}
       handleSubmit={handleSubmit}
       onFinishHandler={onFinishHandler}
+      initialValues={saleData?.data}
     />
   );
 };
