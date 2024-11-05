@@ -67,11 +67,16 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
     const checked = e.target.checked;
     setNoValidReceipt(checked);
     
-    // Recalculate VAT components when receipt status changes
-    const { netAmount, vatAmount } = calculateVATComponents(amount, checked, false);
+    if (checked) {
+      setNetOfVAT(0); // Set netOfVAT to 0 when no valid receipt
+      setInputVAT(0); // Set inputVAT to 0 when no valid receipt
+    } else {
+      const { netAmount, vatAmount } = calculateVATComponents(amount, false, isNonVat);
+      setNetOfVAT(netAmount);
+      setInputVAT(vatAmount);
+    }
+    // Ensure Non-VAT checkbox is cleared when No Valid Receipt is selected
     setIsNonVat(false);
-    setNetOfVAT(netAmount);
-    setInputVAT(vatAmount);
   };
 
   const handleNonVatChange = (e: { target: { checked: any; }; }) => {
@@ -99,6 +104,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
       updatedData.ref = "N/A";
       updatedData.tin = "N/A";
       updatedData.address = "N/A";
+      updatedData.netOfVat = 0;
       updatedData.inputVAT = 0;
     }
     
@@ -268,15 +274,15 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
           '& .MuiFormControl-root': { flex: 1 }
         }}>
 
-        <TextField
-          label="Net of VAT"
-          variant="outlined"
-          type="number"
-          value={netOfVAT.toFixed(2)}
-          InputProps={{ readOnly: true }}
-        />
-
-        {!isNonVat && !noValidReceipt && (
+        {!noValidReceipt && (
+        <>
+          <TextField
+            label="Net of VAT"
+            variant="outlined"
+            type="number"
+            value={netOfVAT.toFixed(2)}
+            InputProps={{ readOnly: true }}
+          />
           <TextField
             label="Input VAT"
             variant="outlined"
@@ -285,6 +291,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
             InputProps={{ readOnly: true }}
             inputProps={{ step: "0.01" }}
           />
+        </>
         )}
         </Box>
         <Box 

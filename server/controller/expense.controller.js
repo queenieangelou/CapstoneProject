@@ -155,14 +155,14 @@ const updateExpense = async (req, res) => {
       expense.tin = "N/A";
       expense.address = "N/A";
       expense.inputVAT = 0;
-      expense.netOfVAT = amount;
+      expense.netOfVAT = 0;
       expense.isNonVat = false; // Reset isNonVat if noValidReceipt is true
     } else {
       expense.supplierName = supplierName;
       expense.ref = ref;
       expense.tin = tin;
       expense.address = address;
-      expense.inputVAT = isNonVat ? 0 : inputVAT;
+      expense.inputVAT = isNonVat || noValidReceipt ? 0 : inputVAT;
       expense.netOfVAT = isNonVat ? amount : netOfVAT;
     }
 
