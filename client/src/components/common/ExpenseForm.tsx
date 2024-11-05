@@ -34,12 +34,6 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
   const [amount, setAmount] = useState<number>(0);
   const [netOfVAT, setNetOfVAT] = useState<number>(0);
   const [inputVAT, setInputVAT] = useState<number>(0);
-  const [supplierInfo, setSupplierInfo] = useState({
-    supplierName: '',
-    ref: '',
-    tin: '',
-    address: ''
-  });
   
   const navigate = useNavigate();
 
@@ -48,29 +42,17 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
       setNoValidReceipt(!!initialValues.noValidReceipt);
       setIsNonVat(!!initialValues.isNonVat);
       setAmount(initialValues.amount || 0);
-      setSupplierInfo({
-        supplierName: initialValues.supplierName || '',
-        ref: initialValues.ref || '',
-        tin: initialValues.tin || '',
-        address: initialValues.address || ''
-      });
     }
   }, [initialValues]);
 
   useEffect(() => {
-    if (noValidReceipt) {
-      setSupplierInfo({
-        supplierName: 'N/A',
-        ref: 'N/A',
-        tin: 'N/A',
-        address: 'N/A'
-      });
-      setNetOfVAT(0);
-      setInputVAT(0);
-    } else {
+    if (!noValidReceipt) {
       const calculatedValues = calculateValues(amount);
       setNetOfVAT(calculatedValues.netOfVAT);
       setInputVAT(calculatedValues.inputVAT);
+    } else {
+      setNetOfVAT(0);
+      setInputVAT(0);
     }
   }, [amount, isNonVat, noValidReceipt]);
 
@@ -92,14 +74,18 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
   };
 
   const onSubmit = (data: Record<string, any>) => {
-    const updatedData = { ...data };
-    
-    updatedData.noValidReceipt = noValidReceipt;
-    updatedData.isNonVat = isNonVat;
-    updatedData.amount = amount;
-    updatedData.netOfVAT = netOfVAT;
-    updatedData.inputVAT = inputVAT;
-    updatedData.supplierInfo = supplierInfo;
+    const updatedData = {
+      ...data,
+      noValidReceipt,
+      isNonVat,
+      amount,
+      netOfVAT,
+      inputVAT,
+      supplierName: noValidReceipt ? 'N/A' : data.supplierName,
+      ref: noValidReceipt ? 'N/A' : data.ref,
+      tin: noValidReceipt ? 'N/A' : data.tin,
+      address: noValidReceipt ? 'N/A' : data.address
+    };
 
     onFinishHandler(updatedData);
   };
@@ -204,9 +190,9 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
               required
               variant="outlined"
               color="info"
-              value={supplierInfo.supplierName}
-              onChange={(e) => setSupplierInfo(prev => ({ ...prev, supplierName: e.target.value }))}
               disabled={noValidReceipt}
+              {...register('supplierName', { required: !noValidReceipt })}
+              defaultValue={initialValues?.supplierName || ""}
             />
           </FormControl>
 
@@ -216,9 +202,9 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
               required
               variant="outlined"
               color="info"
-              value={supplierInfo.ref}
-              onChange={(e) => setSupplierInfo(prev => ({ ...prev, ref: e.target.value }))}
               disabled={noValidReceipt}
+              {...register('ref', { required: !noValidReceipt })}
+              defaultValue={initialValues?.ref || ""}
             />
           </FormControl>
 
@@ -228,9 +214,9 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
               required
               variant="outlined"
               color="info"
-              value={supplierInfo.tin}
-              onChange={(e) => setSupplierInfo(prev => ({ ...prev, tin: e.target.value }))}
               disabled={noValidReceipt}
+              {...register('tin', { required: !noValidReceipt })}
+              defaultValue={initialValues?.tin || ""}
             />
           </FormControl>
 
@@ -240,9 +226,9 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
               required
               variant="outlined"
               color="info"
-              value={supplierInfo.address}
-              onChange={(e) => setSupplierInfo(prev => ({ ...prev, address: e.target.value }))}
               disabled={noValidReceipt}
+              {...register('address', { required: !noValidReceipt })}
+              defaultValue={initialValues?.address || ""}
             />
           </FormControl>
         </Box>
