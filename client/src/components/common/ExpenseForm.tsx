@@ -49,8 +49,9 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
 
   useEffect(() => {
     if (initialValues) {
-      setIsNonVat(!!initialValues.isNonVat);
-      setNoValidReceipt(!!initialValues.noValidReceipt);
+      // Convert the values to boolean using double negation
+      setIsNonVat(Boolean(initialValues.isNonVat));
+      setNoValidReceipt(Boolean(initialValues.noValidReceipt));
       setAmount(initialValues.amount || 0);
       setSupplierInfo({
         supplierName: initialValues.supplierName || '',
@@ -58,8 +59,12 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         tin: initialValues.tin || '',
         address: initialValues.address || ''
       });
+
+      // Register the values with the form
+      register('isNonVat', { value: initialValues.isNonVat });
+      register('noValidReceipt', { value: initialValues.noValidReceipt });
     }
-  }, [initialValues]);
+  }, [initialValues, register]);
 
   useEffect(() => {
     const calculatedValues = calculateValues(amount);
@@ -99,6 +104,18 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
     };
   };
 
+  const handleNonVatChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setIsNonVat(checked);
+    register('isNonVat', { value: checked });
+  };
+
+  const handleNoValidReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setNoValidReceipt(checked);
+    register('noValidReceipt', { value: checked });
+  };
+
   if (formLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -119,18 +136,18 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
 
   return (
     <Paper 
-    elevation={2} 
-    sx={{ 
-      padding: '32px',
-      margin: '24px auto',
-      maxWidth: '1000px',
-      borderRadius: '16px',
-      transition: 'transform 0.2s ease-in-out',
-      '&:hover': {
-        transform: 'translateY(-2px)'
-      }
-    }}
-  >
+      elevation={2} 
+      sx={{ 
+        padding: '32px',
+        margin: '24px auto',
+        maxWidth: '1000px',
+        borderRadius: '16px',
+        transition: 'transform 0.2s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-2px)'
+        }
+      }}
+    >
     <Typography 
       variant="h4" 
       sx={{ 
@@ -179,19 +196,19 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
             />
         </FormControl>
       </Box>
-  
+      
       <Box sx={{ display: 'flex', gap: 2 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={noValidReceipt}
-                onChange={(e) => setNoValidReceipt(e.target.checked)}
-              />
-            }
-            label="No Valid Receipt"
-          />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={noValidReceipt}
+              onChange={handleNoValidReceiptChange}
+            />
+          }
+          label="No Valid Receipt"
+        />
       </Box>
-  
+
       <Box sx={{ 
         display: 'flex', 
         flexDirection: { xs: 'column', sm: 'row' }, 
@@ -202,6 +219,8 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         {!noValidReceipt && <InputLabel htmlFor="supplierName">Supplier Name</InputLabel>}
         <OutlinedInput
           required
+          variant="outlined"
+          color="info"
           {...register('supplierName', { required: true })}
           value={supplierInfo.supplierName}
           onChange={(e) => setSupplierInfo(prev => ({ ...prev, supplierName: e.target.value }))}
@@ -213,6 +232,8 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         {!noValidReceipt && <InputLabel htmlFor="ref">Reference</InputLabel>}
         <OutlinedInput
           required
+          variant="outlined"
+          color="info"
           {...register('ref', { required: true })}
           value={supplierInfo.ref}
           onChange={(e) => setSupplierInfo(prev => ({ ...prev, ref: e.target.value }))}
@@ -224,6 +245,8 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         {!noValidReceipt && <InputLabel htmlFor="tin">TIN</InputLabel>}
         <OutlinedInput
           required
+          variant="outlined"
+          color="info"
           {...register('tin', { required: true })}
           value={supplierInfo.tin}
           onChange={(e) => setSupplierInfo(prev => ({ ...prev, tin: e.target.value }))}
@@ -235,6 +258,8 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         {!noValidReceipt && <InputLabel htmlFor="address">Address</InputLabel>}
         <OutlinedInput
           required
+          variant="outlined"
+          color="info"
           {...register('address', { required: true })}
           value={supplierInfo.address}
           onChange={(e) => setSupplierInfo(prev => ({ ...prev, address: e.target.value }))}
@@ -262,7 +287,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
             {...register('amount', { required: true })}
           />
         </FormControl>
-  
+
       <Box sx={{ 
         display: 'flex', 
         flexDirection: { xs: 'column', sm: 'row' }, 
@@ -273,13 +298,13 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
           control={
             <Switch
               checked={isNonVat}
-              onChange={(e) => setIsNonVat(e.target.checked)}
+              onChange={handleNonVatChange}
             />
           }
           label="Non-VAT"
         />
       </Box>
-  
+
         <Box sx={{ 
         display: 'flex', 
         flexDirection: { xs: 'column', sm: 'row' }, 
@@ -378,8 +403,8 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         </Tooltip>
       </Box>
     </form>
-  </Paper>
+    </Paper>
   );
-  };
-  
-  export default ExpenseForm;
+};
+
+export default ExpenseForm;
