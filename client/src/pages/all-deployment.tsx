@@ -208,7 +208,7 @@ const AllDeployments = () => {
             field: 'actions',
             headerName: 'Actions',
             align: 'center',
-            flex: 1,
+            width: 120,
             renderCell: (params) => (
             <Stack direction="row" spacing={1}>
                 <Tooltip title="View">

@@ -128,7 +128,7 @@ const filteredRows = allProcurements.filter((procurement) => {
         field: 'actions',
         headerName: 'Actions',
         align: 'center',
-        flex: 1,
+        width: 120,
         renderCell: (params) => (
         <Stack direction="row" spacing={1}>
             <Tooltip title="View">
@@ -139,8 +139,8 @@ const filteredRows = allProcurements.filter((procurement) => {
                     bgcolor: 'primary.light',
                     color: 'primary.dark',
                     p: 1.5,
-                    width: 36, // Set fixed width
-                    height: 36, // Set fixed height
+                    width: 32, // Set fixed width
+                    height: 32, // Set fixed height
                     '&:hover': {
                         bgcolor: 'primary.main',
                         color: 'white',
@@ -160,8 +160,8 @@ const filteredRows = allProcurements.filter((procurement) => {
                     bgcolor: 'warning.light',
                     color: 'warning.dark',
                     p: 1.5,
-                    width: 36, // Set fixed width
-                    height: 36, // Set fixed height
+                    width: 32, // Set fixed width
+                    height: 32, // Set fixed height
                     '&:hover': {
                         bgcolor: 'warning.main',
                         color: 'white',
@@ -181,8 +181,8 @@ const filteredRows = allProcurements.filter((procurement) => {
                     bgcolor: 'error.light',
                     color: 'error.dark',
                     p: 1.5,
-                    width: 36, // Set fixed width
-                    height: 36, // Set fixed height
+                    width: 32, // Set fixed width
+                    height: 32, // Set fixed height
                     '&:hover': {
                         bgcolor: 'error.main',
                         color: 'white',
