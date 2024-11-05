@@ -79,6 +79,26 @@ const createExpense = async (req, res) => {
       throw new Error('User not found');
     }
 
+    // Calculate VAT values based on conditions
+    let calculatedNetOfVAT;
+    let calculatedInputVAT = 0;
+    let finalIsNonVat = isNonVat;
+
+    if (noValidReceipt) {
+      // When no valid receipt, force non-VAT to true and set net to 0
+      calculatedNetOfVAT = 0;
+      calculatedInputVAT = 0;
+      finalIsNonVat = true;
+    } else if (isNonVat) {
+      // When non-VAT but has valid receipt, set net to amount
+      calculatedNetOfVAT = amount;
+      calculatedInputVAT = 0;
+    } else {
+      // Normal VAT calculation
+      calculatedNetOfVAT = netOfVAT;
+      calculatedInputVAT = inputVAT;
+    }
+
     const newExpense = new Expense({
       seq,
       date,
@@ -88,9 +108,9 @@ const createExpense = async (req, res) => {
       address: noValidReceipt ? "N/A" : address,
       description,
       amount,
-      netOfVAT: isNonVat ? amount : netOfVAT,
-      inputVAT: isNonVat || noValidReceipt ? 0 : inputVAT,
-      isNonVat,
+      netOfVAT: calculatedNetOfVAT,
+      inputVAT: calculatedInputVAT,
+      isNonVat: finalIsNonVat,
       noValidReceipt,
       creator: user._id,
     });
@@ -141,29 +161,47 @@ const updateExpense = async (req, res) => {
       return res.status(404).json({ message: 'Expense not found' });
     }
 
+    // Calculate VAT values based on conditions
+    let calculatedNetOfVAT;
+    let calculatedInputVAT = 0;
+    let finalIsNonVat = isNonVat;
+
+    if (noValidReceipt) {
+      // When no valid receipt, force non-VAT to true and set net to 0
+      calculatedNetOfVAT = 0;
+      calculatedInputVAT = 0;
+      finalIsNonVat = true;
+    } else if (isNonVat) {
+      // When non-VAT but has valid receipt, set net to amount
+      calculatedNetOfVAT = amount;
+      calculatedInputVAT = 0;
+    } else {
+      // Normal VAT calculation
+      calculatedNetOfVAT = netOfVAT;
+      calculatedInputVAT = inputVAT;
+    }
+
+    // Update basic fields
     expense.seq = seq;
     expense.date = date;
     expense.description = description;
     expense.amount = amount;
-    expense.isNonVat = isNonVat;
+    expense.isNonVat = finalIsNonVat;
     expense.noValidReceipt = noValidReceipt;
+    expense.netOfVAT = calculatedNetOfVAT;
+    expense.inputVAT = calculatedInputVAT;
 
-    // Apply conditional updates based on noValidReceipt and isNonVat states
+    // Update supplier information based on noValidReceipt
     if (noValidReceipt) {
       expense.supplierName = "N/A";
       expense.ref = "N/A";
       expense.tin = "N/A";
       expense.address = "N/A";
-      expense.inputVAT = 0;
-      expense.netOfVAT = 0;
-      expense.isNonVat = false; // Reset isNonVat if noValidReceipt is true
     } else {
       expense.supplierName = supplierName;
       expense.ref = ref;
       expense.tin = tin;
       expense.address = address;
-      expense.inputVAT = isNonVat || noValidReceipt ? 0 : inputVAT;
-      expense.netOfVAT = isNonVat ? amount : netOfVAT;
     }
 
     await expense.save({ session });

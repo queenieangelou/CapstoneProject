@@ -35,9 +35,16 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
 
   // Function to calculate VAT components
   const calculateVATComponents = (totalAmount: number, isNoValidReceipt: boolean, isNonVAT: boolean) => {
-    if (isNoValidReceipt || isNonVAT) {
+    if (isNoValidReceipt) {
       return {
-        netAmount: totalAmount,
+        netAmount: 0,  // Set to 0 when no valid receipt
+        vatAmount: 0
+      };
+    }
+
+    if (isNonVAT) {
+      return {
+        netAmount: totalAmount,  // Set to total amount when non-VAT
         vatAmount: 0
       };
     }
@@ -58,6 +65,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
     const newAmount = parseFloat(e.target.value) || 0;
     setAmount(newAmount);
 
+    // Calculate VAT components based on current state
     const { netAmount, vatAmount } = calculateVATComponents(newAmount, noValidReceipt, isNonVat);
     setNetOfVAT(netAmount);
     setInputVAT(vatAmount);
@@ -68,25 +76,36 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
     setNoValidReceipt(checked);
     
     if (checked) {
-      setNetOfVAT(0); // Set netOfVAT to 0 when no valid receipt
-      setInputVAT(0); // Set inputVAT to 0 when no valid receipt
+      // When no valid receipt is checked, set non-VAT to true and values to 0
+      setIsNonVat(true);
+      setNetOfVAT(0);  // Always set to 0 when no valid receipt
+      setInputVAT(0);
     } else {
-      const { netAmount, vatAmount } = calculateVATComponents(amount, false, isNonVat);
+      // When unchecking no valid receipt, reset non-VAT and recalculate
+      setIsNonVat(false);
+      const { netAmount, vatAmount } = calculateVATComponents(amount, false, false);
       setNetOfVAT(netAmount);
       setInputVAT(vatAmount);
     }
-    // Ensure Non-VAT checkbox is cleared when No Valid Receipt is selected
-    setIsNonVat(false);
   };
 
   const handleNonVatChange = (e: { target: { checked: any; }; }) => {
     const checked = e.target.checked;
     setIsNonVat(checked);
     
-    // Recalculate VAT components when VAT status changes
-    const { netAmount, vatAmount } = calculateVATComponents(amount, noValidReceipt, checked);
-    setNetOfVAT(netAmount);
-    setInputVAT(vatAmount);
+    if (checked) {
+      // When non-VAT is checked and no valid receipt is not checked
+      if (!noValidReceipt) {
+        setNetOfVAT(amount);
+      }
+      // Always set input VAT to 0 when non-VAT
+      setInputVAT(0);
+    } else {
+      // When unchecking non-VAT, recalculate based on current receipt status
+      const { netAmount, vatAmount } = calculateVATComponents(amount, noValidReceipt, false);
+      setNetOfVAT(netAmount);
+      setInputVAT(vatAmount);
+    }
   };
 
   const onSubmit = (data: any) => {
@@ -104,11 +123,10 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
       updatedData.ref = "N/A";
       updatedData.tin = "N/A";
       updatedData.address = "N/A";
-      updatedData.netOfVat = 0;
       updatedData.inputVAT = 0;
-    }
-    
-    if (isNonVat) {
+      updatedData.isNonVat = true;
+      updatedData.netOfVAT = 0;  // Always 0 when no valid receipt
+    } else if (isNonVat) {
       updatedData.inputVAT = 0;
       updatedData.netOfVAT = updatedData.amount;
     }
