@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  FormControl, 
+import {
+  Box,
+  Typography,
+  FormControl,
   InputLabel,
   Paper,
   OutlinedInput,
   CircularProgress,
   TextField,
-  FormHelperText,
   FormControlLabel,
   Checkbox,
   Tooltip,
@@ -17,8 +16,6 @@ import {
 import { FormPropsExpense } from 'interfaces/common';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { Close, Publish } from '@mui/icons-material';
-
-const VAT_RATE = 0.12;
 
 const getTodayDate = () => {
   const today = new Date();
@@ -29,64 +26,58 @@ const getTodayDate = () => {
 };
 
 const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, initialValues }: FormPropsExpense) => {
-  const [noValidReceipt, setNoValidReceipt] = useState<boolean>(false);
-  const [isNonVat, setIsNonVat] = useState<boolean>(false);
-  const [amount, setAmount] = useState<number>(0);
-  const [netOfVAT, setNetOfVAT] = useState<number>(0);
-  const [inputVAT, setInputVAT] = useState<number>(0);
-  
+  const [noValidReceipt, setNoValidReceipt] = useState(initialValues?.noValidReceipt || false);
+  const [isNonVat, setIsNonVat] = useState(initialValues?.isNonVat || false);
+  const [amount, setAmount] = useState(initialValues?.amount || 0);
+  const [netOfVAT, setNetOfVAT] = useState(initialValues?.netOfVAT || 0);
+  const [inputVAT, setInputVAT] = useState(initialValues?.inputVAT || 0);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (initialValues) {
-      setNoValidReceipt(!!initialValues.noValidReceipt);
-      setIsNonVat(!!initialValues.isNonVat);
-      setAmount(initialValues.amount || 0);
-    }
-  }, [initialValues]);
 
-  useEffect(() => {
-    if (!noValidReceipt) {
-      const calculatedValues = calculateValues(amount);
-      setNetOfVAT(calculatedValues.netOfVAT);
-      setInputVAT(calculatedValues.inputVAT);
-    } else {
-      setNetOfVAT(0);
-      setInputVAT(0);
-    }
-  }, [amount, isNonVat, noValidReceipt]);
-
-  const calculateValues = (inputAmount: number) => {
-    if (isNonVat) {
-      return {
-        netOfVAT: inputAmount,
-        inputVAT: 0
-      };
-    }
-
-    const netOfVAT = inputAmount / (1 + VAT_RATE);
-    const inputVAT = inputAmount - netOfVAT;
-
-    return {
-      netOfVAT,
-      inputVAT
-    };
+  const handleAmountChange = (e: { target: { value: string; }; }) => {
+    const newAmount = parseFloat(e.target.value) || 0;
+    setAmount(newAmount);
+    setNetOfVAT(isNonVat ? newAmount : newAmount - inputVAT);
   };
 
-  const onSubmit = (data: Record<string, any>) => {
-    const updatedData = {
-      ...data,
-      noValidReceipt,
-      isNonVat,
-      amount,
-      netOfVAT,
-      inputVAT,
-      supplierName: noValidReceipt ? 'N/A' : data.supplierName,
-      ref: noValidReceipt ? 'N/A' : data.ref,
-      tin: noValidReceipt ? 'N/A' : data.tin,
-      address: noValidReceipt ? 'N/A' : data.address
-    };
+  const handleInputVATChange = (e: { target: { value: string; }; }) => {
+    const newInputVAT = parseFloat(e.target.value) || 0;
+    setInputVAT(newInputVAT);
+    setNetOfVAT(amount - newInputVAT);
+  };
 
+  const handleNoValidReceiptChange = (e: { target: { checked: any; }; }) => {
+    const checked = e.target.checked;
+    setNoValidReceipt(checked);
+    if (checked) {
+      setIsNonVat(false);
+      setInputVAT(0);
+      setNetOfVAT(amount);
+    }
+  };
+
+  const handleNonVatChange = (e: { target: { checked: any; }; }) => {
+    const checked = e.target.checked;
+    setIsNonVat(checked);
+    if (checked) {
+      setInputVAT(0);
+      setNetOfVAT(amount);
+    }
+  };
+
+  const onSubmit = (data: any) => {
+    const updatedData = { ...data };
+    if (noValidReceipt) {
+      updatedData.supplierName = "N/A";
+      updatedData.ref = "N/A";
+      updatedData.tin = "N/A";
+      updatedData.address = "N/A";
+      updatedData.inputVAT = 0;
+    }
+    if (isNonVat) {
+      updatedData.inputVAT = 0;
+      updatedData.netOfVAT = updatedData.amount;
+    }
     onFinishHandler(updatedData);
   };
 
@@ -170,8 +161,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
             control={
               <Checkbox
                 checked={noValidReceipt}
-                onChange={(e) => setNoValidReceipt(e.target.checked)}
-                color="primary"
+                onChange={handleNoValidReceiptChange}
               />
             }
             label="No Valid Receipt"
@@ -184,125 +174,96 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
           gap: 2,
           '& .MuiFormControl-root': { flex: 1 }
         }}>
-          <FormControl>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Supplier Name</FormHelperText>
+        {!noValidReceipt && (
+          <>
+          
             <TextField
-              required
+              label="Supplier Name"
               variant="outlined"
-              color="info"
-              disabled={noValidReceipt}
-              {...register('supplierName', { required: !noValidReceipt })}
-              defaultValue={initialValues?.supplierName || ""}
-            />
-          </FormControl>
 
-          <FormControl>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Reference</FormHelperText>
-            <TextField
-              required
-              variant="outlined"
-              color="info"
-              disabled={noValidReceipt}
-              {...register('ref', { required: !noValidReceipt })}
-              defaultValue={initialValues?.ref || ""}
+              {...register('supplierName', { required: true })}
+              defaultValue={initialValues?.supplierName || ''}
             />
-          </FormControl>
+            <TextField
+              label="Reference"
+              variant="outlined"
 
-          <FormControl>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>TIN</FormHelperText>
-            <TextField
-              required
-              variant="outlined"
-              color="info"
-              disabled={noValidReceipt}
-              {...register('tin', { required: !noValidReceipt })}
-              defaultValue={initialValues?.tin || ""}
+              {...register('ref', { required: true })}
+              defaultValue={initialValues?.ref || ''}
             />
-          </FormControl>
+            <TextField
+              label="TIN"
+              variant="outlined"
 
-          <FormControl>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Address</FormHelperText>
-            <TextField
-              required
-              variant="outlined"
-              color="info"
-              disabled={noValidReceipt}
-              {...register('address', { required: !noValidReceipt })}
-              defaultValue={initialValues?.address || ""}
+              {...register('tin', { required: true })}
+              defaultValue={initialValues?.tin || ''}
             />
-          </FormControl>
+            <TextField
+              label="Address"
+              variant="outlined"
+
+              {...register('address', { required: true })}
+              defaultValue={initialValues?.address || ''}
+            />
+          </>
+        )}
         </Box>
 
-        <FormControl>
-          <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Description</FormHelperText>
-          <TextField
-            required
-            variant="outlined"
-            color="info"
-            {...register('description', { required: true })}
-            defaultValue={initialValues?.description || ""}
-          />
-        </FormControl>
+        <TextField
+          label="Description"
+          variant="outlined"
+          {...register('description', { required: true })}
+          defaultValue={initialValues?.description || ''}
+        />
+
+        <TextField
+          label="Amount"
+          variant="outlined"
+          type="number"
+          value={amount}
+          onChange={handleAmountChange}
+          {...register('amount', { required: true })}
+        />
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={isNonVat}
+              onChange={handleNonVatChange}
+              disabled={noValidReceipt}
+            />
+          }
+          label="Non-VAT"
+        />
 
         <Box sx={{ 
           display: 'flex', 
-          flexDirection: 'column',
-          gap: 2
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: 2,
+          alignItems: 'center',
+          '& .MuiFormControl-root': { flex: 1 }
         }}>
-          <FormControl>
-            <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Amount</FormHelperText>
-            <TextField
-              required
-              type="number"
-              variant="outlined"
-              color="info"
-              value={amount}
-              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-            />
-          </FormControl>
 
-          {!noValidReceipt && (
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', sm: 'row' }, 
-              gap: 2,
-              alignItems: 'center',
-              '& .MuiFormControl-root': { flex: 1 }
-            }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={isNonVat}
-                    onChange={(e) => setIsNonVat(e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Non-VAT"
-              />
+        <TextField
+          label="Net of VAT"
+          variant="outlined"
+          type="number"
+          value={netOfVAT.toFixed(2)}
+          InputProps={{ readOnly: true }}
+          {...register('netOfVAT', { required: true })}
+        />
 
-              <FormControl>
-                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Net of VAT</FormHelperText>
-                <TextField
-                  variant="outlined"
-                  color="info"
-                  value={netOfVAT.toFixed(2)}
-                  InputProps={{ readOnly: true }}
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Input VAT</FormHelperText>
-                <TextField
-                  variant="outlined"
-                  color="info"
-                  value={inputVAT.toFixed(2)}
-                  InputProps={{ readOnly: true }}
-                />
-              </FormControl>
-            </Box>
-          )}
+        {!isNonVat && !noValidReceipt && (
+          <TextField
+            label="Input VAT"
+            variant="outlined"
+            type="number"
+            value={inputVAT.toFixed(2)}
+            onChange={handleInputVATChange}
+            {...register('inputVAT', { required: true })}
+          />
+        )}
         </Box>
-
         <Box 
           display="flex" 
           justifyContent="center" 
