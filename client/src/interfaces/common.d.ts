@@ -88,4 +88,5 @@ export interface FormPropsExpense {
   formLoading: boolean,
   handleSubmit: FormEventHandler<HTMLFormElement> | undefined,
   onFinishHandler: (data: FieldValues) => Promise<void>,
+  initialValues?: Record<string, any>;
 }

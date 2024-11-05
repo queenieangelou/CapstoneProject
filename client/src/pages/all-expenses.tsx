@@ -122,8 +122,6 @@ const filteredRows = allExpenses.filter((expense) => {
     { field: 'amount', headerName: 'Amount', type: 'number', flex: 1 },
     { field: 'netOfVAT', headerName: 'Net of VAT', type: 'number', flex: 1 },
     { field: 'inputVAT', headerName: 'Input VAT', type: 'number', flex: 1 },
-    { field: 'total', headerName: 'Total', type: 'number', flex: 1 },
-    { field: 'net', headerName: 'Net', type: 'number', flex: 1 },
     { 
       field: 'isNonVat', 
       headerName: 'Non-VAT', 
@@ -132,11 +130,11 @@ const filteredRows = allExpenses.filter((expense) => {
         <Typography
           variant="body2"
           sx={{
-            color: params.row.isNonVat ? 'success.main' : 'text.secondary',
+            color: params.row.isNonVat ? 'warning.main' : 'text.secondary',
             fontWeight: params.row.isNonVat ? 'bold' : 'normal'
           }}
         >
-          {params.row.isNonVat ? 'Yes' : 'No'}
+          {params.row.isNonVat ? 'No VAT' : 'N/A'}
         </Typography>
       )
     },
@@ -152,7 +150,7 @@ const filteredRows = allExpenses.filter((expense) => {
             fontWeight: params.row.noValidReceipt ? 'bold' : 'normal'
           }}
         >
-          {params.row.noValidReceipt ? 'Yes' : 'No'}
+          {params.row.noValidReceipt ? 'No RCPT' : 'N/A'}
         </Typography>
       )
     },
@@ -244,8 +242,6 @@ const filteredRows = allExpenses.filter((expense) => {
     amount: expense.amount?.toFixed(2),
     netOfVAT: expense.netOfVAT?.toFixed(2),
     inputVAT: expense.inputVAT?.toFixed(2),
-    total: expense.total?.toFixed(2),
-    net: expense.net?.toFixed(2),
     isNonVat: expense.isNonVat,
     noValidReceipt: expense.noValidReceipt
   }));
@@ -356,25 +352,25 @@ const filteredRows = allExpenses.filter((expense) => {
         overflow: 'hidden'
       }}>
         <DataGrid
-                    rows={rows}
-                    columns={columns}
-                    pageSize={pageSize}
-                    page={current - 1}
-                    onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                    onPageChange={(newPage) => setCurrent(newPage + 1)}
-                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                    paginationMode="server"
-                    rowCount={data?.total ?? 0}
-                    checkboxSelection={false}
-                    disableSelectionOnClick
-                    autoHeight={false}
-                    sx={{
-                        height: '100%',
-                        '& .MuiDataGrid-main': {
-                            overflow: 'hidden'
-                        }
-                    }}
-                />
+          rows={rows}
+          columns={columns}
+          pageSize={pageSize}
+          page={current - 1}
+          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+          onPageChange={(newPage) => setCurrent(newPage + 1)}
+          rowsPerPageOptions={[5, 10, 25, 50, 100]}
+          paginationMode="server"
+          rowCount={data?.total ?? 0}
+          checkboxSelection={false}
+          disableSelectionOnClick
+          autoHeight={false}
+          sx={{
+            height: '100%',
+            '& .MuiDataGrid-main': {
+                overflow: 'hidden'
+            }
+          }}
+        />
       </Box>
     </Paper>
   );

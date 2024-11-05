@@ -96,10 +96,10 @@ const ProcurementDetails = () => {
               <strong>Supplier Name:</strong> {procurementDetails.supplierName}
             </Typography>
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Type:</strong> {procurementDetails.reference}
+              <strong>Reference:</strong> {procurementDetails.reference}
             </Typography>
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Location:</strong> {procurementDetails.tin}
+              <strong>Tin:</strong> {procurementDetails.tin}
             </Typography>
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong>Address:</strong> {procurementDetails.address}

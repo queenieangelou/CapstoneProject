@@ -127,14 +127,6 @@ const ExpenseDetails = () => {
                 </Typography>
               </>
             )}
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Total:</strong> {expenseDetails.total?.toFixed(2)}
-            </Typography>
-            {!expenseDetails.noValidReceipt && (
-              <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <strong>Net:</strong> {expenseDetails.net?.toFixed(2)}
-              </Typography>
-            )}
           </Stack>
 
             <Box 

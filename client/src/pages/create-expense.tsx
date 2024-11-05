@@ -1,6 +1,7 @@
-/* eslint-disable */
-// client\src\pages\create-expense.tsx
+// src/pages/create-expense.tsx
+import React from 'react';
 import { useGetIdentity } from '@pankod/refine-core';
+import { Box, CircularProgress } from '@pankod/refine-mui';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import ExpenseForm from 'components/common/ExpenseForm';
@@ -8,9 +9,9 @@ import ExpenseForm from 'components/common/ExpenseForm';
 const CreateExpense = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
-  const { 
-    refineCore: { onFinish, formLoading }, register, handleSubmit, watch, setValue} = useForm({
-  });
+
+  const {
+    refineCore: { onFinish, formLoading }, register, handleSubmit, } = useForm();
 
   const onFinishHandler = async (data: FieldValues) => {
     await onFinish({
@@ -19,6 +20,14 @@ const CreateExpense = () => {
     });
     navigate('/expenses');
   };
+
+  if (formLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <ExpenseForm

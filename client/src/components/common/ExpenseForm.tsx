@@ -33,40 +33,67 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
   const [inputVAT, setInputVAT] = useState(initialValues?.inputVAT || 0);
   const navigate = useNavigate();
 
+  // Function to calculate VAT components
+  const calculateVATComponents = (totalAmount: number, isNoValidReceipt: boolean, isNonVAT: boolean) => {
+    if (isNoValidReceipt || isNonVAT) {
+      return {
+        netAmount: totalAmount,
+        vatAmount: 0
+      };
+    }
+
+    // For valid VAT receipts:
+    // Net Amount = Amount × (100/112)
+    // VAT = Amount × (12/112)
+    const netAmount = totalAmount * (100/112);
+    const vatAmount = totalAmount * (12/112);
+
+    return {
+      netAmount: Number(netAmount.toFixed(2)),
+      vatAmount: Number(vatAmount.toFixed(2))
+    };
+  };
 
   const handleAmountChange = (e: { target: { value: string; }; }) => {
     const newAmount = parseFloat(e.target.value) || 0;
     setAmount(newAmount);
-    setNetOfVAT(isNonVat ? newAmount : newAmount - inputVAT);
-  };
 
-  const handleInputVATChange = (e: { target: { value: string; }; }) => {
-    const newInputVAT = parseFloat(e.target.value) || 0;
-    setInputVAT(newInputVAT);
-    setNetOfVAT(amount - newInputVAT);
+    const { netAmount, vatAmount } = calculateVATComponents(newAmount, noValidReceipt, isNonVat);
+    setNetOfVAT(netAmount);
+    setInputVAT(vatAmount);
   };
 
   const handleNoValidReceiptChange = (e: { target: { checked: any; }; }) => {
     const checked = e.target.checked;
     setNoValidReceipt(checked);
-    if (checked) {
-      setIsNonVat(false);
-      setInputVAT(0);
-      setNetOfVAT(amount);
-    }
+    
+    // Recalculate VAT components when receipt status changes
+    const { netAmount, vatAmount } = calculateVATComponents(amount, checked, false);
+    setIsNonVat(false);
+    setNetOfVAT(netAmount);
+    setInputVAT(vatAmount);
   };
 
   const handleNonVatChange = (e: { target: { checked: any; }; }) => {
     const checked = e.target.checked;
     setIsNonVat(checked);
-    if (checked) {
-      setInputVAT(0);
-      setNetOfVAT(amount);
-    }
+    
+    // Recalculate VAT components when VAT status changes
+    const { netAmount, vatAmount } = calculateVATComponents(amount, noValidReceipt, checked);
+    setNetOfVAT(netAmount);
+    setInputVAT(vatAmount);
   };
 
   const onSubmit = (data: any) => {
-    const updatedData = { ...data };
+    const updatedData = { 
+      ...data,
+      isNonVat,
+      noValidReceipt,
+      amount: parseFloat(amount),
+      inputVAT: parseFloat(inputVAT),
+      netOfVAT: parseFloat(netOfVAT)
+    };
+    
     if (noValidReceipt) {
       updatedData.supplierName = "N/A";
       updatedData.ref = "N/A";
@@ -74,10 +101,12 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
       updatedData.address = "N/A";
       updatedData.inputVAT = 0;
     }
+    
     if (isNonVat) {
       updatedData.inputVAT = 0;
       updatedData.netOfVAT = updatedData.amount;
     }
+    
     onFinishHandler(updatedData);
   };
 
@@ -176,33 +205,28 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         }}>
         {!noValidReceipt && (
           <>
-          
             <TextField
               label="Supplier Name"
               variant="outlined"
-
-              {...register('supplierName', { required: true })}
+              {...register('supplierName', { required: !noValidReceipt })}
               defaultValue={initialValues?.supplierName || ''}
             />
             <TextField
               label="Reference"
               variant="outlined"
-
-              {...register('ref', { required: true })}
+              {...register('ref', { required: !noValidReceipt })}
               defaultValue={initialValues?.ref || ''}
             />
             <TextField
               label="TIN"
               variant="outlined"
-
-              {...register('tin', { required: true })}
+              {...register('tin', { required: !noValidReceipt })}
               defaultValue={initialValues?.tin || ''}
             />
             <TextField
               label="Address"
               variant="outlined"
-
-              {...register('address', { required: true })}
+              {...register('address', { required: !noValidReceipt })}
               defaultValue={initialValues?.address || ''}
             />
           </>
@@ -222,7 +246,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
           type="number"
           value={amount}
           onChange={handleAmountChange}
-          {...register('amount', { required: true })}
+          inputProps={{ step: "0.01" }}
         />
 
         <FormControlLabel
@@ -250,7 +274,6 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
           type="number"
           value={netOfVAT.toFixed(2)}
           InputProps={{ readOnly: true }}
-          {...register('netOfVAT', { required: true })}
         />
 
         {!isNonVat && !noValidReceipt && (
@@ -259,8 +282,8 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
             variant="outlined"
             type="number"
             value={inputVAT.toFixed(2)}
-            onChange={handleInputVATChange}
-            {...register('inputVAT', { required: true })}
+            InputProps={{ readOnly: true }}
+            inputProps={{ step: "0.01" }}
           />
         )}
         </Box>

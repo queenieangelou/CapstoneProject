@@ -1,4 +1,3 @@
-// server\controller\expense.controller.js
 import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Expense from '../mongodb/models/expense.js';
@@ -24,7 +23,8 @@ const getAllExpenses = async (req, res) => {
       .find(query)
       .limit(parseInt(_end) - parseInt(_start))
       .skip(parseInt(_start))
-      .sort({ [_sort]: _order });
+      .sort({ [_sort]: _order })
+      .populate('creator', 'name email');
 
     res.header('x-total-count', count);
     res.header('Access-Control-Expose-Headers', 'x-total-count');
@@ -36,162 +36,175 @@ const getAllExpenses = async (req, res) => {
 };
 
 const getExpenseDetail = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const expenseExists = await Expense.findOne({ _id: id }).populate('creator');
+    const { id } = req.params;
 
-    if (expenseExists) {
-      res.status(200).json(expenseExists);
-    } else {
-      res.status(404).json({ message: 'Expense does not exist' });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
     }
+    const expense = await Expense.findById(id).populate('creator', 'name email');
+
+    if (!expense) {
+      return res.status(404).json({ message: 'Expense does not exist' });
+    }
+    res.status(200).json(expense);
   } catch (err) {
     res.status(500).json({ message: 'Failed to get the expense details, please try again later' });
   }
 };
 
 const createExpense = async (req, res) => {
+  const {
+    seq,
+    date,
+    supplierName,
+    ref,
+    tin,
+    address,
+    description,
+    amount,
+    netOfVAT,
+    inputVAT,
+    isNonVat,
+    noValidReceipt,
+    email,
+  } = req.body;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const {
+    const user = await User.findOne({ email }).session(session);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const newExpense = new Expense({
       seq,
       date,
-      supplierName,
-      ref,
-      tin,
-      address,
+      supplierName: noValidReceipt ? "N/A" : supplierName,
+      ref: noValidReceipt ? "N/A" : ref,
+      tin: noValidReceipt ? "N/A" : tin,
+      address: noValidReceipt ? "N/A" : address,
       description,
       amount,
-      netOfVAT,
-      inputVAT,
-      total,
-      net,
+      netOfVAT: isNonVat ? amount : netOfVAT,
+      inputVAT: isNonVat || noValidReceipt ? 0 : inputVAT,
       isNonVat,
       noValidReceipt,
-      email,
-    } = req.body;
+      creator: user._id,
+    });
 
-    // Start a session for transaction
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    await newExpense.save({ session });
 
-    try {
-      const user = await User.findOne({ email }).session(session);
-
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      const newExpense = await Expense.create({
-        seq,
-        date,
-        supplierName,
-        ref,
-        tin,
-        address,
-        description,
-        amount,
-        netOfVAT,
-        inputVAT,
-        total,
-        net,
-        isNonVat,
-        noValidReceipt,
-        creator: user._id,
-      });
-
+    if (user.allExpenses) {
       user.allExpenses.push(newExpense._id);
       await user.save({ session });
-
-      await session.commitTransaction();
-
-
-      res.status(200).json({ message: 'Expense created successfully', expense: newExpense });
-    } catch (error) {
-      await session.abortTransaction();
-
-      throw error;
-    } finally {
-      session.endSession();
     }
-  } catch (error) {
 
+    await session.commitTransaction();
+
+    const populatedExpense = await Expense.findById(newExpense._id).populate('creator', 'name email');
+    
+    res.status(201).json({ message: 'Expense created successfully', expense: populatedExpense });
+  } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({ message: 'Failed to create expense', error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
 const updateExpense = async (req, res) => {
+  const { id } = req.params;
+  const {
+    seq,
+    date,
+    supplierName,
+    ref,
+    tin,
+    address,
+    description,
+    amount,
+    netOfVAT,
+    inputVAT,
+    isNonVat,
+    noValidReceipt,
+  } = req.body;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { id } = req.params;
-    const {
-      seq,
-      date,
-      supplierName,
-      ref,
-      tin,
-      address,
-      description,
-      amount,
-      netOfVAT,
-      inputVAT,
-      total,
-      net,
-      isNonVat,
-      noValidReceipt,
-    } = req.body;
-
-    const updatedExpense = await Expense.findByIdAndUpdate(
-      { _id: id },
-      {
-        seq,
-        date,
-        supplierName,
-        ref,
-        tin,
-        address,
-        description,
-        amount,
-        netOfVAT,
-        inputVAT,
-        total,
-        net,
-        isNonVat,
-        noValidReceipt,
-      },
-      { new: true }
-    );
-
-    if (!updatedExpense) {
+    const expense = await Expense.findById(id).session(session);
+    if (!expense) {
       return res.status(404).json({ message: 'Expense not found' });
     }
 
-    res.status(200).json(updatedExpense);
-  } catch (error) {
+    expense.seq = seq;
+    expense.date = date;
+    expense.description = description;
+    expense.amount = amount;
+    expense.isNonVat = isNonVat;
+    expense.noValidReceipt = noValidReceipt;
 
+    // Apply conditional updates based on noValidReceipt and isNonVat states
+    if (noValidReceipt) {
+      expense.supplierName = "N/A";
+      expense.ref = "N/A";
+      expense.tin = "N/A";
+      expense.address = "N/A";
+      expense.inputVAT = 0;
+      expense.netOfVAT = amount;
+      expense.isNonVat = false; // Reset isNonVat if noValidReceipt is true
+    } else {
+      expense.supplierName = supplierName;
+      expense.ref = ref;
+      expense.tin = tin;
+      expense.address = address;
+      expense.inputVAT = isNonVat ? 0 : inputVAT;
+      expense.netOfVAT = isNonVat ? amount : netOfVAT;
+    }
+
+    await expense.save({ session });
+    await session.commitTransaction();
+
+    const populatedExpense = await Expense.findById(expense._id).populate('creator', 'name email');
+
+    res.status(200).json({ message: 'Expense updated successfully', expense: populatedExpense });
+  } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({ message: 'Failed to update expense', error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
 const deleteExpense = async (req, res) => {
+  const { id } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { id } = req.params;
+    const expense = await Expense.findById(id).populate('creator').session(session);
 
-    const expenseToDelete = await Expense.findById({ _id: id }).populate('creator');
-    
-    if (!expenseToDelete) throw new Error('Expense not found');
+    if (!expense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    expenseToDelete.remove({ session });
-    expenseToDelete.creator.allExpenses.pull(expenseToDelete);
-
-    await expenseToDelete.creator.save({ session });
+    // Remove expense from user's expenses list if needed
+    if (expense.creator && expense.creator.allExpenses) {
+      expense.creator.allExpenses.pull(expense._id);
+      await expense.creator.save({ session });
+    }
+    await Expense.findByIdAndDelete(id).session(session);
     await session.commitTransaction();
-    
     res.status(200).json({ message: 'Expense deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete expense, please try again later' });
+    await session.abortTransaction();
+    res.status(500).json({ message: 'Failed to delete expense, please try again later', error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 

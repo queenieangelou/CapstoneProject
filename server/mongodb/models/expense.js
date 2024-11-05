@@ -42,14 +42,6 @@ const ExpenseSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  total: {
-    type: Number,
-    required: true,
-  },
-  net: {
-    type: Number,
-    required: true,
-  },
   isNonVat: {
     type: Boolean,
     required: true,
