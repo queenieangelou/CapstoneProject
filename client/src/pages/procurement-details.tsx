@@ -1,3 +1,4 @@
+//client\src\pages\procurement-details.tsx
 import { Delete, Edit } from '@mui/icons-material';
 import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
 import { Box, CircularProgress, Button, Paper, Stack, Tooltip, Typography } from '@pankod/refine-mui';
@@ -92,18 +93,22 @@ const ProcurementDetails = () => {
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong>Sequence:</strong> {procurementDetails.seq}
             </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Supplier Name:</strong> {procurementDetails.supplierName}
-            </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Reference:</strong> {procurementDetails.reference}
-            </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Tin:</strong> {procurementDetails.tin}
-            </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Address:</strong> {procurementDetails.address}
-            </Typography>
+            {!procurementDetails.noValidReceipt && (
+              <>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Supplier Name:</strong> {procurementDetails.supplierName}
+                </Typography>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Reference:</strong> {procurementDetails.ref}
+                </Typography>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>TIN:</strong> {procurementDetails.tin}
+                </Typography>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Address:</strong> {procurementDetails.address}
+                </Typography>
+              </>
+            )}
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong>Part Name:</strong> {procurementDetails.part.partName}
             </Typography>
@@ -119,6 +124,16 @@ const ProcurementDetails = () => {
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong>Amount:</strong> {procurementDetails.amount}
             </Typography>
+            {!procurementDetails.isNonVat && !procurementDetails.noValidReceipt && (
+              <>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Net of VAT:</strong> {procurementDetails.netOfVAT?.toFixed(2)}
+                </Typography>
+                <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>Input VAT:</strong> {procurementDetails.inputVAT?.toFixed(2)}
+                </Typography>
+              </>
+            )}
           </Stack>
 
             <Box 

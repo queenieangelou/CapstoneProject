@@ -1,3 +1,4 @@
+//client\src\pages\all-procurements.tsx
 /* eslint-disable */
 import React, { useMemo, useState, useEffect } from 'react';
 import { DataGrid, GridColDef, Box, Paper, Typography, CircularProgress, IconButton, Tooltip, TextField, Stack, Button } from '@pankod/refine-mui';
@@ -124,6 +125,40 @@ const filteredRows = allProcurements.filter((procurement) => {
     { field: 'brandName', headerName: 'Brand', flex: 1 },
     { field: 'quantityBought', headerName: 'Quantity', type: 'number', flex: 1 },
     { field: 'amount', headerName: 'Amount', type: 'number', flex: 1 },
+    { field: 'netOfVAT', headerName: 'Net of VAT', type: 'number', flex: 1 },
+    { field: 'inputVAT', headerName: 'Input VAT', type: 'number', flex: 1 },
+    { 
+      field: 'isNonVat', 
+      headerName: 'Non-VAT', 
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          variant="body2"
+          sx={{
+            color: params.row.isNonVat ? 'warning.main' : 'text.secondary',
+            fontWeight: params.row.isNonVat ? 'bold' : 'normal'
+          }}
+        >
+          {params.row.isNonVat ? 'No VAT' : 'N/A'}
+        </Typography>
+      )
+    },
+    { 
+      field: 'noValidReceipt', 
+      headerName: 'No Receipt', 
+      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          variant="body2"
+          sx={{
+            color: params.row.noValidReceipt ? 'warning.main' : 'text.secondary',
+            fontWeight: params.row.noValidReceipt ? 'bold' : 'normal'
+          }}
+        >
+          {params.row.noValidReceipt ? 'No RCPT' : 'N/A'}
+        </Typography>
+      )
+    },
     {
         field: 'actions',
         headerName: 'Actions',
@@ -211,7 +246,11 @@ const filteredRows = allProcurements.filter((procurement) => {
         partName: procurement.part?.partName,
         brandName: procurement.part?.brandName,
         quantityBought: procurement.quantityBought,
-        amount: procurement.amount,
+        amount: procurement.amount?.toFixed(2),
+        netOfVAT: procurement.netOfVAT?.toFixed(2),
+        inputVAT: procurement.inputVAT?.toFixed(2),
+        isNonVat: procurement.isNonVat,
+        noValidReceipt: procurement.noValidReceipt
     }));
 
     if (isLoading) {

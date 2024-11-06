@@ -1,15 +1,19 @@
+//client\src\components\common\ProcurementForm.tsx
 import { Close, Publish } from '@mui/icons-material';
 import {
   Box,
   Button,
+  Checkbox,
   CircularProgress,
   FormControl,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   OutlinedInput,
   Paper,
   Select,
   SelectChangeEvent,
+  TextField,
   Tooltip,
   Typography
 } from '@pankod/refine-mui';
@@ -37,6 +41,11 @@ const ProcurementForm = ({
   const [selectedPart, setSelectedPart] = useState('');
   const [newPartName, setNewPartName] = useState('');
   const [newBrandName, setNewBrandName] = useState('');
+  const [noValidReceipt, setNoValidReceipt] = useState(initialValues?.noValidReceipt || false);
+  const [isNonVat, setIsNonVat] = useState(initialValues?.isNonVat || false);
+  const [amount, setAmount] = useState(initialValues?.amount || 0);
+  const [netOfVAT, setNetOfVAT] = useState(initialValues?.netOfVAT || 0);
+  const [inputVAT, setInputVAT] = useState(initialValues?.inputVAT || 0);
   const navigate = useNavigate();
   
   const isError = false;
@@ -51,6 +60,56 @@ const ProcurementForm = ({
     setSelectedPart(event.target.value as string);
   };
 
+  // Helper function to calculate VAT and net amount
+  const calculateVATComponents = (totalAmount: number, isNoReceipt: boolean, isNonVAT: boolean) => {
+    if (isNoReceipt) {
+      return { netAmount: 0, vatAmount: 0 };
+    }
+    if (isNonVAT) {
+      return { netAmount: totalAmount, vatAmount: 0 };
+    }
+    const netAmount = totalAmount * (100 / 112);
+    const vatAmount = totalAmount * (12 / 112);
+    return { netAmount: Number(netAmount.toFixed(2)), vatAmount: Number(vatAmount.toFixed(2)) };
+  };
+
+  const handleAmountChange = (e: { target: { value: string } }) => {
+    const newAmount = parseFloat(e.target.value) || 0;
+    setAmount(newAmount);
+    const { netAmount, vatAmount } = calculateVATComponents(newAmount, noValidReceipt, isNonVat);
+    setNetOfVAT(netAmount);
+    setInputVAT(vatAmount);
+  };
+
+  const handleNoValidReceiptChange = (e: { target: { checked: any } }) => {
+    const checked = e.target.checked;
+    setNoValidReceipt(checked);
+
+    if (checked) {
+      setIsNonVat(true);
+      setNetOfVAT(0);
+      setInputVAT(0);
+    } else {
+      const { netAmount, vatAmount } = calculateVATComponents(amount, false, isNonVat);
+      setNetOfVAT(netAmount);
+      setInputVAT(vatAmount);
+    }
+  };
+
+  const handleNonVatChange = (e: { target: { checked: any } }) => {
+    const checked = e.target.checked;
+    setIsNonVat(checked);
+
+    if (checked && !noValidReceipt) {
+      setNetOfVAT(amount);
+      setInputVAT(0);
+    } else if (!checked) {
+      const { netAmount, vatAmount } = calculateVATComponents(amount, noValidReceipt, false);
+      setNetOfVAT(netAmount);
+      setInputVAT(vatAmount);
+    }
+  };
+
   const onSubmit = (data: Record<string, any>) => {
     const updatedData = { ...data };
     if (selectedPart === 'new') {
@@ -61,7 +120,29 @@ const ProcurementForm = ({
       updatedData.partName = partName;
       updatedData.brandName = brandName;
     }
-    onFinishHandler(updatedData);
+
+    const formData = {
+      ...updatedData,
+      isNonVat,
+      noValidReceipt,
+      amount,
+      inputVAT,
+      netOfVAT,
+      supplierName: noValidReceipt ? "N/A" : updatedData.supplierName,
+      reference: noValidReceipt ? "N/A" : updatedData.reference,
+      tin: noValidReceipt ? "N/A" : updatedData.tin,
+      address: noValidReceipt ? "N/A" : updatedData.address,
+    };
+
+    if (noValidReceipt) {
+      formData.inputVAT = 0;
+      formData.netOfVAT = 0;
+    } else if (isNonVat) {
+      formData.inputVAT = 0;
+      formData.netOfVAT = amount;
+    }
+
+    onFinishHandler(formData);
   };
 
   if (formLoading) {
@@ -83,22 +164,22 @@ const ProcurementForm = ({
   }
 
   return (
-    <Paper 
-      elevation={2} 
-      sx={{ 
+    <Paper
+      elevation={2}
+      sx={{
         padding: '32px',
         margin: '24px auto',
         maxWidth: '1000px',
         borderRadius: '16px',
         transition: 'transform 0.2s ease-in-out',
         '&:hover': {
-          transform: 'translateY(-2px)'
-        }
+          transform: 'translateY(-2px)',
+        },
       }}
     >
-      <Typography 
-        variant="h4" 
-        sx={{ 
+      <Typography
+        variant="h4"
+        sx={{
           textAlign: 'left',
           mb: 4,
           fontWeight: 600,
@@ -106,22 +187,25 @@ const ProcurementForm = ({
       >
         {type} a Procurement
       </Typography>
-
+  
       <form
-        style={{ 
-          width: '100%', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '24px' 
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
         }}
         onSubmit={handleSubmit(onSubmit)}
       >
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          gap: 2,
-          '& .MuiFormControl-root': { flex: 1 }
-        }}>
+        {/* Section for Sequence Number and Date */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+            '& .MuiFormControl-root': { flex: 1 },
+          }}
+        >
           <FormControl>
             <InputLabel htmlFor="seq">Sequence Number</InputLabel>
             <OutlinedInput
@@ -132,7 +216,7 @@ const ProcurementForm = ({
               defaultValue={initialValues?.seq || 0}
             />
           </FormControl>
-
+  
           <FormControl>
             <InputLabel htmlFor="date">Date</InputLabel>
             <OutlinedInput
@@ -147,64 +231,81 @@ const ProcurementForm = ({
 
         <Box sx={{ 
           display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
           gap: 2,
-          '& .MuiFormControl-root': { flex: 1 }
+          alignItems: 'center',
         }}>
-          <FormControl>
-            <InputLabel htmlFor="supplierName">Supplier Name</InputLabel>
-            <OutlinedInput
-              id="supplierName"
-              label="Supplier Name"
-              {...register('supplierName', { required: true })}
-              defaultValue={initialValues?.supplierName || ""}
-            />
-          </FormControl>
-
-          <FormControl>
-            <InputLabel htmlFor="reference">Reference</InputLabel>
-            <OutlinedInput
-              id="reference"
-              label="Reference"
-              {...register('reference', { required: true })}
-              defaultValue={initialValues?.reference || ""}
-            />
-          </FormControl>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={noValidReceipt}
+                onChange={handleNoValidReceiptChange}
+              />
+            }
+            label="No Valid Receipt"
+          />
         </Box>
-
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          gap: 2,
-          '& .MuiFormControl-root': { flex: 1 }
-        }}>
-          <FormControl>
-            <InputLabel htmlFor="tin">TIN</InputLabel>
-            <OutlinedInput
-              id="tin"
-              label="TIN"
-              {...register('tin', { required: true })}
-              defaultValue={initialValues?.tin || ""}
-            />
-          </FormControl>
-
-          <FormControl>
-            <InputLabel htmlFor="address">Address</InputLabel>
-            <OutlinedInput
-              id="address"
-              label="Address"
-              {...register('address', { required: true })}
-              defaultValue={initialValues?.address || ""}
-            />
-          </FormControl>
-        </Box>
-
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          gap: 2,
-          '& .MuiFormControl-root': { flex: 1 }
-        }}>
+  
+        {/* Conditional section for Supplier Details */}
+        {!noValidReceipt && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              '& .MuiFormControl-root': { flex: 1 },
+            }}
+          >
+            <FormControl>
+              <InputLabel htmlFor="supplierName">Supplier Name</InputLabel>
+              <OutlinedInput
+                id="supplierName"
+                label="Supplier Name"
+                {...register('supplierName', { required: true })}
+                defaultValue={initialValues?.supplierName || ""}
+              />
+            </FormControl>
+  
+            <FormControl>
+              <InputLabel htmlFor="reference">Reference</InputLabel>
+              <OutlinedInput
+                id="reference"
+                label="Reference"
+                {...register('reference', { required: true })}
+                defaultValue={initialValues?.reference || ""}
+              />
+            </FormControl>
+  
+            <FormControl>
+              <InputLabel htmlFor="tin">TIN</InputLabel>
+              <OutlinedInput
+                id="tin"
+                label="TIN"
+                {...register('tin', { required: true })}
+                defaultValue={initialValues?.tin || ""}
+              />
+            </FormControl>
+  
+            <FormControl>
+              <InputLabel htmlFor="address">Address</InputLabel>
+              <OutlinedInput
+                id="address"
+                label="Address"
+                {...register('address', { required: true })}
+                defaultValue={initialValues?.address || ""}
+              />
+            </FormControl>
+          </Box>
+        )}
+  
+        {/* Part & Brand Selection */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+            '& .MuiFormControl-root': { flex: 1 },
+          }}
+        >
           <FormControl>
             <InputLabel htmlFor="part">Part & Brand</InputLabel>
             <Select
@@ -220,7 +321,8 @@ const ProcurementForm = ({
               <MenuItem value="new">Add New Part</MenuItem>
             </Select>
           </FormControl>
-
+  
+          {/* Conditionally show New Part and Brand fields */}
           {selectedPart === 'new' && (
             <>
               <FormControl>
@@ -244,13 +346,16 @@ const ProcurementForm = ({
             </>
           )}
         </Box>
-
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          gap: 2,
-          '& .MuiFormControl-root': { flex: 1 }
-        }}>
+  
+        {/* Additional details for Description and Quantity */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+            '& .MuiFormControl-root': { flex: 1 },
+          }}
+        >
           <FormControl>
             <InputLabel htmlFor="description">Description</InputLabel>
             <OutlinedInput
@@ -260,7 +365,7 @@ const ProcurementForm = ({
               defaultValue={initialValues?.description || ""}
             />
           </FormControl>
-
+  
           <FormControl>
             <InputLabel htmlFor="quantityBought">Quantity Bought</InputLabel>
             <OutlinedInput
@@ -271,25 +376,53 @@ const ProcurementForm = ({
               defaultValue={initialValues?.quantityBought || 0}
             />
           </FormControl>
-
-          <FormControl>
-            <InputLabel htmlFor="amount">Amount</InputLabel>
-            <OutlinedInput
-              id="amount"
-              type="number"
-              label="Amount"
-              {...register('amount', { required: true })}
-              defaultValue={initialValues?.amount || 0}
-            />
-          </FormControl>
         </Box>
-
-        <Box 
-          display="flex" 
-          justifyContent="center" 
-          gap={2} 
-          mt={3}
-        >
+  
+        {/* Amount Input */}
+        <TextField
+          label="Amount"
+          variant="outlined"
+          type="number"
+          value={amount}
+          onChange={handleAmountChange}
+          inputProps={{ step: "0.01" }}
+        />
+  
+        {/* Non-VAT Checkbox */}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={isNonVat}
+              onChange={handleNonVatChange}
+              disabled={noValidReceipt}
+            />
+          }
+          label="Non-VAT"
+        />
+  
+        {/* Net of VAT and Input VAT */}
+        {!noValidReceipt && (
+          <>
+            <TextField
+              label="Net of VAT"
+              variant="outlined"
+              type="number"
+              value={netOfVAT.toFixed(2)}
+              InputProps={{ readOnly: true }}
+            />
+            <TextField
+              label="Input VAT"
+              variant="outlined"
+              type="number"
+              value={inputVAT.toFixed(2)}
+              InputProps={{ readOnly: true }}
+              inputProps={{ step: "0.01" }}
+            />
+          </>
+        )}
+  
+        {/* Action Buttons */}
+        <Box display="flex" justifyContent="center" gap={2} mt={3}>
           <Tooltip title="Publish Deployment" arrow>
             <Button
               type="submit"
@@ -306,10 +439,10 @@ const ProcurementForm = ({
                   transform: 'scale(1.05)',
                 },
                 transition: 'all 0.2s ease-in-out',
-                borderRadius: 5, // Optional: adjust for button shape
+                borderRadius: 5,
               }}
             >
-              <Publish sx={{ mr: 1 }} /> {/* Margin right for spacing */}
+              <Publish sx={{ mr: 1 }} />
               Publish
             </Button>
           </Tooltip>
@@ -329,17 +462,18 @@ const ProcurementForm = ({
                   transform: 'scale(1.05)',
                 },
                 transition: 'all 0.2s ease-in-out',
-                borderRadius: 5, // Optional: adjust for button shape
+                borderRadius: 5,
               }}
             >
-              <Close sx={{ mr: 1 }} /> {/* Margin right for spacing */}
+              <Close sx={{ mr: 1 }} />
               Close
             </Button>
           </Tooltip>
-          </Box>
+        </Box>
       </form>
     </Paper>
   );
 };
-
-export default ProcurementForm;
+  
+  export default ProcurementForm;
+  

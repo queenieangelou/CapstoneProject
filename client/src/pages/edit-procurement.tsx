@@ -1,3 +1,4 @@
+// client\src\pages\edit-procurement.tsx
 /* eslint-disable */
 import React from 'react';
 import { useGetIdentity, useOne, useList } from '@pankod/refine-core';
