@@ -1,3 +1,4 @@
+// client\src\interfaces\procurement.d.ts
 import { BaseKey } from '@pankod/refine-core';
 
 export interface FormFieldProp {
@@ -5,18 +6,22 @@ export interface FormFieldProp {
   labelName: string
 }
 
-export interface FormValues {
-    title: string,
-    description: string,
-    procurementType: string,
-    location: string,
-    price: number | undefined,
+export interface ProcurementFormValues {
+  seq: number,
+  date: string,
+  supplierName: string,
+  reference: string,
+  tin: string,
+  address: string,
+  partName: string,
+  brandName: string,
+  description: string,
+  quantityBought: number,
+  amount: number
 }
 
-export interface ProcurementCardProps {
-  id?: BaseKey | undefined,
-  title: string,
-  location: string,
-  price: string,
-  procurementType?: string;
+export interface Parts {
+  _id: string,
+  partName: string,
+  brandName: string
 }

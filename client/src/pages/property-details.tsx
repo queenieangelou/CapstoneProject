@@ -1,3 +1,4 @@
+//client\src\pages\property-details.tsx
 /* eslint-disable no-restricted-globals */
 import { Typography, Box, Stack } from '@pankod/refine-mui';
 import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';

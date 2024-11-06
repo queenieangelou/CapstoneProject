@@ -1,3 +1,4 @@
+//client\src\interfaces\common.d.ts
 export interface CustomButtonProps {
   type?: string,
   title: string,

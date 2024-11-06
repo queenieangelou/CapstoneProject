@@ -1,3 +1,4 @@
+//client\src\interfaces\property.d.ts
 import { BaseKey } from '@pankod/refine-core';
 
 export interface FormFieldProp {

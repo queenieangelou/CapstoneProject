@@ -1,3 +1,4 @@
+//client\src\pages\edit-property.tsx
 import { useGetIdentity } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import Form from 'components/common/PropertyForm';
