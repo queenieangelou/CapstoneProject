@@ -396,21 +396,27 @@ const deleteDeployment = async (req, res) => {
   try {
     const deployment = await Deployment.findById(id)
       .populate('creator')
-      .populate('part')
+      .populate({
+        path: 'parts.part',
+        model: 'Part'
+      })
       .session(session);
 
     if (!deployment) {
       return res.status(404).json({ message: 'Deployment not found' });
     }
 
-    // Restore part quantity
-    const part = deployment.part;
-    if (part) {
-      part.qtyLeft += deployment.quantityUsed;
-      if (part.deployments) {
-        part.deployments.pull(deployment._id);
+    // Restore quantities for all parts
+    if (deployment.parts && deployment.parts.length > 0) {
+      for (const partEntry of deployment.parts) {
+        if (partEntry.part) {
+          partEntry.part.qtyLeft += partEntry.quantityUsed;
+          if (partEntry.part.deployments) {
+            partEntry.part.deployments.pull(deployment._id);
+          }
+          await partEntry.part.save({ session });
+        }
       }
-      await part.save({ session });
     }
 
     // Remove deployment from user's deployments if needed

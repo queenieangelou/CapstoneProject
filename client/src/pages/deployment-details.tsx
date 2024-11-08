@@ -2,6 +2,7 @@ import { Delete, Edit } from '@mui/icons-material';
 import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
 import { Box, CircularProgress, Button, Paper, Stack, Tooltip, Typography } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
+import { ReactElement, JSXElementConstructor, ReactFragment, ReactPortal, Key } from 'react';
 
 
 const DeploymentDetails = () => {
@@ -103,12 +104,37 @@ const DeploymentDetails = () => {
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong>Vehicle Model:</strong> {deploymentDetails.vehicleModel}
             </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Part Name:</strong> {deploymentDetails.partName}
-            </Typography>
-            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <strong>Quantity Used:</strong> {deploymentDetails.quantityUsed}
-            </Typography>
+            {/* Replace the single part section with this */}
+          <Box>
+            <Typography fontSize={16} fontWeight="bold" mb={2}>Parts Used:</Typography>
+            {deploymentDetails.parts && deploymentDetails.parts.length > 0 ? (
+              deploymentDetails.parts.map((partEntry: { part: { partName: any; brandName: any; }; quantityUsed: any; }, index: Key | null | undefined) => (
+                <Box 
+                  key={index} 
+                  sx={{ 
+                    ml: 2, 
+                    mb: 2, 
+                    pb: 1, 
+                    borderBottom: index !== deploymentDetails.parts.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none'
+                  }}
+                >
+                  <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <strong>Part Name:</strong> {partEntry.part.partName}
+                  </Typography>
+                  <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <strong>Brand Name:</strong> {partEntry.part.brandName}
+                  </Typography>
+                  <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <strong>Quantity Used:</strong> {partEntry.quantityUsed}
+                  </Typography>
+                </Box>
+              ))
+            ) : (
+              <Typography fontSize={16} color="text.secondary">
+                No parts used in this deployment
+              </Typography>
+            )}
+          </Box>
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong>Deployment Status:</strong> {deploymentDetails.deploymentStatus ? 'Yes' : 'No'}
             </Typography>
