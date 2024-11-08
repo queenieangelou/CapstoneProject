@@ -1,6 +1,9 @@
 // components/common/CustomTable.tsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { DataGrid, GridColDef } from '@pankod/refine-mui';
+import { ColorModeContext } from 'contexts';
+
+
 
 interface CustomTableProps {
   rows: any[];
@@ -13,6 +16,7 @@ const CustomTable: React.FC<CustomTableProps> = ({
   columns,
   containerHeight = '100%'
 }) => {
+  const { mode } = useContext(ColorModeContext);
   return (
     <DataGrid
       rows={rows}
@@ -34,9 +38,11 @@ const CustomTable: React.FC<CustomTableProps> = ({
           whiteSpace: 'normal',
           wordWrap: 'break-word'
         },
+                /* Dark Mode */
         '& .MuiDataGrid-columnHeaders': {
-          backgroundColor: '#f5f5f5',
-          borderBottom: '2px solid #e0e0e0'
+          backgroundColor: mode === 'light' ? '#f5f5f5' : '#333333',
+          borderBottom: mode === 'light' ? '2px solid #e0e0e0' : '2px solid #444444',
+          color: mode === 'light' ? 'inherit' : '#f5f5f5'
         },
         '& .MuiDataGrid-columnHeader': {
           padding: '8px',
