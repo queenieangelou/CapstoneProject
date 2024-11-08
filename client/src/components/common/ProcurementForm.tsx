@@ -20,6 +20,7 @@ import {
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { FormPropsProcurement } from 'interfaces/common';
 import { useEffect, useState } from 'react';
+import CustomButton from './CustomButton';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -423,52 +424,20 @@ const ProcurementForm = ({
   
         {/* Action Buttons */}
         <Box display="flex" justifyContent="center" gap={2} mt={3}>
-          <Tooltip title="Publish Deployment" arrow>
-            <Button
-              type="submit"
-              sx={{
-                bgcolor: 'primary.light',
-                color: 'primary.dark',
-                display: 'flex',
-                alignItems: 'center',
-                width: '120px',
-                p: 1.5,
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease-in-out',
-                borderRadius: 5,
-              }}
-            >
-              <Publish sx={{ mr: 1 }} />
-              Publish
-            </Button>
-          </Tooltip>
-          <Tooltip title="Close Deployment" arrow>
-            <Button
-              onClick={() => navigate(`/deployments/`)}
-              sx={{
-                bgcolor: 'error.light',
-                color: 'error.dark',
-                display: 'flex',
-                alignItems: 'center',
-                width: '120px',
-                p: 1.5,
-                '&:hover': {
-                  bgcolor: 'error.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease-in-out',
-                borderRadius: 5,
-              }}
-            >
-              <Close sx={{ mr: 1 }} />
-              Close
-            </Button>
-          </Tooltip>
+          <CustomButton
+            type="submit" // This ensures the button submits the form
+            title="Publish"
+            backgroundColor="primary.light"
+            color="primary.dark"
+            icon={<Publish />}
+          />
+          <CustomButton
+            title="Close"
+            backgroundColor="error.light"
+            color="error.dark"
+            icon={<Close />}
+            handleClick={() => navigate('/procurements')}
+          />
         </Box>
       </form>
     </Paper>

@@ -1,6 +1,8 @@
 //client\src\interfaces\common.d.ts
+import { ReactNode } from 'react';
+
 export interface CustomButtonProps {
-  type?: string,
+  type?: "button" | "submit" | "reset",
   title: string,
   backgroundColor: string,
   color: string,
@@ -10,15 +12,13 @@ export interface CustomButtonProps {
   handleClick?: () => void
 }
 
-export interface TableButtonProps {
-  type?: string,
+export interface CustomIconButtonProps {
+  icon: ReactNode,
   title: string,
   backgroundColor: string,
   color: string,
-  fullWidth?: boolean,
-  icon?: ReactNode,
-  disabled?: boolean,
-  handleClick?: () => void
+  handleClick: () => void,
+  size?: "small" | "medium" | "large"
 }
 
 export interface ProfileProps {

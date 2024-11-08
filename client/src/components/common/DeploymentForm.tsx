@@ -1,3 +1,4 @@
+//client\src\components\common\DeploymentForm.tsx
 import React, { useState, useEffect } from 'react';
 import { 
   Box, 
@@ -15,11 +16,18 @@ import {
   FormControlLabel,
   Checkbox,
   Tooltip,
-  Button
+  Button,
+  IconButton
 } from '@pankod/refine-mui';
 import { FormPropsDeployment } from 'interfaces/common';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-import { Close, Publish } from '@mui/icons-material';
+import { Add, Close, Delete, Publish, Remove } from '@mui/icons-material';
+import CustomButton from './CustomButton';
+import CustomIconButton from './CustomIconButton';
+interface PartEntry {
+  partId: string;
+  quantityUsed: number;
+}
 
 const getTodayDate = () => {
   const today = new Date();
@@ -30,45 +38,86 @@ const getTodayDate = () => {
 };
 
 const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, existingParts, initialValues }: FormPropsDeployment) => {
-  const [selectedPart, setSelectedPart] = useState<string>('');
+  const [partsEntries, setPartsEntries] = useState<PartEntry[]>([{ partId: '', quantityUsed: 0 }]);
   const [deploymentStatus, setDeploymentStatus] = useState<boolean>(false);
   const [releaseStatus, setReleaseStatus] = useState<boolean>(false);
-  const [quantityUsed, setQuantityUsed] = useState<number>(0);
-  const [availableQuantity, setAvailableQuantity] = useState<number>(0);
-  const navigate = useNavigate();
+  const [availableQuantities, setAvailableQuantities] = useState<{[key: string]: number}>({});
 
+  const navigate = useNavigate();
   const isError = false;
 
   useEffect(() => {
     if (initialValues) {
-      if (initialValues.part) {
-        setSelectedPart(`${initialValues.part.partName}|${initialValues.part.brandName}`);
-        setAvailableQuantity(initialValues.part.qtyLeft + initialValues.quantityUsed);
+      // Initialize parts entries
+      if (initialValues.parts && Array.isArray(initialValues.parts)) {
+        const initialParts = initialValues.parts.map((p: any) => ({
+          partId: `${p.part.partName}|${p.part.brandName}`,
+          quantityUsed: parseInt(p.quantityUsed) || 0
+        }));
+        setPartsEntries(initialParts.length > 0 ? initialParts : [{ partId: '', quantityUsed: 0 }]);
+        
+        // Initialize available quantities
+        const quantities: {[key: string]: number} = {};
+        initialValues.parts.forEach((p: any) => {
+          if (p.part) {
+            const partKey = `${p.part.partName}|${p.part.brandName}`;
+            // Add the current quantity used to the available quantity
+            quantities[partKey] = (p.part.qtyLeft || 0) + (parseInt(p.quantityUsed) || 0);
+          }
+        });
+        setAvailableQuantities(quantities);
       }
-      setQuantityUsed(initialValues.quantityUsed || 0);
+      // Initialize status
       setDeploymentStatus(!!initialValues.deploymentStatus);
       setReleaseStatus(!!initialValues.releaseStatus);
     }
   }, [initialValues]);
 
-  const handlePartChange = (event: SelectChangeEvent<string>) => {
+  const handlePartChange = (index: number) => (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
-    setSelectedPart(value);
-    
+    const newPartsEntries = [...partsEntries];
+    newPartsEntries[index].partId = value;
+    newPartsEntries[index].quantityUsed = 0;
+    setPartsEntries(newPartsEntries);
+
     const part = existingParts.find(p => `${p.partName}|${p.brandName}` === value);
     if (part) {
-      setAvailableQuantity(part.qtyLeft);
-      setQuantityUsed(0);
+      setAvailableQuantities(prev => ({
+        ...prev,
+        [value]: part.qtyLeft
+      }));
+    }
+  };
+  const handleQuantityChange = (index: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newPartsEntries = [...partsEntries];
+    newPartsEntries[index].quantityUsed = parseInt(event.target.value) || 0;
+    setPartsEntries(newPartsEntries);
+  };
+  const addPartEntry = () => {
+    setPartsEntries([...partsEntries, { partId: '', quantityUsed: 0 }]);
+  };
+  const removePartEntry = (index: number) => {
+    if (partsEntries.length > 1) {
+      const newPartsEntries = partsEntries.filter((_, i) => i !== index);
+      setPartsEntries(newPartsEntries);
     }
   };
 
   const onSubmit = (data: Record<string, any>) => {
     const updatedData = { ...data };
-    
-    if (!selectedPart || quantityUsed <= 0 || quantityUsed > availableQuantity) return;
 
-    updatedData.part = selectedPart;
-    updatedData.quantityUsed = quantityUsed;
+    // Filter out empty entries and format parts data
+    const validParts = partsEntries.filter(entry => 
+      entry.partId && 
+      entry.quantityUsed > 0 && 
+      entry.quantityUsed <= (availableQuantities[entry.partId] || 0)
+    );
+    // Allow submission even if no parts are selected
+    updatedData.parts = validParts.map(entry => ({
+      part: entry.partId,
+      quantityUsed: entry.quantityUsed
+    }));
+
     updatedData.deploymentStatus = deploymentStatus;
     updatedData.releaseStatus = releaseStatus;
     updatedData.deploymentDate = deploymentStatus ? data.deploymentDate : null;
@@ -199,42 +248,61 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
             </FormControl>
           </Box>
 
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', sm: 'row' }, 
-              gap: 2,
-              '& .MuiFormControl-root': { flex: 1 }
-            }}>
-            <FormControl sx={{ flex: 1 }}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>Part Selection</FormHelperText>
-              <Select
-                value={selectedPart}
-                onChange={handlePartChange}
-                displayEmpty
-                required
-              >
-                <MenuItem value="">Select a part</MenuItem>
-                {existingParts.map((part) => (
-                  <MenuItem key={part._id} value={`${part.partName}|${part.brandName}`}>
-                    {`${part.partName} - ${part.brandName} (Available: ${part.qtyLeft})`}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            {/* Parts Section */}
+      <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>Parts Selection</Typography>
+      
+      {partsEntries.map((entry, index) => (
+        <Box key={index} sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: 2,
+          mb: 2,
+          alignItems: 'center'
+        }}>
+          <FormControl sx={{ flex: 2 }}>
+            <Select
+              value={entry.partId}
+              onChange={handlePartChange(index)}
+              displayEmpty
+            >
+              <MenuItem value="">Select a part</MenuItem>
+              {existingParts.map((part) => (
+                <MenuItem key={part._id} value={`${part.partName}|${part.brandName}`}>
+                  {`${part.partName} - ${part.brandName} (Available: ${part.qtyLeft})`}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            <FormControl sx={{ flex: 1 }}>
-              <FormHelperText sx={{ fontWeight: 500, margin: '10px 0', fontSize: 16 }}>
-                Quantity (Available: {availableQuantity})
-              </FormHelperText>
-              <TextField
-                required
-                type="number"
-                value={quantityUsed}
-                onChange={(e) => setQuantityUsed(parseInt(e.target.value) || 0)}
-                inputProps={{ min: 1, max: availableQuantity }}
-              />
-            </FormControl>
-          </Box>
+          <FormControl sx={{ flex: 1 }}>
+            <TextField
+              type="number"
+              value={entry.quantityUsed}
+              onChange={handleQuantityChange(index)}
+              inputProps={{ 
+                min: 0, 
+                max: availableQuantities[entry.partId] || 0 
+              }}
+              label={`Quantity (Max: ${availableQuantities[entry.partId] || 0})`}
+            />
+          </FormControl>
+          <CustomIconButton
+            title="Remove"
+            icon={<Delete />}
+            backgroundColor="error.light"
+            color="error.dark"
+            handleClick={() => removePartEntry(index)}
+          />
+        </Box>
+      ))}
+        <Button
+          onClick={addPartEntry}
+          startIcon={<Add />}
+          sx={{ mt: 2, mb: 4 }}
+          variant="outlined"
+        >
+          Add Another Part
+        </Button>
 
           <Box sx={{ 
             display: 'flex', 
@@ -285,60 +353,22 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
             </FormControl>
           )}
         </Box>
-
-        <Box 
-          display="flex" 
-          justifyContent="center" 
-          gap={2} 
-          mt={3}
-        >
-          <Tooltip title="Publish Deployment" arrow>
-            <Button
-              type="submit"
-              sx={{
-                bgcolor: 'primary.light',
-                color: 'primary.dark',
-                display: 'flex',
-                alignItems: 'center',
-                width: '120px',
-                p: 1.5,
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease-in-out',
-                borderRadius: 5, // Optional: adjust for button shape
-              }}
-            >
-              <Publish sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-              Publish
-            </Button>
-          </Tooltip>
-          <Tooltip title="Close Deployment" arrow>
-            <Button
-              onClick={() => navigate(`/deployments/`)}
-              sx={{
-                bgcolor: 'error.light',
-                color: 'error.dark',
-                display: 'flex',
-                alignItems: 'center',
-                width: '120px',
-                p: 1.5,
-                '&:hover': {
-                  bgcolor: 'error.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease-in-out',
-                borderRadius: 5, // Optional: adjust for button shape
-              }}
-            >
-              <Close sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-              Close
-            </Button>
-          </Tooltip>
-          </Box>
+        <Box display="flex" justifyContent="center" gap={2} mt={3}>
+          <CustomButton
+            type="submit"
+            title="Publish"
+            backgroundColor="primary.light"
+            color="primary.dark"
+            icon={<Publish />}
+          />
+          <CustomButton
+            title="Close"
+            backgroundColor="error.light"
+            color="error.dark"
+            icon={<Close />}
+            handleClick={() => navigate('/deployments')}
+          />
+        </Box>
       </form>
     </Paper>
   );

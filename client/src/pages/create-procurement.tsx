@@ -38,7 +38,7 @@ const CreateProcurement = () => {
   };
 
   // Handle loading state if needed
-  if (isLoading) {
+  if (isLoading || formLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />

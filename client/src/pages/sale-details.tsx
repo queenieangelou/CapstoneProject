@@ -1,17 +1,24 @@
 import { Delete, Edit } from '@mui/icons-material';
-import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
-import { Box, CircularProgress, Button, Paper, Stack, Tooltip, Typography } from '@pankod/refine-mui';
+import { useGetIdentity, useShow } from '@pankod/refine-core';
+import { Box, CircularProgress, Typography, Paper, Stack } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
+import CustomButton from 'components/common/CustomButton';
+import useHandleDelete from 'utils/usehandleDelete';
 
 const SaleDetails = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
   const { id } = useParams();
-  const { mutate } = useDelete();
   const { queryResult } = useShow();
 
   const { data, isLoading, isError } = queryResult;
   const saleDetails = data?.data ?? {};
+
+  const handleDeleteSale = useHandleDelete({
+    resource: 'sales',
+    onSuccess: () => navigate('/sales'), // Redirect on successful deletion
+    onError: (error) => console.error('Delete error:', error), // Custom error handling
+  });
 
   if (isLoading) {
     return (
@@ -28,23 +35,6 @@ const SaleDetails = () => {
       </Box>
     );
   }
-
-  const handleDeleteSale = () => {
-    const response = window.confirm('Are you sure you want to delete this sale?');
-    if (response) {
-      mutate(
-        {
-          resource: 'sales',
-          id: id as string,
-        },
-        {
-          onSuccess: () => {
-            navigate('/sales');
-          },
-        },
-      );
-    }
-  };
 
   return (
     <Paper 
@@ -112,59 +102,22 @@ const SaleDetails = () => {
             </Typography>
           </Stack>
 
-            <Box 
-              display="flex" 
-              justifyContent="center" 
-              gap={2} 
-              mt={3}
-            >
-              <Tooltip title="Edit Sale" arrow>
-                <Button
-                  onClick={() => navigate(`/sales/edit/${saleDetails._id}`)}
-                  sx={{
-                    bgcolor: 'warning.light',
-                    color: 'warning.dark',
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '120px',
-                    p: 1.5,
-                    '&:hover': {
-                      bgcolor: 'warning.main',
-                      color: 'white',
-                      transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out',
-                    borderRadius: 5, // Optional: adjust for button shape
-                  }}
-                >
-                  <Edit sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-                  Edit
-                </Button>
-              </Tooltip>
-              <Tooltip title="Delete Sale" arrow>
-                <Button
-                  onClick={handleDeleteSale}
-                  sx={{
-                    bgcolor: 'error.light',
-                    color: 'error.dark',
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '120px',
-                    p: 1.5,
-                    '&:hover': {
-                      bgcolor: 'error.main',
-                      color: 'white',
-                      transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out',
-                    borderRadius: 5, // Optional: adjust for button shape
-                  }}
-                >
-                  <Delete sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-                  Delete
-                </Button>
-              </Tooltip>
-            </Box>
+          <Box display="flex" gap={2} mt={3}>
+            <CustomButton
+              title="Edit"
+              backgroundColor="warning.light"
+              color="warning.dark"
+              icon={<Edit />}
+              handleClick={() => navigate(`/sales/edit/${saleDetails._id}`)}
+            />
+            <CustomButton
+              title="Delete"
+              backgroundColor="error.light"
+              color="error.dark"
+              icon={<Delete />}
+              handleClick={() => handleDeleteSale(id as string)} // Pass the id of the sale to delete
+            />
+          </Box>
         </Box>
 
         {/* Creator Information Section */}

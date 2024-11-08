@@ -8,6 +8,7 @@ import {
   PeopleAltOutlined,
   StarOutlineRounded,
   VillaOutlined,
+  WalletOutlined,
   WarehouseOutlined,
 } from '@mui/icons-material';
 import { AuthProvider, Refine } from '@pankod/refine-core';
@@ -215,7 +216,7 @@ const App = () => {
       show: ExpenseDetails,
       create: CreateExpense,
       edit: EditExpense,
-      icon: <AttachMoneyOutlined/>,
+      icon: <WalletOutlined/>,
     },
     {
       name: 'sales', // LINK

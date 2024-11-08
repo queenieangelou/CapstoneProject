@@ -1,19 +1,26 @@
 //client\src\pages\procurement-details.tsx
 import { Delete, Edit } from '@mui/icons-material';
-import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
+import { useGetIdentity, useShow } from '@pankod/refine-core';
 import { Box, CircularProgress, Button, Paper, Stack, Tooltip, Typography } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
+import CustomButton from 'components/common/CustomButton';
+import useHandleDelete from 'utils/usehandleDelete';
 
 const ProcurementDetails = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
   const { id } = useParams();
-  const { mutate } = useDelete();
   const { queryResult } = useShow();
 
   const { data, isLoading, isError } = queryResult;
   const procurementDetails = data?.data ?? {};
 
+  const handleDeleteProcurement = useHandleDelete({
+    resource: 'procurements',
+    onSuccess: () => navigate('/procurements'), // Redirect on successful deletion
+    onError: (error) => console.error('Delete error:', error), // Custom error handling
+  });
+  
   if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -29,23 +36,6 @@ const ProcurementDetails = () => {
       </Box>
     );
   }
-
-  const handleDeleteProcurement = () => {
-    const response = window.confirm('Are you sure you want to delete this procurement?');
-    if (response) {
-      mutate(
-        {
-          resource: 'procurements',
-          id: id as string,
-        },
-        {
-          onSuccess: () => {
-            navigate('/procurements');
-          },
-        },
-      );
-    }
-  };
 
   return (
     <Paper 
@@ -136,59 +126,22 @@ const ProcurementDetails = () => {
             )}
           </Stack>
 
-            <Box 
-              display="flex" 
-              justifyContent="center" 
-              gap={2} 
-              mt={3}
-            >
-              <Tooltip title="Edit Procurement" arrow>
-                <Button
-                  onClick={() => navigate(`/procurements/edit/${procurementDetails._id}`)}
-                  sx={{
-                    bgcolor: 'warning.light',
-                    color: 'warning.dark',
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '120px',
-                    p: 1.5,
-                    '&:hover': {
-                      bgcolor: 'warning.main',
-                      color: 'white',
-                      transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out',
-                    borderRadius: 5, // Optional: adjust for button shape
-                  }}
-                >
-                  <Edit sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-                  Edit
-                </Button>
-              </Tooltip>
-              <Tooltip title="Delete Procurement" arrow>
-                <Button
-                  onClick={handleDeleteProcurement}
-                  sx={{
-                    bgcolor: 'error.light',
-                    color: 'error.dark',
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '120px',
-                    p: 1.5,
-                    '&:hover': {
-                      bgcolor: 'error.main',
-                      color: 'white',
-                      transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out',
-                    borderRadius: 5, // Optional: adjust for button shape
-                  }}
-                >
-                  <Delete sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-                  Delete
-                </Button>
-              </Tooltip>
-            </Box>
+          <Box display="flex" gap={2} mt={3}>
+            <CustomButton
+              title="Edit"
+              backgroundColor="warning.light"
+              color="warning.dark"
+              icon={<Edit />}
+              handleClick={() => navigate(`/procurements/edit/${procurementDetails._id}`)}
+            />
+            <CustomButton
+              title="Delete"
+              backgroundColor="error.light"
+              color="error.dark"
+              icon={<Delete />}
+              handleClick={() => handleDeleteProcurement(id as string)}
+            />
+          </Box>
         </Box>
 
         {/* Creator Information Section */}

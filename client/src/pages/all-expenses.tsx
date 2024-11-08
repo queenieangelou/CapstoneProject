@@ -6,110 +6,53 @@ import { DataGrid, GridColDef, Box, Paper, Typography, CircularProgress, IconBut
 import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
 import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
+import CustomIconButton from 'components/common/CustomIconButton';
+import CustomButton from 'components/common/CustomButton';
+import useDynamicHeight from 'hooks/useDynamicHeight';
+import CustomTable from 'components/common/CustomTable';
+import useHandleDelete from 'utils/usehandleDelete';
 
 const AllExpenses = () => {
   const navigate = useNavigate();
-  const { mutate } = useDelete();
-  const [containerHeight, setContainerHeight] = useState('auto');
-
+  const containerHeight = useDynamicHeight();
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  
   const { 
-    tableQueryResult: { data, isLoading, isError },
-    filters, setFilters,
-    current, setCurrent,
-    pageSize, setPageSize,
-} = useTable({
+    tableQueryResult: { data, isLoading, isError }
+  } = useTable({
     resource: 'expenses',
-    initialPageSize: 5,    // Initial page size
-    initialCurrent: 1,      // Initial page number
-    hasPagination: true,    // Enable pagination
-});
-
-  // Dynamic height calculation
-  useEffect(() => {
-    const calculateHeight = () => {
-      const windowHeight = window.innerHeight;
-      const headerHeight = 64; // Adjust based on your header height
-      const marginAndPadding = 80; // Adjust based on your layout
-      const availableHeight = windowHeight - headerHeight - marginAndPadding;
-      setContainerHeight(`${availableHeight}px`);
-    };
-
-    calculateHeight();
-    window.addEventListener('resize', calculateHeight);
-    return () => window.removeEventListener('resize', calculateHeight);
-  }, []);
+    hasPagination: false,
+  });
 
   const allExpenses = data?.data ?? [];
 
-  const currentFilterValues = useMemo(() => {
-    const logicalFilters = filters.flatMap((item) => ('field' in item ? item : []));
-    return {
-        searchField: logicalFilters.find((item) => item.field === 'searchField')?.value || 'clientName',
-        searchValue: logicalFilters.find((item) => item.field === 'searchValue')?.value || '',
-    };
-}, [filters]);
+  // Filter the data based on search term and date range
+  const filteredRows = useMemo(() => {
+    return allExpenses.filter((expense) => {
+      const expenseDate = new Date(expense.date);
+      const matchesSearch = 
+        !searchTerm || 
+        expense.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        expense.tin.toString().includes(searchTerm) ||
+        expense.seq.toString().includes(searchTerm);
+        
+      const matchesDateRange = 
+        (!startDate || expenseDate >= new Date(startDate)) &&
+        (!endDate || expenseDate <= new Date(endDate));
 
-// Available search fields
-const searchFields = [
-    { value: 'clientName', label: 'Client Name' },
-    { value: 'tin', label: 'Tin' },
-    { value: 'seq', label: 'Sequence' },
-];
+      return matchesSearch && matchesDateRange;
+    });
+  }, [allExpenses, searchTerm, startDate, endDate]);
 
-// Handle search
-const handleSearch = (field: string, value: string) => {
-    setFilters([
-        {
-            field: 'searchField',
-            operator: 'eq',
-            value: field,
-        },
-        {
-            field: 'searchValue',
-            operator: 'contains',
-            value: value ? value : undefined,
-        },
-    ]);
-};
-
-// Filter rows based on search criteria
-const filteredRows = allExpenses.filter((expense) => {
-    if (!currentFilterValues.searchValue) return true;
-
-    const searchValue = currentFilterValues.searchValue.toLowerCase();
-    const field = currentFilterValues.searchField;
-
-    switch (field) {
-        case 'tin':
-          return expense.tin?.toString().includes(searchValue);
-        case 'seq':
-            return expense.seq?.toString().includes(searchValue);
-        default:
-            return expense[field]?.toLowerCase().includes(searchValue);
-    }
-});
-
-  const handleDeleteExpense = (id: string) => {
-    const confirmDeletion = (message: string) => window.confirm(message);
-    if (confirmDeletion('Are you sure you want to delete this expense?')) {
-      mutate(
-        {
-          resource: 'expenses',
-          id,
-        },
-        {
-          onSuccess: () => {
-            alert('Expense deleted successfully!');
-            navigate('/expenses');
-          },
-          onError: (error) => {
-            alert('Failed to delete expense.');
-            console.error('Delete error:', error);
-          },
-        },
-      );
-    }
-  };
+  const handleDeleteExpense = useHandleDelete({
+    resource: 'sales',
+    onSuccess: () => console.log('Custom success callback'),
+    onError: (error) => console.log('Custom error callback', error),
+  });
 
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -161,72 +104,30 @@ const filteredRows = allExpenses.filter((expense) => {
       width: 120,
       renderCell: (params) => (
         <Stack direction="row" spacing={1}>
-          <Tooltip title="View">
-            <IconButton
-              onClick={() => navigate(`/expenses/show/${params.row.id}`)}
-              size="small"
-              sx={{
-                  bgcolor: 'primary.light',
-                  color: 'primary.dark',
-                  p: 0.5,
-                  width: 32, // Set fixed width
-                  height: 32, // Set fixed height
-                  '&:hover': {
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    transform: 'scale(1.05)',
-                  },
-                  transition: 'all 0.2s ease-in-out'
-                }}
-            >
-              <Visibility />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              onClick={() => navigate(`/expenses/edit/${params.row.id}`)}
-              size="small"
-              sx={{
-                  bgcolor: 'warning.light',
-                  color: 'warning.dark',
-                  p: 0.5,
-                  width: 32, // Set fixed width
-                  height: 32, // Set fixed height
-                  '&:hover': {
-                    bgcolor: 'warning.main',
-                    color: 'white',
-                    transform: 'scale(1.05)',
-                  },
-                  transition: 'all 0.2s ease-in-out'
-                }}
-            >
-              <Edit />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              onClick={() => handleDeleteExpense(params.row.id)}
-              size="small"
-              sx={{
-                  bgcolor: 'error.light',
-                  color: 'error.dark',
-                  p: 0.5,
-                  width: 32, // Set fixed width
-                  height: 32, // Set fixed height
-                  '&:hover': {
-                    bgcolor: 'error.main',
-                    color: 'white',
-                    transform: 'scale(1.05)',
-                  },
-                  transition: 'all 0.2s ease-in-out'
-                }}
-            >
-              <Delete />
-            </IconButton>
-          </Tooltip>
+          <CustomIconButton
+            title="View"
+            icon={<Visibility />}
+            backgroundColor="primary.light"
+            color="primary.dark"
+            handleClick={() => navigate(`/expenses/show/${params.row.id}`)}
+          />
+          <CustomIconButton
+            title="Edit"
+            icon={<Edit />}
+            backgroundColor="warning.light"
+            color="warning.dark"
+            handleClick={() => navigate(`/expenses/edit/${params.row.id}`)}
+          />
+          <CustomIconButton
+            title="Delete"
+            icon={<Delete />}
+            backgroundColor="error.light"
+            color="error.dark"
+            handleClick={() => handleDeleteExpense(params.row.id)}
+          />
         </Stack>
       ),
-    },
+    }
   ];
 
   const rows = filteredRows.map((expense) => ({
@@ -288,62 +189,49 @@ const filteredRows = allExpenses.filter((expense) => {
       <Box sx={{ 
         p: 2,
         display: 'flex', 
-        justifyContent: 'space-between', 
-        gap: 2, 
-        flexDirection: { xs: 'column', sm: 'row' } 
+        flexDirection: {xs: 'column', md: 'row'},
+        gap: 2,
+        alignItems: {xs: 'stretch', md: 'center'},
+        justifyContent: 'space-between'
       }}>
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 1, 
-          flexDirection: { xs: 'column', sm: 'row' } 
-        }}>
-          <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Search By</InputLabel>
-            <Select
-              size="small"
-              value={currentFilterValues.searchField}
-              label="Search By"
-              onChange={(e) => handleSearch(e.target.value, currentFilterValues.searchValue)}
-            >
-              {searchFields.map((field) => (
-                <MenuItem key={field.value} value={field.value}>
-                  {field.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          spacing={2} 
+          sx={{ flex: 1 }}
+        >
           <TextField
-            variant="outlined"
             size="small"
-            placeholder={`Search by ${searchFields.find(f => f.value === currentFilterValues.searchField)?.label}`}
-            value={currentFilterValues.searchValue}
-            onChange={(e) => handleSearch(currentFilterValues.searchField, e.currentTarget.value)}
-            sx={{ minWidth: '250px' }}
+            label="Search"
+            placeholder="Search by supplier, TIN, or sequence"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ minWidth: '200px' }}
           />
-        </Box>
-          <Tooltip title="Add Expense" arrow>
-            <Button
-            onClick={() => navigate(`/expenses/create`)}
-            sx={{
-                bgcolor: 'primary.light',
-                color: 'primary.dark',
-                display: 'flex',
-                alignItems: 'center',
-                width: '120px',
-                p: 1.5,
-                '&:hover': {
-                bgcolor: 'primary.main',
-                color: 'white',
-                transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease-in-out',
-                borderRadius: 5, // Optional: adjust for button shape
-            }}
-            >
-            <Add sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-            Add
-            </Button>
-        </Tooltip>
+          <TextField
+            size="small"
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            size="small"
+            label="End Date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Stack>
+
+        <CustomButton
+          title="Add"
+          backgroundColor="primary.light"
+          color="primary.dark"
+          icon={<Add />}
+          handleClick={() => navigate(`/expenses/create`)}
+        />
       </Box>
 
       <Box sx={{ 
@@ -351,25 +239,10 @@ const filteredRows = allExpenses.filter((expense) => {
         width: '100%',
         overflow: 'hidden'
       }}>
-        <DataGrid
+        <CustomTable
           rows={rows}
           columns={columns}
-          pageSize={pageSize}
-          page={current - 1}
-          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-          onPageChange={(newPage) => setCurrent(newPage + 1)}
-          rowsPerPageOptions={[5, 10, 25, 50, 100]}
-          paginationMode="server"
-          rowCount={data?.total ?? 0}
-          checkboxSelection={false}
-          disableSelectionOnClick
-          autoHeight={false}
-          sx={{
-            height: '100%',
-            '& .MuiDataGrid-main': {
-                overflow: 'hidden'
-            }
-          }}
+          containerHeight="100%"
         />
       </Box>
     </Paper>

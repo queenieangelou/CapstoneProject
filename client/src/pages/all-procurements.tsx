@@ -6,113 +6,53 @@ import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
 import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete } from '@pankod/refine-core';
+import CustomIconButton from 'components/common/CustomIconButton';
+import CustomButton from 'components/common/CustomButton';
+import useDynamicHeight from 'hooks/useDynamicHeight';
+import CustomTable from 'components/common/CustomTable';
+import useHandleDelete from 'utils/usehandleDelete';
 
 const AllProcurements = () => {
-  const { mutate } = useDelete();
   const navigate = useNavigate();
-  const [containerHeight, setContainerHeight] = useState('auto');
+  const containerHeight = useDynamicHeight();
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   
   const { 
-    tableQueryResult: { data, isLoading, isError },
-    filters, setFilters,
-    current, setCurrent,
-    pageSize, setPageSize,
-} = useTable({
+    tableQueryResult: { data, isLoading, isError }
+  } = useTable({
     resource: 'procurements',
-    initialPageSize: 5,    // Initial page size
-    initialCurrent: 1,      // Initial page number
-    hasPagination: true,    // Enable pagination
-});
+    hasPagination: false,
+  });
 
-    // Dynamic height calculation
-    useEffect(() => {
-        const calculateHeight = () => {
-          const windowHeight = window.innerHeight;
-          const headerHeight = 64; // Adjust based on your header height
-          const marginAndPadding = 80; // Adjust based on your layout
-          const availableHeight = windowHeight - headerHeight - marginAndPadding;
-          setContainerHeight(`${availableHeight}px`);
-        };
-    
-        calculateHeight();
-        window.addEventListener('resize', calculateHeight);
-        return () => window.removeEventListener('resize', calculateHeight);
-      }, []);
-    
   const allProcurements = data?.data ?? [];
 
-  const currentFilterValues = useMemo(() => {
-    const logicalFilters = filters.flatMap((item) => ('field' in item ? item : []));
-    return {
-        searchField: logicalFilters.find((item) => item.field === 'searchField')?.value || 'supplierName',
-        searchValue: logicalFilters.find((item) => item.field === 'searchValue')?.value || '',
-    };
-}, [filters]);
+  // Filter the data based on search term and date range
+  const filteredRows = useMemo(() => {
+    return allProcurements.filter((procurement) => {
+      const procurementDate = new Date(procurement.date);
+      const matchesSearch = 
+        !searchTerm || 
+        procurement.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        procurement.tin.toString().includes(searchTerm) ||
+        procurement.seq.toString().includes(searchTerm);
+        
+      const matchesDateRange = 
+        (!startDate || procurementDate >= new Date(startDate)) &&
+        (!endDate || procurementDate <= new Date(endDate));
 
-// Available search fields
-const searchFields = [
-    { value: 'supplierName', label: 'Supplier Name' },
-    { value: 'partName', label: 'Part Name' },
-    { value: 'brandName', label: 'Brand Name' },
-    { value: 'seq', label: 'Sequence' },
-];
+      return matchesSearch && matchesDateRange;
+    });
+  }, [allProcurements, searchTerm, startDate, endDate]);
 
-// Handle search
-const handleSearch = (field: string, value: string) => {
-    setFilters([
-        {
-            field: 'searchField',
-            operator: 'eq',
-            value: field,
-        },
-        {
-            field: 'searchValue',
-            operator: 'contains',
-            value: value ? value : undefined,
-        },
-    ]);
-};
-
-// Filter rows based on search criteria
-const filteredRows = allProcurements.filter((procurement) => {
-    if (!currentFilterValues.searchValue) return true;
-
-    const searchValue = currentFilterValues.searchValue.toLowerCase();
-    const field = currentFilterValues.searchField;
-
-    switch (field) {
-        case 'partName':
-            return procurement.part?.partName?.toLowerCase().includes(searchValue);
-        case 'brandName':
-            return procurement.part?.brandName?.toLowerCase().includes(searchValue);
-        case 'seq':
-            return procurement.seq?.toString().includes(searchValue);
-        default:
-            return procurement[field]?.toLowerCase().includes(searchValue);
-    }
-});
-
-    const handleDeleteProcurement = (id: string) => {
-        const confirmDeletion = (message: string) => window.confirm(message);
-        if (confirmDeletion('Are you sure you want to delete this procurement?')) {
-        mutate(
-            {
-            resource: 'procurements',
-            id,
-            },
-            {
-            onSuccess: () => {
-                alert('Procurement deleted successfully!');
-                navigate('/procurements');
-            },
-            onError: (error) => {
-                alert('Failed to delete procurement.');
-                console.error('Delete error:', error);
-            },
-            },
-        );
-        }
-    };
+    const handleDeleteProcurement = useHandleDelete({
+      resource: 'sales',
+      onSuccess: () => console.log('Custom success callback'),
+      onError: (error) => console.log('Custom error callback', error),
+    });
 
     const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -160,78 +100,36 @@ const filteredRows = allProcurements.filter((procurement) => {
       )
     },
     {
-        field: 'actions',
-        headerName: 'Actions',
-        align: 'center',
-        width: 120,
-        renderCell: (params) => (
+      field: 'actions',
+      headerName: 'Actions',
+      align: 'center',
+      width: 120,
+      renderCell: (params) => (
         <Stack direction="row" spacing={1}>
-            <Tooltip title="View">
-            <IconButton
-                onClick={() => navigate(`/procurements/show/${params.row.id}`)}
-                size="small"
-                sx={{
-                    bgcolor: 'primary.light',
-                    color: 'primary.dark',
-                    p: 1.5,
-                    width: 32, // Set fixed width
-                    height: 32, // Set fixed height
-                    '&:hover': {
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out'
-                    }}
-            >
-                <Visibility />
-            </IconButton>
-            </Tooltip>
-            <Tooltip title="Edit">
-            <IconButton
-                onClick={() => navigate(`/procurements/edit/${params.row.id}`)}
-                size="small"
-                sx={{
-                    bgcolor: 'warning.light',
-                    color: 'warning.dark',
-                    p: 1.5,
-                    width: 32, // Set fixed width
-                    height: 32, // Set fixed height
-                    '&:hover': {
-                        bgcolor: 'warning.main',
-                        color: 'white',
-                        transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out'
-                    }}
-            >
-                <Edit />
-            </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete">
-            <IconButton
-                onClick={() => handleDeleteProcurement(params.row.id)}
-                size="small"
-                sx={{
-                    bgcolor: 'error.light',
-                    color: 'error.dark',
-                    p: 1.5,
-                    width: 32, // Set fixed width
-                    height: 32, // Set fixed height
-                    '&:hover': {
-                        bgcolor: 'error.main',
-                        color: 'white',
-                        transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out'
-                    }}
-            >
-                <Delete />
-            </IconButton>
-            </Tooltip>
+          <CustomIconButton
+            title="View"
+            icon={<Visibility />}
+            backgroundColor="primary.light"
+            color="primary.dark"
+            handleClick={() => navigate(`/procurements/show/${params.row.id}`)}
+          />
+          <CustomIconButton
+            title="Edit"
+            icon={<Edit />}
+            backgroundColor="warning.light"
+            color="warning.dark"
+            handleClick={() => navigate(`/procurements/edit/${params.row.id}`)}
+          />
+          <CustomIconButton
+            title="Delete"
+            icon={<Delete />}
+            backgroundColor="error.light"
+            color="error.dark"
+            handleClick={() => handleDeleteProcurement(params.row.id)}
+          />
         </Stack>
-        ),
-    },
+      ),
+    }
 ];
 
     const rows = filteredRows.map((procurement) => ({
@@ -293,91 +191,63 @@ const filteredRows = allProcurements.filter((procurement) => {
             </Typography>
 
             <Box sx={{ 
-                p: 2,
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                gap: 2, 
-                flexDirection: { xs: 'column', sm: 'row' } 
-            }}>
-                <Box sx={{ 
-                display: 'flex', 
-                gap: 1, 
-                flexDirection: { xs: 'column', sm: 'row' } 
-                }}>
-                <FormControl sx={{ minWidth: 200 }}>
-                <InputLabel>Search By</InputLabel>
-                    <Select
-                        size="small"
-                        value={currentFilterValues.searchField}
-                        label="Search By"
-                        onChange={(e) => handleSearch(e.target.value, currentFilterValues.searchValue)}
-                    >
-                        {searchFields.map((field) => (
-                            <MenuItem key={field.value} value={field.value}>
-                                {field.label}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    </FormControl>
-                    <TextField
-                        variant="outlined"
-                        size="small"
-                        placeholder={`Search by ${searchFields.find(f => f.value === currentFilterValues.searchField)?.label}`}
-                        value={currentFilterValues.searchValue}
-                        onChange={(e) => handleSearch(currentFilterValues.searchField, e.currentTarget.value)}
-                        sx={{ minWidth: '250px' }}
-                    />
-                </Box>
-                <Tooltip title="Add Deployment" arrow>
-                    <Button
-                    onClick={() => navigate(`/procurements/create`)}
-                    sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.dark',
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '120px',
-                        p: 1.5,
-                        '&:hover': {
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        transform: 'scale(1.05)',
-                        },
-                        transition: 'all 0.2s ease-in-out',
-                        borderRadius: 5, // Optional: adjust for button shape
-                    }}
-                    >
-                    <Add sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-                    Add
-                    </Button>
-                </Tooltip>
-            </Box>
+        p: 2,
+        display: 'flex', 
+        flexDirection: {xs: 'column', md: 'row'},
+        gap: 2,
+        alignItems: {xs: 'stretch', md: 'center'},
+        justifyContent: 'space-between'
+      }}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          spacing={2} 
+          sx={{ flex: 1 }}
+        >
+          <TextField
+            size="small"
+            label="Search"
+            placeholder="Search by supplier, TIN, or sequence"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ minWidth: '200px' }}
+          />
+          <TextField
+            size="small"
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            size="small"
+            label="End Date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Stack>
 
-        <Box sx={{ 
-                flex: 1,
-                width: '100%',
-                overflow: 'hidden'
-            }}>
-                <DataGrid
-                    rows={rows}
-                    columns={columns}
-                    pageSize={pageSize}
-                    page={current - 1}
-                    onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                    onPageChange={(newPage) => setCurrent(newPage + 1)}
-                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                    paginationMode="server"
-                    rowCount={data?.total ?? 0}
-                    checkboxSelection={false}
-                    disableSelectionOnClick
-                    autoHeight={false}
-                    sx={{
-                        height: '100%',
-                        '& .MuiDataGrid-main': {
-                            overflow: 'hidden'
-                        }
-                    }}
-                />
+        <CustomButton
+          title="Add"
+          backgroundColor="primary.light"
+          color="primary.dark"
+          icon={<Add />}
+          handleClick={() => navigate(`/procurements/create`)}
+        />
+    </Box>
+
+        <Box sx={{
+          flex: 1,
+          width: '100%',
+          overflow: 'hidden'
+        }}>
+        <CustomTable
+          rows={rows}
+          columns={columns}
+          containerHeight="100%"
+        />
         </Box>
     </Paper>
     );
