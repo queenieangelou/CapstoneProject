@@ -8,13 +8,25 @@ dotenv.config();
 
 const getAllDeployments = async (req, res) => {
   const {
-    _end, _order, _start, _sort, supplierName_like = '',
+    _end, _order, _start, _sort, searchField, searchValue = '',
   } = req.query;
 
   const query = {};
 
-  if (supplierName_like) {
-    query.supplierName = { $regex: supplierName_like, $options: 'i' };
+  // Handle search based on various fields
+  if (searchValue) {
+    switch (searchField) {
+      case 'clientName':
+      case 'vehicleModel':
+        query[searchField] = { $regex: searchValue, $options: 'i' };
+        break;
+      case 'seq':
+        // Handle numeric search for sequence
+        if (!isNaN(searchValue)) {
+          query.seq = parseInt(searchValue);
+        }
+        break;
+    }
   }
 
   try {
@@ -25,7 +37,7 @@ const getAllDeployments = async (req, res) => {
       .limit(parseInt(_end) - parseInt(_start))
       .skip(parseInt(_start))
       .sort({ [_sort]: _order })
-      .populate('part', 'partName brandName');
+      .populate('parts.part'); // Populate the parts array
 
     res.header('x-total-count', count);
     res.header('Access-Control-Expose-Headers', 'x-total-count');
@@ -50,14 +62,21 @@ const getDeploymentDetail = async (req, res) => {
 
     const deploymentExists = await Deployment.findOne({ _id: id })
       .populate('creator')
-      .populate('part')
+      .populate({
+        path: 'parts.part',
+        select: 'partName brandName qtyLeft' // Include any other part fields you need
+      })
       .session(session);
 
     if (deploymentExists) {
       const response = {
         ...deploymentExists.toObject(),
-        partName: deploymentExists.part ? deploymentExists.part.partName : null,
-        brandName: deploymentExists.part ? deploymentExists.part.brandName : null,
+        parts: deploymentExists.parts.map(partEntry => ({
+          ...partEntry.toObject(),
+          partName: partEntry.part?.partName || null,
+          brandName: partEntry.part?.brandName || null,
+          qtyLeft: partEntry.part?.qtyLeft || 0,
+        }))
       };
       res.status(200).json(response);
     } else {
@@ -79,8 +98,7 @@ const createDeployment = async (req, res) => {
     clientName, 
     vehicleModel, 
     arrivalDate,
-    part, // This is coming in "partName|brandName" format
-    quantityUsed,
+    parts, // Array of {part: "partName|brandName", quantityUsed: number}
     deploymentStatus,
     deploymentDate,
     releaseStatus,
@@ -92,31 +110,38 @@ const createDeployment = async (req, res) => {
 
   try {
     const user = await User.findOne({ email }).session(session);
-    if (!user) {
-      throw new Error('User not found');
-    }
+    if (!user) throw new Error('User not found');
 
-    // Split the part string into partName and brandName
-    const [partName, brandName] = part.split('|');
-    
-    if (!partName || !brandName) {
-      throw new Error('Invalid part format. Expected "partName|brandName"');
-    }
+    // Process all parts
+    const processedParts = await Promise.all(parts.map(async (partEntry) => {
+      // Split the part string into partName and brandName
+      const [partName, brandName] = partEntry.part.split('|');
+      
+      if (!partName || !brandName) {
+        throw new Error('Invalid part format. Expected "partName|brandName"');
+      }
 
-    // Find part using partName and brandName
-    const selectedPart = await Part.findOne({
-      partName: partName,
-      brandName: brandName
-    }).session(session);
+      // Find part using partName and brandName
+      const selectedPart = await Part.findOne({
+        partName: partName,
+        brandName: brandName
+      }).session(session);
 
-    if (!selectedPart) {
-      throw new Error(`Part with name "${partName}" and brand "${brandName}" not found`);
-    }
+      if (!selectedPart) {
+        throw new Error(`Part with name "${partName}" and brand "${brandName}" not found`);
+      }
 
-    // Validate quantity
-    if (selectedPart.qtyLeft < quantityUsed) {
-      throw new Error(`Insufficient quantity available. Requested: ${quantityUsed}, Available: ${selectedPart.qtyLeft}`);
-    }
+      // Validate quantity
+      if (selectedPart.qtyLeft < partEntry.quantityUsed) {
+        throw new Error(`Insufficient quantity available for ${partName}. Requested: ${partEntry.quantityUsed}, Available: ${selectedPart.qtyLeft}`);
+      }
+
+      return {
+        part: selectedPart._id,
+        quantityUsed: parseInt(partEntry.quantityUsed),
+        selectedPart // Keep reference to update quantity later
+      };
+    }));
 
     // Create new deployment
     const newDeployment = new Deployment({
@@ -125,8 +150,10 @@ const createDeployment = async (req, res) => {
       clientName,
       vehicleModel,
       arrivalDate,
-      part: selectedPart._id,
-      quantityUsed: parseInt(quantityUsed),
+      parts: processedParts.map(({ part, quantityUsed }) => ({
+        part,
+        quantityUsed
+      })),
       deploymentStatus: deploymentStatus || false,
       deploymentDate,
       releaseStatus: releaseStatus || false,
@@ -137,12 +164,14 @@ const createDeployment = async (req, res) => {
     // Save deployment
     await newDeployment.save({ session });
 
-    // Update part quantity
-    selectedPart.qtyLeft -= parseInt(quantityUsed);
-    if (selectedPart.deployments) {
-      selectedPart.deployments.push(newDeployment._id);
-    }
-    await selectedPart.save({ session });
+    // Update quantities for all parts
+    await Promise.all(processedParts.map(async ({ selectedPart, quantityUsed }) => {
+      selectedPart.qtyLeft -= quantityUsed;
+      if (selectedPart.deployments) {
+        selectedPart.deployments.push(newDeployment._id);
+      }
+      await selectedPart.save({ session });
+    }));
 
     // Link deployment to user's deployments
     if (user.allDeployments) {
@@ -153,7 +182,7 @@ const createDeployment = async (req, res) => {
     await session.commitTransaction();
     
     const populatedDeployment = await Deployment.findById(newDeployment._id)
-      .populate('part')
+      .populate('parts.part')
       .populate('creator');
     
     res.status(201).json({ 
@@ -162,7 +191,7 @@ const createDeployment = async (req, res) => {
     });
   } catch (error) {
     await session.abortTransaction();
-    console.log('Error creating deployment:', error); // Add this for debugging
+    console.log('Error creating deployment:', error);
     res.status(500).json({ message: 'Failed to create deployment', error: error.message });
   } finally {
     session.endSession();
@@ -181,8 +210,7 @@ const updateDeployment = async (req, res) => {
     clientName,
     vehicleModel,
     arrivalDate,
-    part,
-    quantityUsed
+    parts
   } = req.body;
 
   const session = await mongoose.startSession();
@@ -190,14 +218,17 @@ const updateDeployment = async (req, res) => {
 
   try {
     // Find the existing deployment
-    const deployment = await Deployment.findById(id).populate('part').session(session);
+    const deployment = await Deployment.findById(id)
+      .populate('parts.part')
+      .session(session);
+
     if (!deployment) {
-      return res.status(404).json({ message: 'Procurement not found' });
+      return res.status(404).json({ message: 'Deployment not found' });
     }
 
     // Check if only deployment and release statuses and dates are being updated
     const isStatusUpdateOnly = !(
-      seq || date || clientName || vehicleModel || arrivalDate || part || quantityUsed
+      seq || date || clientName || vehicleModel || arrivalDate || parts
     );
 
     if (isStatusUpdateOnly) {
@@ -209,16 +240,18 @@ const updateDeployment = async (req, res) => {
         // If deployment status is set to false, also set release status to false
         if (deployment.deploymentStatus === false) {
           deployment.releaseStatus = false;
-          deployment.releaseDate = null; // Optionally clear the release date
+          deployment.releaseDate = null;
         }
       }
 
-      // Allow release status and date update only if deployment status is `true`
+      // Allow release status and date update only if deployment status is true
       if (deployment.deploymentStatus === true && releaseStatus !== undefined) {
         deployment.releaseStatus = releaseStatus;
         deployment.releaseDate = releaseDate;
       } else if (releaseStatus !== undefined) {
-        return res.status(404).json({ message: 'Release status cannot be updated until deployment is complete.' });
+        return res.status(400).json({ 
+          message: 'Release status cannot be updated until deployment is complete.' 
+        });
       }
 
       await deployment.save({ session });
@@ -231,69 +264,95 @@ const updateDeployment = async (req, res) => {
       return;
     }
 
-    // Proceed with full validation and updates if additional fields are present
-    const [partName, brandName] = part.split('|');
-    if (!partName || !brandName) {
-      return res.status(404).json({ message: 'Invalid part format. Expected "partName|brandName"' });
+    // Handle parts updates
+    if (parts) {
+      // Create a map of existing parts for easier lookup
+      const existingPartsMap = new Map(
+        deployment.parts.map(p => [p.part._id.toString(), p])
+      );
+
+      // Process each new part
+      for (const newPartData of parts) {
+        const [partName, brandName] = newPartData.part.split('|');
+        if (!partName || !brandName) {
+          return res.status(400).json({ 
+            message: 'Invalid part format. Expected "partName|brandName"' 
+          });
+        }
+
+        // Find the part in database
+        const partDoc = await Part.findOne({
+          partName: partName,
+          brandName: brandName
+        }).session(session);
+
+        if (!partDoc) {
+          return res.status(404).json({ 
+            message: `Part with name "${partName}" and brand "${brandName}" not found` 
+          });
+        }
+
+        const partId = partDoc._id.toString();
+        const existingPart = existingPartsMap.get(partId);
+        const newQuantity = parseInt(newPartData.quantityUsed);
+
+        if (existingPart) {
+          // Update existing part quantity
+          const quantityDifference = newQuantity - existingPart.quantityUsed;
+          if (partDoc.qtyLeft < quantityDifference) {
+            return res.status(400).json({
+              message: `Insufficient quantity available for ${partName}. Need ${quantityDifference} more, but only ${partDoc.qtyLeft} available`
+            });
+          }
+          partDoc.qtyLeft -= quantityDifference;
+          existingPartsMap.delete(partId);
+        } else {
+          // Add new part
+          if (partDoc.qtyLeft < newQuantity) {
+            return res.status(400).json({
+              message: `Insufficient quantity available for ${partName}. Requested: ${newQuantity}, Available: ${partDoc.qtyLeft}`
+            });
+          }
+          partDoc.qtyLeft -= newQuantity;
+        }
+
+        await partDoc.save({ session });
+      }
+
+      // Return quantities for removed parts
+      for (const [, removedPart] of existingPartsMap) {
+        const partDoc = await Part.findById(removedPart.part._id).session(session);
+        partDoc.qtyLeft += removedPart.quantityUsed;
+        await partDoc.save({ session });
+      }
+
+      // Update deployment parts array
+      deployment.parts = await Promise.all(parts.map(async (partData) => {
+        const [partName, brandName] = partData.part.split('|');
+        const partDoc = await Part.findOne({
+          partName: partName,
+          brandName: brandName
+        }).session(session);
+        
+        return {
+          part: partDoc._id,
+          quantityUsed: parseInt(partData.quantityUsed)
+        };
+      }));
     }
 
-    const newPart = await Part.findOne({
-      partName: partName,
-      brandName: brandName
-    }).session(session);
-
-    if (!newPart) {
-      return res.status(404).json({ message: `Part with name "${partName}" and brand "${brandName}" not found` });
-    }
-
-    const oldPart = deployment.part;
-    const oldQuantityUsed = deployment.quantityUsed;
-    const newQuantityUsed = parseInt(quantityUsed);
-
-    if (oldPart._id.toString() === newPart._id.toString()) {
-      const quantityDifference = newQuantityUsed - oldQuantityUsed;
-
-      if (newPart.qtyLeft < quantityDifference) {
-        return res.status(404).json({ message: `Insufficient quantity available. Need ${quantityDifference} more, but only ${newPart.qtyLeft} available` });
-      }
-
-      newPart.qtyLeft -= quantityDifference;
-      await newPart.save({ session });
-    } else {
-      oldPart.qtyLeft += oldQuantityUsed;
-      await oldPart.save({ session });
-
-      if (newPart.qtyLeft < newQuantityUsed) {
-        return res.status(404).json({ message: `Insufficient quantity available. Requested: ${newQuantityUsed}, Available: ${newPart.qtyLeft}` });
-      }
-
-      newPart.qtyLeft -= newQuantityUsed;
-      await newPart.save({ session });
-
-      if (oldPart.deployments) {
-        oldPart.deployments.pull(deployment._id);
-        await oldPart.save({ session });
-      }
-
-      if (newPart.deployments) {
-        newPart.deployments.push(deployment._id);
-        await newPart.save({ session });
-      }
-    }
-
+    // Update other deployment fields
     deployment.seq = seq;
     deployment.date = date;
     deployment.clientName = clientName;
     deployment.vehicleModel = vehicleModel;
     deployment.arrivalDate = arrivalDate;
-    deployment.part = newPart._id;
-    deployment.quantityUsed = newQuantityUsed;
 
+    // Update status fields if provided
     if (deploymentStatus !== undefined) {
       deployment.deploymentStatus = deploymentStatus;
       deployment.deploymentDate = deploymentDate;
 
-      // If deployment status is set to false, also set release status to false
       if (deployment.deploymentStatus === false) {
         deployment.releaseStatus = false;
         deployment.releaseDate = null;
@@ -309,7 +368,7 @@ const updateDeployment = async (req, res) => {
     await session.commitTransaction();
 
     const populatedDeployment = await Deployment.findById(deployment._id)
-      .populate('part')
+      .populate('parts.part')
       .populate('creator');
 
     res.status(200).json({
@@ -319,8 +378,11 @@ const updateDeployment = async (req, res) => {
 
   } catch (error) {
     await session.abortTransaction();
-    console.log('Error updating deployment:', error);
-    res.status(500).json({ message: 'Failed to update deployment', error: error.message });
+    console.error('Error updating deployment:', error);
+    res.status(500).json({ 
+      message: 'Failed to update deployment', 
+      error: error.message 
+    });
   } finally {
     session.endSession();
   }

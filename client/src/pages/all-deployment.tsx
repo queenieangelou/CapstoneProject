@@ -20,6 +20,7 @@ const AllDeployments = () => {
         initialPageSize: 5,    // Initial page size
         initialCurrent: 1,      // Initial page number
         hasPagination: true,    // Enable pagination
+        
     });
 
     const [containerHeight, setContainerHeight] = useState('auto');
@@ -53,8 +54,6 @@ const AllDeployments = () => {
     const searchFields = [
         { value: 'clientName', label: 'Client Name' },
         { value: 'vehicleModel', label: 'Vehicle Model' },
-        { value: 'partName', label: 'Part Name' },
-        { value: 'brandName', label: 'Brand Name' },
         { value: 'seq', label: 'Sequence' },
     ];
 
@@ -167,9 +166,7 @@ const AllDeployments = () => {
         { field: 'clientName', headerName: 'Client Name', flex: 1 },
         { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1 },
         { field:  'arrivalDate', headerName: 'arrivalDate', flex: 1 },
-        { field: 'partName', headerName: 'Part', flex: 1 },
-        { field: 'brandName', headerName: 'Brand', flex: 1 },
-        { field: 'quantityUsed', headerName: 'Quantity', type: 'number', flex: 1 },
+        { field: 'partsCount', headerName: 'Parts Count', flex: 1 },
         { 
             field: 'deploymentStatus', 
             headerName: 'Deployed',
@@ -287,9 +284,7 @@ const AllDeployments = () => {
         clientName: deployment.clientName,
         vehicleModel: deployment.vehicleModel,
         arrivalDate: new Date(deployment.arrivalDate).toLocaleDateString(),
-        partName: deployment.part?.partName,
-        brandName: deployment.part?.brandName,
-        quantityUsed: deployment.quantityUsed,
+        partsCount: deployment.parts?.length > 0 ? deployment.parts.length : 'TBA',
         deploymentStatus: deployment.deploymentStatus,
         deploymentDate: deployment.deploymentDate ? new Date(deployment.deploymentDate).toLocaleDateString() : 'N/A',
         releaseStatus: deployment.releaseStatus,

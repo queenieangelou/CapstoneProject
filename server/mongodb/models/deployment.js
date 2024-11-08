@@ -22,15 +22,18 @@ const DeploymentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  part: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Part',
-    required: true,
-  },
-  quantityUsed: {
-    type: Number,
-    required: true,
-  },
+  parts: [{
+    part: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Part',
+    },
+    quantityUsed: {
+      type: Number,
+      required: function() {
+        return this.part != null;
+      }
+    }
+  }],
   deploymentStatus: {
     type: Boolean,
     default: false,
