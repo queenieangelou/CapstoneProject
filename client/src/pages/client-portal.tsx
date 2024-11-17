@@ -1,32 +1,41 @@
-// client/src/pages/client-portal.tsx
 import React, { useState } from 'react';
 import { 
-  Card,
-  CardContent,
-  Typography,
   TextField,
   Button,
-  Grid,
   Box,
   Alert,
-  Container,
   CircularProgress,
-  Paper
+  Paper,
+  Grid,
+  Typography,
+  Chip
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import Header from 'components/client-portal/Header';
 import Footer from 'components/client-portal/Footer';
 
+interface Part {
+  partName: string;
+  brandName: string;
+  quantityUsed: number;
+}
 
 interface SearchResult {
+  seq: number;
+  date: string;
   clientName: string;
-  vehicle: string;
-  status: string;
-  estimatedCompletion: string;
+  vehicleModel: string;
+  arrivalDate: string;
+  parts: Part[];
+  releaseStatus: boolean;
+  releaseDate: string | null;
+  repairStatus: string;
+  repairedDate: string | null;
+  trackCode: string;
 }
 
 const ClientPortal: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [trackCode, setTrackCode] = useState('');
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,21 +46,26 @@ const ClientPortal: React.FC = () => {
       setError(null);
       setSearchResult(null);
   
-      const response = await fetch(`http://localhost:8080/api/v1/clientPortal/search?searchQuery=${searchQuery}`, {
+      const response = await fetch(`http://localhost:8080/api/v1/clientPortal/search?trackCode=${encodeURIComponent(trackCode)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
       
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.success) {
         setSearchResult(data.data);
       } else {
-        setError(data.message || 'Error searching for client');
+        setError(data.message || 'Error searching for vehicle');
       }
     } catch (error: any) {
+      console.error('Search error:', error);
       setError(error.message || 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -59,103 +73,153 @@ const ClientPortal: React.FC = () => {
   };
   
   const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' && searchQuery) {
+    if (event.key === 'Enter' && trackCode) {
       handleSearch();
     }
   };
 
   return (
-    <Box> 
-      <Header/>
-      <Box justifyContent="center" textAlign="center" mb={4} width={'100%'}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Vehicle Service Status Portal
+    <Box 
+      sx={{ 
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        height: '100%',
+        overflow: 'auto'
+      }}
+    >
+      <Header />
+      <Box 
+        component="main"
+        sx={{ 
+          flexGrow: 1,
+          p: 4,
+          maxWidth: '1200px',
+          width: '100%',
+          mx: 'auto',
+          mb: 2, // Add some margin at the bottom to prevent content from being hidden behind footer
+        }}
+      >
+        <Typography variant="h3" component="h1" align="center" gutterBottom>
+          Vehicle Service Tracker
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary" mb={4}>
-          Track your vehicle's service status by entering your name
+        <Typography variant="subtitle1" color="text.secondary" align="center" mb={4}>
+          Enter your tracking code to check your vehicle's service status
         </Typography>
 
-        {/* Search Section */}
-        <Box display="flex" justifyContent="center" gap={2} mb={4}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          gap: 2, 
+          mb: 4,
+          maxWidth: '500px',
+          mx: 'auto',
+        }}>
           <TextField
             variant="outlined"
-            placeholder="Enter your name"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Enter tracking code"
+            value={trackCode}
+            onChange={(e) => setTrackCode(e.target.value)}
             onKeyPress={handleKeyPress}
-            sx={{ width: '300px' }}
+            fullWidth
           />
           <Button
             variant="contained"
             onClick={handleSearch}
-            disabled={isLoading || !searchQuery}
+            disabled={isLoading || !trackCode}
             startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
           >
-            {isLoading ? "Searching..." : "Search"}
+            {isLoading ? "Searching..." : "Track"}
           </Button>
         </Box>
 
-        {/* Error Message */}
         {error && (
-          <Alert severity="error" sx={{ mb: 4 }}>
+          <Alert severity="error" sx={{ mb: 4, maxWidth: '500px', mx: 'auto' }}>
             {error}
           </Alert>
         )}
 
-        {/* Results Section */}
         {searchResult && (
-          <Box justifyContent="center" flex={'flex-wrap'} flexDirection={'row'} display={'flex'}>
-            <Paper elevation={3} sx={{ maxWidth: '1000px'}}>
-              <CardContent>
-                <Typography variant="h5" gutterBottom>
-                  Vehicle Status
-                </Typography>
-                <Typography variant="subtitle2" color="text.secondary" mb={3}>
-                  Current service status and details
-                </Typography>
+          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+            <Grid container spacing={4}>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h5">Service Details</Typography>
+                  <Chip
+                    label={searchResult.repairStatus || 'Pending'}
+                    color={searchResult.releaseStatus ? 'success' : 'warning'}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <Chip
+                    label={`Track Code: ${searchResult.trackCode}`}
+                    variant="outlined"
+                  />
+                  <Chip
+                    label={`Sequence: ${searchResult.seq}`}
+                    variant="outlined"
+                  />
+                </Box>
+              </Grid>
 
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      Client Name
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Client Information
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body1" fontWeight="bold">
+                    {searchResult.clientName}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vehicle: {searchResult.vehicleModel}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Service Timeline
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    <strong>Arrival Date:</strong> {searchResult.arrivalDate}
+                  </Typography>
+                  {searchResult.repairedDate && (
+                    <Typography variant="body2">
+                      <strong>Repair Completed:</strong> {searchResult.repairedDate}
                     </Typography>
-                    <Typography color="text.secondary">
-                      {searchResult.clientName}
+                  )}
+                  {searchResult.releaseDate && (
+                    <Typography variant="body2">
+                      <strong>Release Date:</strong> {searchResult.releaseDate}
                     </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      Vehicle Model
-                    </Typography>
-                    <Typography color="text.secondary">
-                      {searchResult.vehicle}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      Status
-                    </Typography>
-                    <Typography color="text.secondary">
-                      {searchResult.status}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      Release Date
-                    </Typography>
-                    <Typography color="text.secondary">
-                      {searchResult.estimatedCompletion}
-                    </Typography>
-                  </Grid>
+                  )}
+                </Box>
+              </Grid>
+
+              {searchResult.parts && searchResult.parts.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Parts Used
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {searchResult.parts.map((part, index) => (
+                      <Chip
+                        key={index}
+                        label={`${part.partName} - ${part.brandName} (${part.quantityUsed})`}
+                        variant="outlined"
+                        size="small"
+                      />
+                    ))}
+                  </Box>
                 </Grid>
-              </CardContent>
-            </Paper>
-            </Box>
+              )}
+            </Grid>
+          </Paper>
         )}
-        <Footer/>
       </Box>
+      <Footer />
     </Box>
-      
   );
 };
 

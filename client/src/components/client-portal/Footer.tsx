@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Container, Grid, Typography } from '@mui/material'
+import { Box, Card, CardContent, Grid, Typography } from '@mui/material'
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -6,16 +6,15 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 const Footer = () => {
   return (
     <Box 
+      component="footer"
       sx={{
-        position: 'fixed',
-        bottom: 0,
         width: "100%",
         backgroundColor: 'background.paper',
-        zIndex: 1000,
+        mt: 'auto', // This pushes the footer to the bottom
       }}
     >
-      <Card sx={{ py: 1 }}> {/* Reduced vertical padding */}
-        <CardContent sx={{ py: '8px !important' }}> {/* Override default padding */}
+      <Card sx={{ py: 1 }}>
+        <CardContent sx={{ py: '8px !important' }}>
           <Grid container spacing={2}>
             {/* Title Section */}
             <Grid item xs={12} md={3}>
