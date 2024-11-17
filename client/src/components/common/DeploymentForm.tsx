@@ -24,10 +24,17 @@ import { useNavigate } from '@pankod/refine-react-router-v6';
 import { Add, Close, Delete, Publish, Remove } from '@mui/icons-material';
 import CustomButton from './CustomButton';
 import CustomIconButton from './CustomIconButton';
+import { customRandom } from 'nanoid';
+
 interface PartEntry {
   partId: string;
   quantityUsed: number;
 }
+
+
+const nanoid = customRandom('1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm', 7, size => {
+  return (new Uint8Array(size)).map(() => 256 * Math.random()); 
+});
 
 const getTodayDate = () => {
   const today = new Date();
@@ -42,6 +49,10 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
   const [deploymentStatus, setDeploymentStatus] = useState<boolean>(false);
   const [releaseStatus, setReleaseStatus] = useState<boolean>(false);
   const [availableQuantities, setAvailableQuantities] = useState<{[key: string]: number}>({});
+  const [trackCode, setTrackCode] = useState<string>(initialValues?.trackCode || nanoid);
+  const [repairStatus, setRepairStatus] = useState<string>(initialValues?.repairStatus || 'Pending');
+
+
 
   const navigate = useNavigate();
   const isError = false;
@@ -61,15 +72,17 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
         initialValues.parts.forEach((p: any) => {
           if (p.part) {
             const partKey = `${p.part.partName}|${p.part.brandName}`;
-            // Add the current quantity used to the available quantity
             quantities[partKey] = (p.part.qtyLeft || 0) + (parseInt(p.quantityUsed) || 0);
           }
         });
         setAvailableQuantities(quantities);
       }
-      // Initialize status
+      // Initialize repairStatus
       setDeploymentStatus(!!initialValues.deploymentStatus);
       setReleaseStatus(!!initialValues.releaseStatus);
+      setTrackCode(initialValues.trackCode || '');
+      setRepairStatus(initialValues.repairStatus || 'Pending');
+
     }
   }, [initialValues]);
 
@@ -122,6 +135,9 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
     updatedData.releaseStatus = releaseStatus;
     updatedData.deploymentDate = deploymentStatus ? data.deploymentDate : null;
     updatedData.releaseDate = releaseStatus ? data.releaseDate : null;
+    updatedData.repairStatus = repairStatus;
+    updatedData.repairedDate = repairStatus ? data.repairedDate: null;
+  
 
     onFinishHandler(updatedData);
   };
@@ -353,6 +369,54 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
             </FormControl>
           )}
         </Box>
+
+        <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' }, 
+        gap: 2,
+        '& .MuiFormControl-root': { flex: 1 }
+      }}>
+
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, fontSize: 16 }}>Status</FormHelperText>
+          <Select
+            value={repairStatus}
+            {...register('repairStatus')}
+            onChange={(e) => setRepairStatus(e.target.value as string)}
+          >
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="In Progress">In Progress</MenuItem>
+            <MenuItem value="Repaired">Repaired</MenuItem>
+            <MenuItem value="Cancelled">Cancelled</MenuItem>
+          </Select>
+        </FormControl>
+
+        {repairStatus === 'Repaired' && (
+          <FormControl>
+            <FormHelperText sx={{ fontWeight: 500, fontSize: 16 }}>Repaired Date</FormHelperText>
+            <TextField
+              type="date"
+              {...register('repairedDate')}
+              defaultValue={initialValues?.repairedDate?.split('T')[0] || getTodayDate()}
+            />
+          </FormControl>
+        )}
+
+        <FormControl>
+          <FormHelperText sx={{ fontWeight: 500, fontSize: 16 }}>Track Code</FormHelperText>
+          <TextField
+            required
+            variant="outlined"
+            color="info"
+            {...register('trackCode', { required: true })}
+            value={trackCode}
+            onChange={(e) => setTrackCode(e.target.value)}
+          />
+        </FormControl>
+      </Box>
+
+      
+
         <Box display="flex" justifyContent="center" gap={2} mt={3}>
           <CustomButton
             type="submit"

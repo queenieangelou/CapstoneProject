@@ -488,7 +488,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
           </Box>
           <Button
             sx={{
-              background: mode === 'dark' ? '#333' : '#fff000',
+              background: mode === 'dark' ? '#0D0D0D' : '#fff000',
               color: mode === 'dark' ? '#fff' : '#141414',
               textAlign: 'center',
               borderRadius: 0,
@@ -496,7 +496,8 @@ export const Sider: typeof DefaultSider = ({ render }) => {
               height: '40px',
               minHeight: '40px',
               '&:hover': {
-                background: mode === 'dark' ? '#444' : '#c3b800',
+                background: mode === 'dark' ? '#fff000' : '#c3b800',
+                color: mode === 'dark' ? '#141414' : '#fff',
               },
             }}
             fullWidth

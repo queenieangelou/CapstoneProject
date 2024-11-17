@@ -2,7 +2,7 @@ import { Delete, Edit } from '@mui/icons-material';
 import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
 import { Box, CircularProgress, Button, Paper, Stack, Tooltip, Typography } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
-import { ReactElement, JSXElementConstructor, ReactFragment, ReactPortal, Key } from 'react';
+import { Key } from 'react';
 
 
 const DeploymentDetails = () => {
@@ -33,6 +33,7 @@ const DeploymentDetails = () => {
   }
 
   const handleDeleteDeployment = () => {
+
     const response = window.confirm('Are you sure you want to delete this deployment?');
     if (response) {
       mutate(
@@ -144,6 +145,16 @@ const DeploymentDetails = () => {
               </Typography>
             )}
             <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <strong>Repair Status:</strong> {deploymentDetails.repairStatus}
+            </Typography>
+            {deploymentDetails.repairStatus == 'Repaired' && (
+            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <strong>Repaired Date:</strong> {deploymentDetails.repairedDate}
+            </Typography>)}
+            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <strong>Track Code:</strong> {deploymentDetails.trackCode}
+            </Typography>
+            <Typography fontSize={16} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong>Release Status:</strong> {deploymentDetails.releaseStatus ? 'Yes' : 'No'}
             </Typography>
             {deploymentDetails.releaseStatus && (
@@ -254,6 +265,7 @@ const DeploymentDetails = () => {
                 {deploymentDetails.creator.email}
               </Typography>
             </Box>
+            
           </Box>
         </Box>
     </Paper>

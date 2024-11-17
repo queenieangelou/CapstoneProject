@@ -102,7 +102,10 @@ const createDeployment = async (req, res) => {
     deploymentStatus,
     deploymentDate,
     releaseStatus,
-    releaseDate
+    releaseDate,
+    repairStatus,
+    repairedDate,
+    trackCode
   } = req.body;
 
   const session = await mongoose.startSession();
@@ -157,6 +160,9 @@ const createDeployment = async (req, res) => {
       deploymentDate,
       releaseStatus: releaseStatus || false,
       releaseDate,
+      repairStatus: repairStatus,
+      repairedDate,
+      trackCode,
       creator: user._id,
     });
 
@@ -209,7 +215,9 @@ const updateDeployment = async (req, res) => {
     clientName,
     vehicleModel,
     arrivalDate,
-    parts
+    parts,
+    repairStatus,
+    repairedDate,
   } = req.body;
 
   const session = await mongoose.startSession();
@@ -251,6 +259,15 @@ const updateDeployment = async (req, res) => {
           message: 'Release status cannot be updated until deployment is complete.' 
         });
       }
+
+        if (repairStatus !== 'Repaired'){
+          deployment.repairStatus = repairStatus;
+          deployment.repairedDate = null;
+        }
+        else{
+          deployment.repairStatus = repairStatus;
+          deployment.repairedDate = repairedDate;
+        }
 
       await deployment.save({ session });
       await session.commitTransaction();
@@ -344,7 +361,18 @@ const updateDeployment = async (req, res) => {
     deployment.vehicleModel = vehicleModel;
     deployment.arrivalDate = arrivalDate;
 
-    // Update status fields if provided
+
+    //Update repair status
+    if (repairStatus !== 'Repaired'){
+      deployment.repairStatus = repairStatus;
+      deployment.repairedDate = null;
+    }
+    else{
+      deployment.repairStatus = repairStatus;
+      deployment.repairedDate = repairedDate;
+     }
+
+  // Update status fields if provided
     if (deploymentStatus !== undefined) {
       deployment.deploymentStatus = deploymentStatus;
       deployment.deploymentDate = deploymentDate;

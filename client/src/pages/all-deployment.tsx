@@ -1,7 +1,6 @@
-import React, { useMemo, useState,useEffect } from 'react';
-import { DataGrid, GridRenderCellParams, GridColDef, Box, Paper, Typography, CircularProgress, IconButton, Tooltip, TextField, Stack, Button } from '@pankod/refine-mui';
+import { useMemo, useState } from 'react';
+import { GridRenderCellParams, GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, Button, Select, MenuItem, FormControl, Switch, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, Alert } from '@pankod/refine-mui';
 import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
-import { Switch, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete, useUpdate } from '@pankod/refine-core';
 import useDynamicHeight from 'hooks/useDynamicHeight';
@@ -16,12 +15,22 @@ const AllDeployments = () => {
   const containerHeight = useDynamicHeight();
   const navigate = useNavigate();
 
-  // Search and filter states
+  // States
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  
-  const { 
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    message: '',
+    title: '',
+    action: () => {}
+  });
+  const [errorDialog, setErrorDialog] = useState({
+    open: false,
+    message: ''
+  });
+
+  const {
     tableQueryResult: { data, isLoading, isError }
   } = useTable({
     resource: 'deployments',
@@ -30,17 +39,26 @@ const AllDeployments = () => {
 
   const allDeployments = data?.data ?? [];
 
+  // Handle dialog close
+  const handleDialogClose = () => {
+    setDialogState((prev: any) => ({ ...prev, open: false }));
+  };
+
+  const handleErrorDialogClose = () => {
+    setErrorDialog(prev => ({ ...prev, open: false }));
+  };
+
   // Filter the data based on search term and date range
   const filteredRows = useMemo(() => {
     return allDeployments.filter((deployment) => {
       const deploymentDate = new Date(deployment.date);
-      const matchesSearch = 
-        !searchTerm || 
+      const matchesSearch =
+        !searchTerm ||
         deployment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deployment.vehicleModel.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deployment.seq.toString().includes(searchTerm);
-        
-      const matchesDateRange = 
+
+      const matchesDateRange =
         (!startDate || deploymentDate >= new Date(startDate)) &&
         (!endDate || deploymentDate <= new Date(endDate));
 
@@ -49,104 +67,239 @@ const AllDeployments = () => {
   }, [allDeployments, searchTerm, startDate, endDate]);
 
   const handleStatusChange = (id: string, field: 'deploymentStatus' | 'releaseStatus', newValue: boolean) => {
-      const statusName = field === 'deploymentStatus' ? 'deployment' : 'release';
-      const action = newValue ? 'enable' : 'disable';
-      const confirmUpdate = (message: string) => window.confirm(message);
+    const statusName = field === 'deploymentStatus' ? 'deployment' : 'release';
+    const action = newValue ? 'enable' : 'disable';
+    
+    // Find the current deployment
+    const currentDeployment = allDeployments.find(dep => dep._id === id);
+    if (!currentDeployment) return;
 
-      if (confirmUpdate(`Are you sure you want to ${action} the ${statusName} status?`)) {
-          const today = new Date().toLocaleDateString('en-CA');
-          const updateData: any = {
-              [field]: newValue,
-          };
-
-          // Update the corresponding date field when status is turned on
-          if (newValue) {
-              if (field === 'deploymentStatus') {
-                  updateData.deploymentDate = today;
-              } else if (field === 'releaseStatus') {
-                  updateData.releaseDate = today;
-              }
-          } else {
-              // Clear the date when status is turned off
-              if (field === 'deploymentStatus') {
-                  updateData.deploymentDate = null;
-              } else if (field === 'releaseStatus') {
-                  updateData.releaseDate = null;
-              }
-          }
-
-        updateDeployment(
-            {
-                resource: 'deployments',
-                id,
-                values: updateData,
-            },
-            {
-                onSuccess: () => {
-                    alert(`${statusName.charAt(0).toUpperCase() + statusName.slice(1)} status updated successfully!`);
-                },
-                onError: (error) => {
-                    alert('Failed to update status.');
-                    console.error('Update error:', error);
-                },
-            },
-        );
+    // Check conditions for release status
+    if (field === 'releaseStatus' && newValue) {
+      if (!currentDeployment.deploymentStatus) {
+        setErrorDialog({
+          open: true,
+          message: "Cannot release when Deployment Status is off."
+        });
+        return;
+      }
+      
+      if (currentDeployment.repairStatus !== 'Repaired') {
+        setErrorDialog({
+          open: true,
+          message: "Cannot release when the vehicle is not \"Repaired\"."
+        });
+        return;
+      }
     }
-};
+
+    const today = new Date().toLocaleDateString('en-CA');
+    
+    // Prepare update data
+    const updateData = {
+      repairStatus: field === 'deploymentStatus' && newValue 
+        ? 'In Progress' 
+        : currentDeployment.repairStatus,
+      repairedDate: currentDeployment.repairedDate,
+      [field]: newValue,
+      ...(field === 'deploymentStatus' && {
+        deploymentDate: newValue ? today : null
+      }),
+      ...(field === 'releaseStatus' && {
+        releaseDate: newValue ? today : null
+      })
+    };
+
+    // Set up confirmation dialog
+    setDialogState({
+      open: true,
+      title: `Confirm ${statusName} Status Change`,
+      message: `Are you sure you want to ${action} the ${statusName} status?`,
+      action: () => {
+        updateDeployment(
+          {
+            resource: 'deployments',
+            id,
+            values: updateData,
+          },
+          {
+            onSuccess: () => {
+            },
+            onError: (error) => {
+              setErrorDialog({
+                open: true,
+                message: `Failed to update ${statusName} status.`
+              });
+              console.error('Update error:', error);
+            },
+          },
+        );
+      }
+    });
+  };
+
+  const handleRepairStatusChange = (id: string, field: 'repairStatus', newStatus: string) => {
+    const statusName = 'repair';
+    
+    setDialogState({
+      open: true,
+      title: 'Confirm Status Change',
+      message: `Are you sure you want to update the ${statusName} status?`,
+      action: () => {
+        const today = new Date().toLocaleDateString('en-CA');
+        
+        updateDeployment(
+          {
+            resource: 'deployments',
+            id,
+            values: {
+              repairStatus: newStatus,
+              repairedDate: newStatus === 'Repaired' ? today : null,
+            },
+          },
+          {
+            onSuccess: () => {
+            },
+            onError: (error) => {
+              setErrorDialog({
+                open: true,
+                message: 'Failed to update repair status.'
+              });
+              console.error('Update error:', error);
+            },
+          }
+        );
+      }
+    });
+  };
 
   const handleDeleteDeployment = useHandleDelete({
-      resource: 'deployments',
-      onSuccess: () => console.log('Custom success callback'),
-      onError: (error) => console.log('Custom error callback', error),
-    });
+    resource: 'deployments',
+    onSuccess: () => console.log('Custom success callback'),
+    onError: (error) => console.log('Custom error callback', error),
+  });
 
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
     { field: 'date', headerName: 'Date', flex: 1 },
     { field: 'clientName', headerName: 'Client Name', flex: 1 },
     { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1 },
-    { field:  'arrivalDate', headerName: 'arrivalDate', flex: 1 },
+    { field: 'arrivalDate', headerName: 'Arrival Date', flex: 1 },
     { field: 'partsCount', headerName: 'Parts Count', flex: 1 },
-    { 
-        field: 'deploymentStatus', 
-        headerName: 'Deployed',
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-            <Switch
-                checked={params.value}
-                onChange={(e) => handleStatusChange(params.row.id, 'deploymentStatus', e.target.checked)}
-                color="primary"
-            />
-        )
-    },
-    { 
-        field: 'deploymentDate', 
-        headerName: 'Deployed Date',
-        flex: 1,
-    },
-    { 
-        field: 'releaseStatus', 
-        headerName: 'Released',
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-            <Switch
-                checked={params.value}
-                onChange={(e) => handleStatusChange(params.row.id, 'releaseStatus', e.target.checked)}
-                color="primary"
-            />
-        )
-    },
-    { 
-        field: 'releaseDate', 
-        headerName: 'Released Date',
-        flex: 1,
+    {
+      field: 'deploymentStatus',
+      headerName: 'Deployed',
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <Switch
+          checked={params.value}
+          onChange={(e) => handleStatusChange(params.row.id, 'deploymentStatus', e.target.checked)}
+          color="primary"
+        />
+      )
     },
     {
-        field: 'actions',
-        headerName: 'Actions',
-        align: 'center',
-        width: 120,
-        renderCell: (params) => (
+      field: 'deploymentDate',
+      headerName: 'Deployed Date',
+      flex: 1,
+    },
+    {
+      field: 'repairStatus',
+      headerName: 'Status',
+      flex: 1,
+      align: 'center',
+      renderCell: (params: GridRenderCellParams) => (
+        <FormControl
+          size="small"
+          sx={{
+            width: '100px', // Take full width of cell
+            minWidth: 'unset', // Remove minimum width
+            align: 'center',
+            display: 'flex-row',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Select
+            value={params.value}
+            onChange={(e) => handleRepairStatusChange(params.row.id, 'repairStatus', e.target.value)}
+            sx={{
+              '& .MuiSelect-select': {
+                align: 'center',
+                display: 'flex',
+               flexWrap: 'wrap',
+               fontSize: () => {
+                switch (params.value) {
+                  case 'Pending':
+                    return '0.950rem'; // Default size
+                  case 'In Progress':
+                    return '0.780rem'; // Smallest size
+                  case 'Repaired':
+                    return '0.950rem';
+                  case 'Cancelled':
+                    return '0.868rem'; // Medium size
+                  default:
+                    return '0.950rem';
+                }
+               },
+               color: () =>{
+                switch (params.value) {
+                  case 'Pending':
+                    return '#FF9800'; // Default size
+                  case 'In Progress':
+                    return '#2196F3'; // Smallest size
+                  case 'Cancelled':
+                    return '#F44336';
+                  case 'Repaired':
+                    return '#4CAF50'; // Medium size
+                  default:
+                    return '#FF9800';
+                }
+               }
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'transparent' // Optional: remove border for cleaner look
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.main' // Show border on hover
+              },
+            }}
+          >
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="In Progress">In Progress</MenuItem>
+            <MenuItem value="Repaired">Repaired</MenuItem>
+            <MenuItem value="Cancelled">Cancelled</MenuItem>
+          </Select>
+        </FormControl>
+      )
+    },
+    {
+      field: 'repairedDate',
+      headerName: 'Repaired Date',
+      flex: 1,
+    },
+    {
+      field: 'releaseStatus',
+      headerName: 'Released',
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <Switch
+          checked={params.value}
+          onChange={(e) => handleStatusChange(params.row.id, 'releaseStatus', e.target.checked)}
+          color="primary"
+        />
+      )
+    },
+    {
+      field: 'releaseDate',
+      headerName: 'Released Date',
+      flex: 1,
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      align: 'center',
+      width: 120,
+      renderCell: (params) => (
         <Stack direction="row" spacing={1}>
           <CustomIconButton
             title="View"
@@ -170,75 +323,77 @@ const AllDeployments = () => {
             handleClick={() => handleDeleteDeployment(params.row.id)}
           />
         </Stack>
-        ),
+      ),
     },
-];
+  ];
 
   const rows = filteredRows.map((deployment) => ({
-      id: deployment._id,
-      _id: deployment._id,
-      seq: deployment.seq,
-      date: new Date(deployment.date).toLocaleDateString(),
-      clientName: deployment.clientName,
-      vehicleModel: deployment.vehicleModel,
-      arrivalDate: new Date(deployment.arrivalDate).toLocaleDateString(),
-      partsCount: deployment.parts?.length > 0 ? deployment.parts.length : 'TBA',
-      deploymentStatus: deployment.deploymentStatus,
-      deploymentDate: deployment.deploymentDate ? new Date(deployment.deploymentDate).toLocaleDateString() : 'N/A',
-      releaseStatus: deployment.releaseStatus,
-      releaseDate: deployment.releaseDate ? new Date(deployment.releaseDate).toLocaleDateString() : 'N/A',
+    id: deployment._id,
+    _id: deployment._id,
+    seq: deployment.seq,
+    date: new Date(deployment.date).toLocaleDateString(),
+    clientName: deployment.clientName,
+    vehicleModel: deployment.vehicleModel,
+    arrivalDate: new Date(deployment.arrivalDate).toLocaleDateString(),
+    partsCount: deployment.parts?.length > 0 ? deployment.parts.length : 'TBA',
+    deploymentStatus: deployment.deploymentStatus,
+    deploymentDate: deployment.deploymentDate ? new Date(deployment.deploymentDate).toLocaleDateString() : 'N/A',
+    releaseStatus: deployment.releaseStatus,
+    releaseDate: deployment.releaseDate ? new Date(deployment.releaseDate).toLocaleDateString() : 'N/A',
+    repairStatus: deployment.repairStatus,
+    repairedDate: deployment.repairedDate ? new Date(deployment.repairedDate).toLocaleDateString() : 'N/A',
   }));
 
   if (isLoading) {
-      return (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-              <CircularProgress />
-          </Box>
-      );
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
   }
 
   if (isError) {
-      return (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-              <Typography variant="h6" color="error">
-                  Error loading deployments data
-              </Typography>
-          </Box>
-      );
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Typography variant="h6" color="error">
+          Error loading deployments data
+        </Typography>
+      </Box>
+    );
   }
 
   return (
-    <Paper 
-      elevation={3} 
-      sx={{ 
-      height: containerHeight,
-      display: 'flex',
-      flexDirection: 'column',
-      m: 2,
-      overflow: 'hidden'
+    <Paper
+      elevation={3}
+      sx={{
+        height: containerHeight,
+        display: 'flex',
+        flexDirection: 'column',
+        m: 2,
+        overflow: 'hidden'
       }}
     >
-      <Typography 
-        variant="h4" 
-        sx={{ 
-            p: 2,
-            fontWeight: 600,
+      <Typography
+        variant="h4"
+        sx={{
+          p: 2,
+          fontWeight: 600,
         }}
-        >
+      >
         {!allDeployments.length ? 'There are no deployments' : 'All Deployments'}
       </Typography>
 
-      <Box sx={{ 
+      <Box sx={{
         p: 2,
-        display: 'flex', 
-        flexDirection: {xs: 'column', md: 'row'},
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
         gap: 2,
-        alignItems: {xs: 'stretch', md: 'center'},
+        alignItems: { xs: 'stretch', md: 'center' },
         justifyContent: 'space-between'
       }}>
-        <Stack 
-          direction={{ xs: 'column', sm: 'row' }} 
-          spacing={2} 
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
           sx={{ flex: 1 }}
         >
           <TextField
@@ -276,7 +431,7 @@ const AllDeployments = () => {
         />
       </Box>
 
-      <Box sx={{ 
+      <Box sx={{
         flex: 1,
         width: '100%',
         overflow: 'hidden'
@@ -287,6 +442,50 @@ const AllDeployments = () => {
           containerHeight="100%"
         />
       </Box>
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={dialogState.open}
+        onClose={handleDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {dialogState.title}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {dialogState.message}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button onClick={() => {
+            dialogState.action();
+            handleDialogClose();
+          }} autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog
+        open={errorDialog.open}
+        onClose={handleErrorDialogClose}
+        aria-labelledby="error-dialog-title"
+      >
+        <DialogTitle id="error-dialog-title">
+          Error
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="error">
+            {errorDialog.message}
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleErrorDialogClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };

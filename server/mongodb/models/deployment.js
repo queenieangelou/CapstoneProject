@@ -52,6 +52,16 @@ const DeploymentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
+  repairStatus: {
+    type: String,
+  },
+  repairedDate: {
+    type: String,
+  },
+  trackCode: {
+    type: String,
+    required: true,
+  }
 });
 
 const deploymentModel = mongoose.model('Deployment', DeploymentSchema);

@@ -49,7 +49,7 @@ const AllProcurements = () => {
   }, [allProcurements, searchTerm, startDate, endDate]);
 
     const handleDeleteProcurement = useHandleDelete({
-      resource: 'sales',
+      resource: 'procurement',
       onSuccess: () => console.log('Custom success callback'),
       onError: (error) => console.log('Custom error callback', error),
     });
