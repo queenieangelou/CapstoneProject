@@ -133,28 +133,34 @@ const App = () => {
         const token = localStorage.getItem('token');
         const user = localStorage.getItem('user');
     
-        if (token && user && typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          axios.defaults.headers.common = {};
-          
-          if (window.google?.accounts?.id) {
-            try {
-              window.google.accounts.id.revoke(token, () => {
-                resolve();
-              });
-            } catch (error) {
-              // Silently catch any errors during revoke
+        // Clear local storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Reset axios headers
+        axios.defaults.headers.common = {};
+    
+        // Reset admin state
+        setIsAdmin(false);
+    
+        // Revoke Google token if available
+        if (token && window.google?.accounts?.id) {
+          try {
+            window.google.accounts.id.revoke(token, () => {
+              // Use window.location to force navigation to login page
+              window.location.href = '/';
               resolve();
-            }
-          } else {
+            });
+          } catch (error) {
+            console.error('Error revoking token:', error);
+            window.location.href = '/';
             resolve();
           }
         } else {
+          // Force navigation to login page if no Google token
+          window.location.href = '/';
           resolve();
         }
-    
-        setIsAdmin(false);
       });
     },
     
@@ -162,24 +168,28 @@ const App = () => {
     checkAuth: async () => {
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');
-
+    
       if (token && user) {
         const userData = JSON.parse(user);
-        setIsAdmin(userData.isAdmin);
+        // Explicitly set admin state when checking authentication
+        setIsAdmin(userData.isAdmin || false);
         return Promise.resolve();
       }
       return Promise.reject();
     },
+    
     getPermissions: () => Promise.resolve(),
     getUserIdentity: async () => {
       const user = localStorage.getItem('user');
       if (user) {
         const userData = JSON.parse(user);
-        setIsAdmin(userData.isAdmin);
+        // Always set admin state when getting user identity
+        setIsAdmin(userData.isAdmin || false);
         return Promise.resolve(userData);
       }
       
-      // Return null if no user data exists
+      // Reset admin state if no user found
+      setIsAdmin(false);
       return Promise.resolve(null);
     },
     
