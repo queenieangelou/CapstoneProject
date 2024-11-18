@@ -8,12 +8,23 @@ import {
   Paper,
   Grid,
   Typography,
-  Chip
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Stack,
+  styled,
+  Theme
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import Header from 'components/client-portal/Header';
 import Footer from 'components/client-portal/Footer';
 
+// Interfaces
 interface Part {
   partName: string;
   brandName: string;
@@ -33,6 +44,175 @@ interface SearchResult {
   repairedDate: string | null;
   trackCode: string;
 }
+
+interface StatusChipProps {
+  status: string;
+}
+
+const StatusChip = styled(Chip)<StatusChipProps>(({ theme, status }) => {
+  // Define color pairs for each status (background: lighter shade, text: darker shade)
+  const statusColors = {
+    'Pending': {
+      background: '#FFF3E0', // Light Orange
+      text: '#E65100'        // Dark Orange
+    },
+    'In Progress': {
+      background: '#E3F2FD', // Light Blue
+      text: '#1565C0'        // Dark Blue
+    },
+    'Repaired': {
+      background: '#E8F5E9', // Light Green
+      text: '#2E7D32'        // Dark Green
+    },
+    'Cancelled': {
+      background: '#FFEBEE', // Light Red
+      text: '#C62828'        // Dark Red
+    },
+    'Released': {
+      background: '#E8F5E9', // Light Green
+      text: '#2E7D32'        // Dark Green
+    }
+  };
+
+  const currentStatus = statusColors[status as keyof typeof statusColors] || statusColors.Pending;
+
+  return {
+    backgroundColor: currentStatus.background,
+    color: currentStatus.text,
+    '& .MuiChip-label': {
+      fontWeight: 600,
+    },
+  };
+});
+
+interface TimelinePointProps {
+  dotColor?: string;
+}
+
+const TimelinePoint = styled(Box)<TimelinePointProps>(({ theme, dotColor }) => ({
+  width: 12,
+  height: 12,
+  borderRadius: '50%',
+  backgroundColor: dotColor || theme.palette.primary.main,
+  marginRight: theme.spacing(1),
+}));
+
+const SearchResult = ({ searchResult }: { searchResult: SearchResult | null }) => {
+  if (!searchResult) return null;
+
+  const getStatusText = () => {
+    if (searchResult.repairStatus === 'Cancelled') return 'Cancelled';
+    if (searchResult.releaseStatus) return 'Released';
+    if (searchResult.repairStatus === 'Repaired') return 'Repaired';
+    if (searchResult.repairStatus === 'In Progress') return 'In Progress';
+    return 'Pending';
+  };
+
+  return (
+    <Card elevation={3}>
+      <CardHeader
+        title={
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5">Service Details</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="subtitle1" color="text.secondary">
+                Vehicle Status:
+              </Typography>
+              <StatusChip
+                label={getStatusText()}
+                status={getStatusText()}
+                theme={undefined}
+              />
+            </Box>
+          </Box>
+        }
+        subheader={
+          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+            <Chip
+              label={`Track Code: ${searchResult.trackCode}`}
+              variant="outlined"
+              size="small"
+            />
+            <Chip
+              label={`Sequence: ${searchResult.seq}`}
+              variant="outlined"
+              size="small"
+            />
+          </Box>
+        }
+      />
+
+      <Divider />
+
+      <CardContent>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Client Information
+            </Typography>
+            <Typography variant="h6">{searchResult.clientName}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Vehicle: {searchResult.vehicleModel}
+            </Typography>
+          </Grid>
+
+          <Stack spacing={2}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <TimelinePoint dotColor="#1976d2" />
+              <Typography variant="body2">
+                <strong>Arrival Date:</strong> {searchResult.arrivalDate}
+              </Typography>
+            </Box>
+            {searchResult.repairedDate && (
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <TimelinePoint dotColor="#2e7d32" />
+                <Typography variant="body2">
+                  <strong>Repair Completed:</strong> {searchResult.repairedDate}
+                </Typography>
+              </Box>
+            )}
+            {searchResult.releaseDate && (
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <TimelinePoint dotColor="#9c27b0" />
+                <Typography variant="body2">
+                  <strong>Release Date:</strong> {searchResult.releaseDate}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+
+          {searchResult.parts && searchResult.parts.length > 0 && (
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                Parts Used
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {searchResult.parts.map((part, index) => (
+                  <Chip
+                    key={index}
+                    label={`${part.partName} - ${part.brandName} (${part.quantityUsed})`}
+                    variant="outlined"
+                    size="small"
+                  />
+                ))}
+              </Box>
+            </Grid>
+          )}
+        </Grid>
+      </CardContent>
+
+      <Divider/>
+
+      {searchResult.repairStatus === 'Repaired' && !searchResult.releaseStatus && (
+        <Box sx={{ px: 2, pb: 2 }}>
+          <Alert severity="info" icon={<LocalShippingIcon />}>
+            Your vehicle is ready for release. Please proceed to our service center for vehicle pickup.
+          </Alert>
+        </Box>
+      )}
+    </Card>
+  );
+};
 
 const ClientPortal: React.FC = () => {
   const [trackCode, setTrackCode] = useState('');
@@ -84,11 +264,10 @@ const ClientPortal: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        height: '100%',
-        overflow: 'auto'
       }}
     >
       <Header />
+      
       <Box 
         component="main"
         sx={{ 
@@ -97,13 +276,12 @@ const ClientPortal: React.FC = () => {
           maxWidth: '1200px',
           width: '100%',
           mx: 'auto',
-          mb: 2, // Add some margin at the bottom to prevent content from being hidden behind footer
         }}
       >
-        <Typography variant="h3" component="h1" align="center" gutterBottom>
+        <Typography variant="h3" align="center" gutterBottom>
           Vehicle Service Tracker
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary" align="center" mb={4}>
+        <Typography variant="subtitle1" color="text.secondary" align="center" sx={{ mb: 4 }}>
           Enter your tracking code to check your vehicle's service status
         </Typography>
 
@@ -116,12 +294,12 @@ const ClientPortal: React.FC = () => {
           mx: 'auto',
         }}>
           <TextField
+            fullWidth
             variant="outlined"
             placeholder="Enter tracking code"
             value={trackCode}
             onChange={(e) => setTrackCode(e.target.value)}
             onKeyPress={handleKeyPress}
-            fullWidth
           />
           <Button
             variant="contained"
@@ -139,85 +317,9 @@ const ClientPortal: React.FC = () => {
           </Alert>
         )}
 
-        {searchResult && (
-          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-            <Grid container spacing={4}>
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h5">Service Details</Typography>
-                  <Chip
-                    label={searchResult.repairStatus || 'Pending'}
-                    color={searchResult.releaseStatus ? 'success' : 'warning'}
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                  <Chip
-                    label={`Track Code: ${searchResult.trackCode}`}
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={`Sequence: ${searchResult.seq}`}
-                    variant="outlined"
-                  />
-                </Box>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Client Information
-                </Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body1" fontWeight="bold">
-                    {searchResult.clientName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Vehicle: {searchResult.vehicleModel}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Service Timeline
-                </Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2">
-                    <strong>Arrival Date:</strong> {searchResult.arrivalDate}
-                  </Typography>
-                  {searchResult.repairedDate && (
-                    <Typography variant="body2">
-                      <strong>Repair Completed:</strong> {searchResult.repairedDate}
-                    </Typography>
-                  )}
-                  {searchResult.releaseDate && (
-                    <Typography variant="body2">
-                      <strong>Release Date:</strong> {searchResult.releaseDate}
-                    </Typography>
-                  )}
-                </Box>
-              </Grid>
-
-              {searchResult.parts && searchResult.parts.length > 0 && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Parts Used
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {searchResult.parts.map((part, index) => (
-                      <Chip
-                        key={index}
-                        label={`${part.partName} - ${part.brandName} (${part.quantityUsed})`}
-                        variant="outlined"
-                        size="small"
-                      />
-                    ))}
-                  </Box>
-                </Grid>
-              )}
-            </Grid>
-          </Paper>
-        )}
+        {searchResult && <SearchResult searchResult={searchResult} />}
       </Box>
+      
       <Footer />
     </Box>
   );
