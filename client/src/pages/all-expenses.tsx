@@ -49,7 +49,7 @@ const AllExpenses = () => {
   }, [allExpenses, searchTerm, startDate, endDate]);
 
   const handleDeleteExpense = useHandleDelete({
-    resource: 'expense',
+    resource: 'expenses',
     onSuccess: () => console.log('Custom success callback'),
     onError: (error) => console.log('Custom error callback', error),
   });

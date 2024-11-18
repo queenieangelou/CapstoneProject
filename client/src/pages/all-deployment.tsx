@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { GridRenderCellParams, GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, Button, Select, MenuItem, FormControl, Switch, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, Alert } from '@pankod/refine-mui';
+import { GridRenderCellParams, GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, Button, Select, MenuItem, FormControl, Switch, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, Alert, Snackbar } from '@pankod/refine-mui';
 import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable, useDelete, useUpdate } from '@pankod/refine-core';
@@ -28,6 +28,11 @@ const AllDeployments = () => {
   const [errorDialog, setErrorDialog] = useState({
     open: false,
     message: ''
+  });
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    open: false,
+    id: null as string | null,
+    deploymentSeq: ''
   });
 
   const {
@@ -66,28 +71,45 @@ const AllDeployments = () => {
     });
   }, [allDeployments, searchTerm, startDate, endDate]);
 
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'error' as 'error' | 'warning' | 'info' | 'success'
+  });
+
+  const handleSnackbarClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
   const handleStatusChange = (id: string, field: 'deploymentStatus' | 'releaseStatus', newValue: boolean) => {
     const statusName = field === 'deploymentStatus' ? 'deployment' : 'release';
     const action = newValue ? 'enable' : 'disable';
-    
+
     // Find the current deployment
     const currentDeployment = allDeployments.find(dep => dep._id === id);
     if (!currentDeployment) return;
 
-    // Check conditions for release status
+    // Check conditions ONLY for release status
     if (field === 'releaseStatus' && newValue) {
+      // Show snackbar if deployment status is off
       if (!currentDeployment.deploymentStatus) {
-        setErrorDialog({
+        setSnackbar({
           open: true,
-          message: "Cannot release when Deployment Status is off."
+          message: "Cannot release when Deployment Status is OFF.",
+          severity: 'error'
         });
         return;
       }
       
+      // Show snackbar if vehicle is not repaired
       if (currentDeployment.repairStatus !== 'Repaired') {
-        setErrorDialog({
+        setSnackbar({
           open: true,
-          message: "Cannot release when the vehicle is not \"Repaired\"."
+          message: "Cannot release when the vehicle is not \"Repaired\".",
+          severity: 'error'
         });
         return;
       }
@@ -173,9 +195,44 @@ const AllDeployments = () => {
     });
   };
 
+  const handleDeleteClick = (id: string, seq: string) => {
+    setDeleteConfirmation({
+      open: true,
+      id,
+      deploymentSeq: seq
+    });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation.id) {
+      deleteDeployment(
+        {
+          resource: 'deployments',
+          id: deleteConfirmation.id,
+        },
+        {
+          onSuccess: () => {
+            // Optional: Add success notification
+            setDeleteConfirmation({ open: false, id: null, deploymentSeq: '' });
+          },
+          onError: (error) => {
+            console.error('Delete error:', error);
+            // Optional: Add error handling
+            setDeleteConfirmation({ open: false, id: null, deploymentSeq: '' });
+          }
+        }
+      );
+    }
+  };
+
+
+  const cancelDelete = () => {
+    setDeleteConfirmation({ open: false, id: null, deploymentSeq: '' });
+  };
+
   const handleDeleteDeployment = useHandleDelete({
     resource: 'deployments',
-    onSuccess: () => console.log('Custom success callback'),
+    onSuccess: () => {},
     onError: (error) => console.log('Custom error callback', error),
   });
 
@@ -320,7 +377,7 @@ const AllDeployments = () => {
             icon={<Delete />}
             backgroundColor="error.light"
             color="error.dark"
-            handleClick={() => handleDeleteDeployment(params.row.id)}
+            handleClick={() => handleDeleteClick(params.row.id, params.row.seq)}
           />
         </Stack>
       ),
@@ -486,6 +543,53 @@ const AllDeployments = () => {
           <Button onClick={handleErrorDialogClose}>Close</Button>
         </DialogActions>
       </Dialog>
+
+       {/* Snackbar for Release status errors */}
+       <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbar.severity} 
+          sx={{ width: '80%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+       {/* Delete Confirmation Dialog */}
+       <Dialog
+        open={deleteConfirmation.open}
+        onClose={cancelDelete}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete Deployment Sequence {deleteConfirmation.deploymentSeq}? 
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDelete} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmDelete} 
+            color="error" 
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Paper>
   );
 };
