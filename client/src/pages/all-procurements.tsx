@@ -1,26 +1,32 @@
 //client\src\pages\all-procurements.tsx
 /* eslint-disable */
-import React, { useMemo, useState, useEffect } from 'react';
-import { DataGrid, GridColDef, Box, Paper, Typography, CircularProgress, IconButton, Tooltip, TextField, Stack, Button } from '@pankod/refine-mui';
+import { useMemo, useState } from 'react';
+import { GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, Button, DialogContent, DialogContentText, Dialog, DialogActions, DialogTitle } from '@pankod/refine-mui';
 import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
-import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-import { useTable, useDelete } from '@pankod/refine-core';
+import { useDelete, useTable } from '@pankod/refine-core';
 import CustomIconButton from 'components/common/CustomIconButton';
 import CustomButton from 'components/common/CustomButton';
 import useDynamicHeight from 'hooks/useDynamicHeight';
 import CustomTable from 'components/common/CustomTable';
-import useHandleDelete from 'utils/usehandleDelete';
 
 const AllProcurements = () => {
   const navigate = useNavigate();
   const containerHeight = useDynamicHeight();
+  const { mutate: deleteProcurement } = useDelete();
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  
+
+  // Delete confirmation state
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    open: false,
+    id: null as string | null,
+    seq: ''
+  });
+
   const { 
     tableQueryResult: { data, isLoading, isError }
   } = useTable({
@@ -48,11 +54,40 @@ const AllProcurements = () => {
     });
   }, [allProcurements, searchTerm, startDate, endDate]);
 
-    const handleDeleteProcurement = useHandleDelete({
-      resource: 'procurements',
-      onSuccess: () => console.log('Custom success callback'),
-      onError: (error) => console.log('Custom error callback', error),
+  // Open delete confirmation dialog
+  const handleDeleteClick = (id: string, seq: string) => {
+    setDeleteConfirmation({
+      open: true,
+      id,
+      seq
     });
+  };
+
+  // Confirm delete action
+  const confirmDelete = () => {
+    if (deleteConfirmation.id) {
+      deleteProcurement(
+        {
+          resource: 'procurements',
+          id: deleteConfirmation.id,
+        },
+        {
+          onSuccess: () => {
+            setDeleteConfirmation({ open: false, id: null, seq: '' });
+          },
+          onError: (error) => {
+            console.error('Delete error:', error);
+            setDeleteConfirmation({ open: false, id: null, seq: '' });
+          }
+        }
+      );
+    }
+  };
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setDeleteConfirmation({ open: false, id: null, seq: '' });
+  };
 
     const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -125,7 +160,7 @@ const AllProcurements = () => {
             icon={<Delete />}
             backgroundColor="error.light"
             color="error.dark"
-            handleClick={() => handleDeleteProcurement(params.row.id)}
+            handleClick={() => handleDeleteClick(params.row.id, params.row.seq)}
           />
         </Stack>
       ),
@@ -249,6 +284,37 @@ const AllProcurements = () => {
           containerHeight="100%"
         />
         </Box>
+
+ {/* Delete Confirmation Dialog */}
+ <Dialog
+        open={deleteConfirmation.open}
+        onClose={cancelDelete}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete Procurement Sequence {deleteConfirmation.seq}? 
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDelete} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmDelete} 
+            color="error" 
+            variant="contained"
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
     );
 };

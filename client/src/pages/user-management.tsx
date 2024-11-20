@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useList, useUpdate, useDelete } from '@pankod/refine-core';
 import { 
   DataGrid, 
@@ -13,6 +13,9 @@ import {
   Tooltip
 } from '@pankod/refine-mui';
 import DeleteIcon from '@mui/icons-material/Delete';
+import useDynamicHeight from 'hooks/useDynamicHeight';
+import { ColorModeContext } from 'contexts';
+
 
 const UserManagement = () => {
     const { data, isLoading, isError, refetch } = useList({
@@ -22,7 +25,8 @@ const UserManagement = () => {
     const { mutate: updateUser } = useUpdate();
     const { mutate: deleteUser } = useDelete();
 
-    const [pageSize, setPageSize] = useState<number>(5);
+    const containerHeight = useDynamicHeight();
+    const { mode } = useContext(ColorModeContext);
   
     const users = data?.data ?? [];
   
@@ -138,13 +142,17 @@ const UserManagement = () => {
   }
 
   return (
-    <Paper elevation={3} style={{ padding: '20px', margin: '20px auto', maxWidth: '2000px' }}>
+    <Paper elevation={3} sx={{     
+      height: containerHeight,
+      display: 'flex',
+      flexDirection: 'column',
+      m: 2,
+      overflow: 'hidden'}}>
       <Typography 
           variant="h4" 
           sx={{ 
-          textAlign: 'left',
-          mb: 4,
-          fontWeight: 600,
+            p: 2,
+            fontWeight: 600,
           }}
       >
         User Management
@@ -154,11 +162,34 @@ const UserManagement = () => {
           rows={users}
           columns={columns}
           getRowId={(row) => row._id}
-          pageSize={pageSize}
-          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-          rowsPerPageOptions={[5, 10, 20]}
           checkboxSelection={false}
-          disableSelectionOnClick
+        disableSelectionOnClick
+        autoHeight={false}
+        hideFooter={true}
+        sx={{
+          height: containerHeight,
+          '& .MuiDataGrid-main': {
+            overflow: 'hidden'
+          },
+          '& .MuiDataGrid-row:hover': {
+            backgroundColor: 'rgba(0, 0, 0, 0.04)'
+          },
+          '& .MuiDataGrid-cell': {
+            padding: '8px',
+            whiteSpace: 'normal',
+            wordWrap: 'break-word'
+          },
+                  /* Dark Mode */
+          '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: mode === 'light' ? '#f5f5f5' : '#333333',
+            borderBottom: mode === 'light' ? '2px solid #e0e0e0' : '2px solid #444444',
+            color: mode === 'light' ? 'inherit' : '#f5f5f5'
+          },
+          '& .MuiDataGrid-columnHeader': {
+            padding: '8px',
+            fontWeight: 'bold'
+          }
+        }}
         />
       </Box>
     </Paper>

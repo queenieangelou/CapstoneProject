@@ -2,7 +2,7 @@
 /* eslint-disable */
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTable, useDelete } from '@pankod/refine-core';
-import { DataGrid, GridColDef, Box, Paper, Typography, CircularProgress, IconButton, Tooltip, TextField, Stack, Button } from '@pankod/refine-mui';
+import { DataGrid, GridColDef, Box, Paper, Typography, CircularProgress, IconButton, Tooltip, TextField, Stack, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@pankod/refine-mui';
 import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
 import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
@@ -15,11 +15,19 @@ import useHandleDelete from 'utils/usehandleDelete';
 const AllExpenses = () => {
   const navigate = useNavigate();
   const containerHeight = useDynamicHeight();
-  
+  const { mutate: deleteExpense } = useDelete();
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // Delete confirmation state
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    open: false,
+    id: null as string | null,
+    expenseSeq: ''
+  });
+
   
   const { 
     tableQueryResult: { data, isLoading, isError }
@@ -48,11 +56,41 @@ const AllExpenses = () => {
     });
   }, [allExpenses, searchTerm, startDate, endDate]);
 
-  const handleDeleteExpense = useHandleDelete({
-    resource: 'expenses',
-    onSuccess: () => console.log('Custom success callback'),
-    onError: (error) => console.log('Custom error callback', error),
-  });
+  // Handle delete click to open confirmation dialog
+  const handleDeleteClick = (id: string, seq: string) => {
+    setDeleteConfirmation({
+      open: true,
+      id,
+      expenseSeq: seq
+    });
+  };
+
+  // Confirm delete action
+  const confirmDelete = () => {
+    if (deleteConfirmation.id) {
+      deleteExpense(
+        {
+          resource: 'expenses',
+          id: deleteConfirmation.id,
+        },
+        {
+          onSuccess: () => {
+            setDeleteConfirmation({ open: false, id: null, expenseSeq: '' });
+          },
+          onError: (error) => {
+            console.error('Delete error:', error);
+            setDeleteConfirmation({ open: false, id: null, expenseSeq: '' });
+          }
+        }
+      );
+    }
+  };
+
+  // Cancel delete action
+  const cancelDelete = () => {
+    setDeleteConfirmation({ open: false, id: null, expenseSeq: '' });
+  };
+
 
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -123,7 +161,7 @@ const AllExpenses = () => {
             icon={<Delete />}
             backgroundColor="error.light"
             color="error.dark"
-            handleClick={() => handleDeleteExpense(params.row.id)}
+            handleClick={() => handleDeleteClick(params.row.id, params.row.seq)}
           />
         </Stack>
       ),
@@ -245,6 +283,39 @@ const AllExpenses = () => {
           containerHeight="100%"
         />
       </Box>
+
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={cancelDelete}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete Expense Sequence {deleteConfirmation.expenseSeq}? 
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDelete} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmDelete} 
+            color="error" 
+            variant="contained"
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
     </Paper>
   );
 };

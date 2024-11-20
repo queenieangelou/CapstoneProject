@@ -7,7 +7,7 @@ import useDynamicHeight from 'hooks/useDynamicHeight';
 import CustomIconButton from 'components/common/CustomIconButton';
 import CustomButton from 'components/common/CustomButton';
 import CustomTable from 'components/common/CustomTable';
-import useHandleDelete from 'utils/usehandleDelete';
+
 
 const AllDeployments = () => {
   const { mutate: deleteDeployment } = useDelete();
@@ -229,12 +229,6 @@ const AllDeployments = () => {
   const cancelDelete = () => {
     setDeleteConfirmation({ open: false, id: null, deploymentSeq: '' });
   };
-
-  const handleDeleteDeployment = useHandleDelete({
-    resource: 'deployments',
-    onSuccess: () => {},
-    onError: (error) => console.log('Custom error callback', error),
-  });
 
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -583,7 +577,8 @@ const AllDeployments = () => {
           <Button 
             onClick={confirmDelete} 
             color="error" 
-            autoFocus
+            variant="contained"
+            startIcon={<Delete />}
           >
             Delete
           </Button>

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React, { useState, useMemo } from 'react';
-import { useTable } from '@pankod/refine-core';
+import { useTable, useDelete } from '@pankod/refine-core';
 import { 
   GridColDef, 
   Box, 
@@ -8,7 +8,13 @@ import {
   Typography, 
   CircularProgress, 
   Stack,
-  TextField
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button
 } from '@pankod/refine-mui';
 import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
@@ -16,17 +22,24 @@ import CustomIconButton from 'components/common/CustomIconButton';
 import CustomButton from 'components/common/CustomButton';
 import CustomTable from 'components/common/CustomTable';
 import useDynamicHeight from 'hooks/useDynamicHeight';
-import useHandleDelete from 'utils/usehandleDelete';
 
 const AllSales = () => {
   const navigate = useNavigate();
   const containerHeight = useDynamicHeight();
+  const { mutate: deleteSale } = useDelete();
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   
+  // Delete confirmation state
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    open: false,
+    id: null as string | null,
+    saleSeq: ''
+  });
+
   const { 
     tableQueryResult: { data, isLoading, isError }
   } = useTable({
@@ -54,11 +67,40 @@ const AllSales = () => {
     });
   }, [allSales, searchTerm, startDate, endDate]);
 
-  const handleDeleteSale = useHandleDelete({
-    resource: 'sales',
-    onSuccess: () => console.log('Custom success callback'),
-    onError: (error) => console.log('Custom error callback', error),
-  });
+  // Handle delete click to open confirmation dialog
+  const handleDeleteClick = (id: string, seq: string) => {
+    setDeleteConfirmation({
+      open: true,
+      id,
+      saleSeq: seq
+    });
+  };
+
+  // Confirm delete action
+  const confirmDelete = () => {
+    if (deleteConfirmation.id) {
+      deleteSale(
+        {
+          resource: 'sales',
+          id: deleteConfirmation.id,
+        },
+        {
+          onSuccess: () => {
+            setDeleteConfirmation({ open: false, id: null, saleSeq: '' });
+          },
+          onError: (error) => {
+            console.error('Delete error:', error);
+            setDeleteConfirmation({ open: false, id: null, saleSeq: '' });
+          }
+        }
+      );
+    }
+  };
+
+  // Cancel delete action
+  const cancelDelete = () => {
+    setDeleteConfirmation({ open: false, id: null, saleSeq: '' });
+  };
 
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -94,7 +136,7 @@ const AllSales = () => {
             icon={<Delete />}
             backgroundColor="error.light"
             color="error.dark"
-            handleClick={() => handleDeleteSale(params.row.id)}
+            handleClick={() => handleDeleteClick(params.row.id, params.row.seq)}
           />
         </Stack>
       ),
@@ -211,6 +253,37 @@ const AllSales = () => {
           containerHeight="100%"
         />
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={cancelDelete}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete Sales Sequence {deleteConfirmation.saleSeq}? 
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDelete} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmDelete} 
+            color="error" 
+            variant="contained"
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };

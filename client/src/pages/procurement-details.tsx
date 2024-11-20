@@ -1,25 +1,46 @@
-//client\src\pages\procurement-details.tsx
 import { Delete, Edit } from '@mui/icons-material';
-import { useGetIdentity, useShow } from '@pankod/refine-core';
-import { Box, CircularProgress, Button, Paper, Stack, Tooltip, Typography } from '@pankod/refine-mui';
+import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
+import { Box, CircularProgress, Button, Paper, Stack, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import CustomButton from 'components/common/CustomButton';
-import useHandleDelete from 'utils/usehandleDelete';
+import { useState } from 'react';
 
 const ProcurementDetails = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
   const { id } = useParams();
   const { queryResult } = useShow();
+  const { mutate } = useDelete();
 
   const { data, isLoading, isError } = queryResult;
   const procurementDetails = data?.data ?? {};
 
-  const handleDeleteProcurement = useHandleDelete({
-    resource: 'procurements',
-    onSuccess: () => navigate('/procurements'), // Redirect on successful deletion
-    onError: (error) => console.error('Delete error:', error), // Custom error handling
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    open: false
   });
+
+  const handleDeleteClick = () => {
+    setDeleteConfirmation({ open: true });
+  };
+
+  const handleDeleteConfirm = () => {
+    mutate(
+      {
+        resource: 'procurements',
+        id: id as string,
+      },
+      {
+        onSuccess: () => {
+          navigate('/procurements');
+        },
+        onError: (error) => console.error('Delete error:', error),
+      }
+    );
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmation({ open: false });
+  };
   
   if (isLoading) {
     return (
@@ -139,7 +160,7 @@ const ProcurementDetails = () => {
               backgroundColor="error.light"
               color="error.dark"
               icon={<Delete />}
-              handleClick={() => handleDeleteProcurement(id as string)}
+              handleClick={handleDeleteClick}
             />
           </Box>
         </Box>
@@ -192,6 +213,37 @@ const ProcurementDetails = () => {
           </Box>
         </Box>
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this procurement? 
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };

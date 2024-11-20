@@ -1,24 +1,46 @@
 import { Delete, Edit } from '@mui/icons-material';
-import {  useGetIdentity, useShow } from '@pankod/refine-core';
-import { Box, CircularProgress, Paper, Stack, Typography } from '@pankod/refine-mui';
+import {  useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
+import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Stack, Typography } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import CustomButton from 'components/common/CustomButton';
-import useHandleDelete from 'utils/usehandleDelete';
+import { useState } from 'react';
 
 const ExpenseDetails = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
   const { id } = useParams();
   const { queryResult } = useShow();
+  const { mutate } = useDelete();
 
   const { data, isLoading, isError } = queryResult;
   const expenseDetails = data?.data ?? {};
 
-  const handleDeleteExpense = useHandleDelete({
-    resource: 'expenses',
-    onSuccess: () => navigate('/expenses'), // Redirect on successful deletion
-    onError: (error) => console.error('Delete error:', error), // Custom error handling
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    open: false
   });
+
+
+  const handleDeleteClick = () => {
+    setDeleteConfirmation({ open: true });
+  };
+
+  const handleDeleteConfirm = () => {
+    mutate(
+      {
+        resource: 'expenses',
+        id: id as string,
+      },
+      {
+        onSuccess: () => {
+          navigate('/expenses');
+        },
+      }
+    );
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmation({ open: false });
+  };
 
   if (isLoading) {
     return (
@@ -132,7 +154,7 @@ const ExpenseDetails = () => {
               backgroundColor="error.light"
               color="error.dark"
               icon={<Delete />}
-              handleClick={() => handleDeleteExpense(id as string)}
+              handleClick={handleDeleteClick}
             />
           </Box>
         </Box>
@@ -185,6 +207,38 @@ const ExpenseDetails = () => {
           </Box>
         </Box>
       </Box>
+
+
+       {/* Delete Confirmation Dialog */}
+       <Dialog
+        open={deleteConfirmation.open}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this expense? 
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            startIcon={<Delete />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
