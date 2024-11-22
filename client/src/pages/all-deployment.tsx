@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react';
-import { GridRenderCellParams, GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, Button, Select, MenuItem, FormControl, Switch, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, Alert, Snackbar } from '@pankod/refine-mui';
-import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
+import { Add } from '@mui/icons-material';
+import { useDelete, useTable, useUpdate } from '@pankod/refine-core';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, GridColDef, GridRenderCellParams, MenuItem, Paper, Select, Snackbar, Stack, Switch, TextField, Typography } from '@pankod/refine-mui';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-import { useTable, useDelete, useUpdate } from '@pankod/refine-core';
-import useDynamicHeight from 'hooks/useDynamicHeight';
-import CustomIconButton from 'components/common/CustomIconButton';
 import CustomButton from 'components/common/CustomButton';
 import CustomTable from 'components/common/CustomTable';
+import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
+import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
+import useDynamicHeight from 'hooks/useDynamicHeight';
+import { useMemo, useState } from 'react';
+
 
 
 const AllDeployments = () => {
@@ -29,12 +31,16 @@ const AllDeployments = () => {
     open: false,
     message: ''
   });
-  const [deleteConfirmation, setDeleteConfirmation] = useState({
-    open: false,
-    id: null as string | null,
-    seq: ''
-  });
 
+  const {
+    deleteConfirmation,
+    handleTableDelete,
+    confirmDelete,
+    cancelDelete,
+  } = useDeleteWithConfirmation({
+    resource: 'deployments',
+  });
+  
   const {
     tableQueryResult: { data, isLoading, isError }
   } = useTable({
@@ -195,41 +201,6 @@ const AllDeployments = () => {
     });
   };
 
-  const handleDeleteClick = (id: string, seq: string) => {
-    setDeleteConfirmation({
-      open: true,
-      id,
-      seq
-    });
-  };
-
-  const confirmDelete = () => {
-    if (deleteConfirmation.id) {
-      deleteDeployment(
-        {
-          resource: 'deployments',
-          id: deleteConfirmation.id,
-        },
-        {
-          onSuccess: () => {
-            // Optional: Add success notification
-            setDeleteConfirmation({ open: false, id: null, seq: '' });
-          },
-          onError: (error) => {
-            console.error('Delete error:', error);
-            // Optional: Add error handling
-            setDeleteConfirmation({ open: false, id: null, seq: '' });
-          }
-        }
-      );
-    }
-  };
-
-
-  const cancelDelete = () => {
-    setDeleteConfirmation({ open: false, id: null, seq: '' });
-  };
-
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
     { field: 'date', headerName: 'Date', flex: 1 },
@@ -355,23 +326,6 @@ const AllDeployments = () => {
     navigate(`/deployments/edit/${id}`);
   };
 
-  const handleDelete = (ids: string[]) => {
-    if (ids.length === 1) {
-      const deployment = rows.find(row => row.id === ids[0]);
-      setDeleteConfirmation({
-        open: true,
-        id: ids[0],
-        seq: deployment?.seq || ''
-      });
-    } else {
-      setDeleteConfirmation({
-        open: true,
-        id: ids.join(','),
-        seq: `${ids.length} items`
-      });
-    }
-  };
-
   const rows = filteredRows.map((deployment) => ({
     id: deployment._id,
     _id: deployment._id,
@@ -487,8 +441,8 @@ const AllDeployments = () => {
           containerHeight="100%"
           onView={handleView}
           onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+          onDelete={(ids) => handleTableDelete(ids, rows)}
+          />
       </Box>
       {/* Confirmation Dialog */}
       <Dialog
@@ -552,36 +506,12 @@ const AllDeployments = () => {
       </Snackbar>
 
        {/* Delete Confirmation Dialog */}
-       <Dialog
-        open={deleteConfirmation.open}
-        onClose={cancelDelete}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          Confirm Deletion
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete Deployment Sequence {deleteConfirmation.seq}? 
-            This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={cancelDelete} color="primary">
-            Cancel
-          </Button>
-          <Button 
-            onClick={confirmDelete} 
-            color="error" 
-            variant="contained"
-            startIcon={<Delete />}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
+        <DeleteConfirmationDialog
+          open={deleteConfirmation.open}
+          contentText={`Are you sure you want to delete Deployments Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
     </Paper>
   );
 };

@@ -9,6 +9,8 @@ import CustomIconButton from 'components/common/CustomIconButton';
 import CustomButton from 'components/common/CustomButton';
 import useDynamicHeight from 'hooks/useDynamicHeight';
 import CustomTable from 'components/common/CustomTable';
+import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
+import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 
 const AllProcurements = () => {
   const navigate = useNavigate();
@@ -20,11 +22,13 @@ const AllProcurements = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Delete confirmation state
-  const [deleteConfirmation, setDeleteConfirmation] = useState({
-    open: false,
-    id: null as string | null,
-    seq: ''
+  const {
+    deleteConfirmation,
+    handleTableDelete,
+    confirmDelete,
+    cancelDelete,
+  } = useDeleteWithConfirmation({
+    resource: 'procurements'
   });
 
   const { 
@@ -53,41 +57,6 @@ const AllProcurements = () => {
       return matchesSearch && matchesDateRange;
     });
   }, [allProcurements, searchTerm, startDate, endDate]);
-
-  // Open delete confirmation dialog
-  const handleDeleteClick = (id: string, seq: string) => {
-    setDeleteConfirmation({
-      open: true,
-      id,
-      seq
-    });
-  };
-
-  // Confirm delete action
-  const confirmDelete = () => {
-    if (deleteConfirmation.id) {
-      deleteProcurement(
-        {
-          resource: 'procurements',
-          id: deleteConfirmation.id,
-        },
-        {
-          onSuccess: () => {
-            setDeleteConfirmation({ open: false, id: null, seq: '' });
-          },
-          onError: (error) => {
-            console.error('Delete error:', error);
-            setDeleteConfirmation({ open: false, id: null, seq: '' });
-          }
-        }
-      );
-    }
-  };
-
-  // Cancel delete
-  const cancelDelete = () => {
-    setDeleteConfirmation({ open: false, id: null, seq: '' });
-  };
 
     const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -142,23 +111,6 @@ const handleView = (id: string) => {
 
 const handleEdit = (id: string) => {
   navigate(`/procurements/edit/${id}`);
-};
-
-const handleDelete = (ids: string[]) => {
-  if (ids.length === 1) {
-    const procurement = rows.find(row => row.id === ids[0]);
-    setDeleteConfirmation({
-      open: true,
-      id: ids[0],
-      seq: procurement?.seq || ''
-    });
-  } else {
-    setDeleteConfirmation({
-      open: true,
-      id: ids.join(','),
-      seq: `${ids.length} items`
-    });
-  }
 };
 
     const rows = filteredRows.map((procurement) => ({
@@ -278,40 +230,17 @@ const handleDelete = (ids: string[]) => {
           containerHeight="100%"
           onView={handleView}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={(ids) => handleTableDelete(ids, rows)}
         />
         </Box>
 
  {/* Delete Confirmation Dialog */}
-  <Dialog
-        open={deleteConfirmation.open}
-        onClose={cancelDelete}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          Confirm Deletion
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete Procurement Sequence {deleteConfirmation.seq}? 
-            This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={cancelDelete} color="primary">
-            Cancel
-          </Button>
-          <Button 
-            onClick={confirmDelete} 
-            color="error" 
-            variant="contained"
-            startIcon={<Delete />}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+  <DeleteConfirmationDialog
+    open={deleteConfirmation.open}
+    contentText={`Are you sure you want to delete Procurements Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+    onConfirm={confirmDelete}
+    onCancel={cancelDelete}
+  />
     </Paper>
     );
 };

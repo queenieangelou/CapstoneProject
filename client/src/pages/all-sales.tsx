@@ -22,22 +22,25 @@ import CustomIconButton from 'components/common/CustomIconButton';
 import CustomButton from 'components/common/CustomButton';
 import CustomTable from 'components/common/CustomTable';
 import useDynamicHeight from 'hooks/useDynamicHeight';
+import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
+import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 
 const AllSales = () => {
   const navigate = useNavigate();
   const containerHeight = useDynamicHeight();
-  const { mutate: deleteSale } = useDelete();
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   
-  // Delete confirmation state
-  const [deleteConfirmation, setDeleteConfirmation] = useState({
-    open: false,
-    id: null as string | null,
-    seq: ''
+  const {
+    deleteConfirmation,
+    handleTableDelete,
+    confirmDelete,
+    cancelDelete,
+  } = useDeleteWithConfirmation({
+    resource: 'sales'
   });
 
   const { 
@@ -67,41 +70,6 @@ const AllSales = () => {
     });
   }, [allSales, searchTerm, startDate, endDate]);
 
-  // Handle delete click to open confirmation dialog
-  const handleDeleteClick = (id: string, seq: string) => {
-    setDeleteConfirmation({
-      open: true,
-      id,
-      seq
-    });
-  };
-
-  // Confirm delete action
-  const confirmDelete = () => {
-    if (deleteConfirmation.id) {
-      deleteSale(
-        {
-          resource: 'sales',
-          id: deleteConfirmation.id,
-        },
-        {
-          onSuccess: () => {
-            setDeleteConfirmation({ open: false, id: null, seq: '' });
-          },
-          onError: (error) => {
-            console.error('Delete error:', error);
-            setDeleteConfirmation({ open: false, id: null, seq: '' });
-          }
-        }
-      );
-    }
-  };
-
-  // Cancel delete action
-  const cancelDelete = () => {
-    setDeleteConfirmation({ open: false, id: null, seq: '' });
-  };
-
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
     { field: 'date', headerName: 'Date', flex: 1 },
@@ -118,23 +86,6 @@ const AllSales = () => {
 
   const handleEdit = (id: string) => {
     navigate(`/sales/edit/${id}`);
-  };
-
-  const handleDelete = (ids: string[]) => {
-    if (ids.length === 1) {
-      const sale = rows.find(row => row.id === ids[0]);
-      setDeleteConfirmation({
-        open: true,
-        id: ids[0],
-        seq: sale?.seq || ''
-      });
-    } else {
-      setDeleteConfirmation({
-        open: true,
-        id: ids.join(','),
-        seq: `${ids.length} items`
-      });
-    }
   };
   
   const rows = filteredRows.map((sale) => ({
@@ -247,42 +198,23 @@ if (isError) {
           containerHeight="100%"
           onView={handleView}
           onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+          onDelete={(ids) => handleTableDelete(ids, rows)}
+          />
       </Box>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
+      <DeleteConfirmationDialog
         open={deleteConfirmation.open}
-        onClose={cancelDelete}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          Confirm Deletion
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete Sales Sequence {deleteConfirmation.seq}? 
-            This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={cancelDelete} color="primary">
-            Cancel
-          </Button>
-          <Button 
-            onClick={confirmDelete} 
-            color="error" 
-            variant="contained"
-            startIcon={<Delete />}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        contentText={`Are you sure you want to delete Sales Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </Paper>
   );
 };
 
 export default AllSales;
+
+function handleMultipleDelete(ids: string[], rows: { id: any; _id: any; seq: any; date: string; clientName: any; tin: any; amount: any; netOfVAT: any; outputVAT: any; }[]) {
+  throw new Error('Function not implemented.');
+}

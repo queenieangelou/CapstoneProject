@@ -3,6 +3,8 @@ import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
 import { Box, CircularProgress, Button, Typography, Paper, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import CustomButton from 'components/common/CustomButton';
+import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
+import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import { useState } from 'react';
 
 const SaleDetails = () => {
@@ -10,37 +12,19 @@ const SaleDetails = () => {
   const { data: user } = useGetIdentity();
   const { id } = useParams();
   const { queryResult } = useShow();
-  const { mutate } = useDelete();
 
   const { data, isLoading, isError } = queryResult;
   const saleDetails = data?.data ?? {};
 
-  const [deleteConfirmation, setDeleteConfirmation] = useState({
-    open: false
+  const {
+    deleteConfirmation,
+    handleDeleteClick,
+    confirmDelete,
+    cancelDelete,
+  } = useDeleteWithConfirmation({
+    resource: 'sales',
+    redirectPath: '/sales'  // Specify where to navigate after successful deletion
   });
-
-  const handleDeleteClick = () => {
-    setDeleteConfirmation({ open: true });
-  };
-
-  const handleDeleteConfirm = () => {
-    mutate(
-      {
-        resource: 'sales',
-        id: id as string,
-      },
-      {
-        onSuccess: () => {
-          navigate('/sales');
-        },
-        onError: (error) => console.error('Delete error:', error),
-      }
-    );
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteConfirmation({ open: false });
-  };
 
   if (isLoading) {
     return (
@@ -137,8 +121,8 @@ const SaleDetails = () => {
               backgroundColor="error.light"
               color="error.dark"
               icon={<Delete />}
-              handleClick={handleDeleteClick}
-            />
+              handleClick={() => handleDeleteClick(saleDetails._id, saleDetails.seq)} // Pass the id and seq
+              />
           </Box>
         </Box>
 
@@ -192,35 +176,12 @@ const SaleDetails = () => {
       </Box>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
+      <DeleteConfirmationDialog
         open={deleteConfirmation.open}
-        onClose={handleDeleteCancel}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          Confirm Deletion
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete this sale? 
-            This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} color="primary">
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
-            color="error" 
-            variant="contained"
-            startIcon={<Delete />}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        contentText={`Are you sure you want to delete Sales Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </Paper>
   );
 };

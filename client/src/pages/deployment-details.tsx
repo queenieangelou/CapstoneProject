@@ -2,6 +2,9 @@ import { Delete, Edit } from '@mui/icons-material';
 import { useDelete, useGetIdentity, useShow } from '@pankod/refine-core';
 import { Box, CircularProgress, Button, Paper, Stack, Tooltip, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@pankod/refine-mui';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
+import CustomButton from 'components/common/CustomButton';
+import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
+import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import { Key, useState } from 'react';
 
 
@@ -12,14 +15,18 @@ const DeploymentDetails = () => {
   const { mutate } = useDelete();
   const { queryResult } = useShow();
 
-
-  const [deleteConfirmation, setDeleteConfirmation] = useState({
-    open: false
+  const {
+    deleteConfirmation,
+    handleDeleteClick,
+    confirmDelete,
+    cancelDelete,
+  } = useDeleteWithConfirmation({
+    resource: 'deployments',
+    redirectPath: '/deployments'  // Specify where to navigate after successful deletion
   });
 
   const { data, isLoading, isError } = queryResult;
   const deploymentDetails = data?.data ?? {};
-
 
   if (isLoading) {
     return (
@@ -36,29 +43,6 @@ const DeploymentDetails = () => {
       </Box>
     );
   }
-
-  const handleDeleteClick = () => {
-    setDeleteConfirmation({ open: true });
-  };
-
-  const handleDeleteConfirm = () => {
-    mutate(
-      {
-        resource: 'deployments',
-        id: id as string,
-      },
-      {
-        onSuccess: () => {
-          navigate('/deployments');
-        },
-      }
-    );
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteConfirmation({ open: false });
-  };
-
 
   return (
     <Paper 
@@ -174,59 +158,22 @@ const DeploymentDetails = () => {
             )}
           </Stack>
 
-            <Box 
-              display="flex" 
-              justifyContent="center" 
-              gap={2} 
-              mt={3}
-            >
-              <Tooltip title="Edit Deployment" arrow>
-                <Button
-                  onClick={() => navigate(`/deployments/edit/${deploymentDetails._id}`)}
-                  sx={{
-                    bgcolor: 'warning.light',
-                    color: 'warning.dark',
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '120px',
-                    p: 1.5,
-                    '&:hover': {
-                      bgcolor: 'warning.main',
-                      color: 'white',
-                      transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out',
-                    borderRadius: 5, // Optional: adjust for button shape
-                  }}
-                >
-                  <Edit sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-                  Edit
-                </Button>
-              </Tooltip>
-              <Tooltip title="Delete Deployment" arrow>
-                <Button
-                  onClick={handleDeleteClick}
-                  sx={{
-                    bgcolor: 'error.light',
-                    color: 'error.dark',
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '120px',
-                    p: 1.5,
-                    '&:hover': {
-                      bgcolor: 'error.main',
-                      color: 'white',
-                      transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.2s ease-in-out',
-                    borderRadius: 5, // Optional: adjust for button shape
-                  }}
-                >
-                  <Delete sx={{ mr: 1 }} /> {/* Margin right for spacing */}
-                  Delete
-                </Button>
-              </Tooltip>
-            </Box>
+          <Box display="flex" gap={2} mt={3}>
+            <CustomButton
+              title="Edit"
+              backgroundColor="warning.light"
+              color="warning.dark"
+              icon={<Edit />}
+              handleClick={() => navigate(`/deployments/edit/${deploymentDetails._id}`)}
+            />
+            <CustomButton
+              title="Delete"
+              backgroundColor="error.light"
+              color="error.dark"
+              icon={<Delete />}
+              handleClick={() => handleDeleteClick(deploymentDetails._id, deploymentDetails.seq)} // Pass the id and seq
+              />
+          </Box>
         </Box>
 
         {/* Creator Information Section */}
@@ -279,37 +226,13 @@ const DeploymentDetails = () => {
           </Box>
         </Box>
 
-
         {/* Delete Confirmation Dialog */}
-      <Dialog
+        <DeleteConfirmationDialog
         open={deleteConfirmation.open}
-        onClose={handleDeleteCancel}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          Confirm Deletion
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete this deployment? 
-            This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} color="primary">
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
-            color="error" 
-            variant="contained"
-            startIcon={<Delete />}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        contentText={`Are you sure you want to delete Sales Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </Paper>
   );
 };
