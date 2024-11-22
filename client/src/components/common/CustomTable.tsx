@@ -54,7 +54,7 @@ const CustomTableToolbar = ({
       variant="subtitle1"
       component="div"
     >
-      {numSelected > 0 ? `${numSelected} selected` : 'Sales Records'}
+      {numSelected > 0 ? `${numSelected} selected` : 'All Records'}
     </Typography>
 
     {numSelected > 0 && (

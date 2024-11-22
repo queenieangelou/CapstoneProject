@@ -1,68 +1,112 @@
-/* eslint-disable */
 import React, { useContext, useState } from 'react';
 import { useList, useUpdate, useDelete } from '@pankod/refine-core';
-import { 
-  DataGrid, 
-  GridColDef, 
-  Checkbox, 
-  Box, 
-  Paper, 
-  Typography, 
-  CircularProgress, 
-  IconButton,
-  Tooltip
+import {
+  DataGrid,
+  GridColDef,
+  Toolbar,
+  Typography,
+  Box,
+  Stack,
+  Checkbox,
+  Paper,
+  CircularProgress,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@pankod/refine-mui';
 import DeleteIcon from '@mui/icons-material/Delete';
-import useDynamicHeight from 'hooks/useDynamicHeight';
 import { ColorModeContext } from 'contexts';
-
+import CustomIconButton from 'components/common/CustomIconButton';
+import useDynamicHeight from 'hooks/useDynamicHeight';
+import { Edit, Visibility } from '@mui/icons-material';
 
 const UserManagement = () => {
-    const { data, isLoading, isError, refetch } = useList({
-      resource: 'user-management',
-    });
-  
-    const { mutate: updateUser } = useUpdate();
-    const { mutate: deleteUser } = useDelete();
+  const { data, isLoading, isError, refetch } = useList({
+    resource: 'user-management',
+  });
 
-    const containerHeight = useDynamicHeight();
-    const { mode } = useContext(ColorModeContext);
-  
-    const users = data?.data ?? [];
-  
-    const handleAllowedChange = (userId: string, currentValue: boolean) => {
-      const newValue = !currentValue;
+  const { mutate: updateUser } = useUpdate();
+  const { mutate: deleteUser } = useDelete();
+  const { mode } = useContext(ColorModeContext);
+  const containerHeight = useDynamicHeight();
+  const [selectionModel, setSelectionModel] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const users = data?.data.map((user) => ({
+    ...user,
+    id: user._id, // Map `_id` to `id`
+  })) ?? [];
+
+  const handleDeleteUsers = () => {
+    selectionModel.forEach((id) => {
+      deleteUser({ resource: 'user-management', id });
+    });
+    refetch();
+    setSelectionModel([]);
+    setDeleteDialogOpen(false);
+  };
+
+  const handleAllowedToggle = () => {
+    if (currentUser) {
       updateUser(
         {
           resource: 'user-management',
-          id: userId,
-          values: { isAllowed: newValue },
+          id: currentUser._id,
+          values: { isAllowed: !currentUser.isAllowed },
         },
-        {
-          onSuccess: (data) => {
-            refetch();
-          },
-          onError: (error) => {
-          },
-        }
+        { onSuccess: () => refetch() }
       );
-    };
-
-  const handleDeleteUser = (userId: string) => {
-    deleteUser(
-      {
-        resource: 'user-management',
-        id: userId,
-      },
-      {
-        onSuccess: () => {
-          refetch(); // Refresh the data after successful deletion
-        },
-        onError: (error) => {
-        },
-      }
-    );
+      setToggleDialogOpen(false);
+    }
   };
+
+  const openDeleteDialog = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const openToggleDialog = (user: any) => {
+    setCurrentUser(user);
+    setToggleDialogOpen(true);
+  };
+
+  const CustomTableToolbar = () => (
+    <Toolbar
+      sx={{
+        pl: { sm: 2 },
+        pr: { xs: 1, sm: 1 },
+        ...(selectionModel.length > 0 && { bgcolor: 'rgba(25, 118, 210, 0.08)' }),
+        display: 'flex',
+        justifyContent: 'space-between',
+      }}
+    >
+      <Typography
+        sx={{ flex: '1 1 100%' }}
+        color="inherit"
+        variant="subtitle1"
+        component="div"
+      >
+        {selectionModel.length > 0
+          ? `${selectionModel.length} selected`
+          : 'All Records'}
+      </Typography>
+      {selectionModel.length > 0 && (
+        <Stack direction="row" spacing={1}>
+          <CustomIconButton
+            title={`Delete ${selectionModel.length > 1 ? `(${selectionModel.length})` : ''}`}
+            icon={<DeleteIcon />}
+            backgroundColor="error.light"
+            color="error.dark"
+            handleClick={openDeleteDialog}
+          />
+        </Stack>
+      )}
+    </Toolbar>
+  );
 
   const columns: GridColDef[] = [
     {
@@ -70,17 +114,21 @@ const UserManagement = () => {
       headerName: 'Avatar',
       width: 100,
       renderCell: (params) => (
-        <img src={params.value} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%' }} />
+        <img
+          src={params.value}
+          alt="avatar"
+          style={{ width: 40, height: 40, borderRadius: '50%' }}
+        />
       ),
     },
-    { field: 'name', headerName: 'Name', flex:1 },
+    { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'email', headerName: 'Email', flex: 1 },
 
-    { 
-      field: 'isAdmin', 
-      headerName: 'Role', 
-      width: 100, 
-      valueGetter: (params) => (params.row.isAdmin ? 'Admin' : 'User') 
+    {
+      field: 'isAdmin',
+      headerName: 'Role',
+      width: 100,
+      valueGetter: (params) => (params.row.isAdmin ? 'Admin' : 'User'),
     },
     {
       field: 'isAllowed',
@@ -89,36 +137,8 @@ const UserManagement = () => {
       renderCell: (params) => (
         <Checkbox
           checked={params.row.isAllowed}
-          onChange={() => handleAllowedChange(params.row._id, params.row.isAllowed)}
+          onChange={() => openToggleDialog(params.row)}
         />
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 100,
-      renderCell: (params) => (
-        <Tooltip title="Delete User" arrow>
-          <IconButton
-            onClick={() => handleDeleteUser(params.row._id)}
-            size="small"
-            sx={{
-                bgcolor: 'error.light',
-                color: 'error.dark',
-                p: 1.5,
-                width: 36, // Set fixed width
-                height: 36, // Set fixed height
-                '&:hover': {
-                  bgcolor: 'error.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease-in-out'
-              }}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
       ),
     },
   ];
@@ -144,16 +164,16 @@ const UserManagement = () => {
   return (
     <Paper elevation={3} sx={{     
       height: containerHeight,
-      display: 'flex',
-      flexDirection: 'column',
-      m: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        m: 2,
       overflow: 'hidden'}}>
-      <Typography 
-          variant="h4" 
-          sx={{ 
-            p: 2,
-            fontWeight: 600,
-          }}
+      <Typography
+        variant="h4"
+        sx={{
+          p: 2,
+          fontWeight: 600,
+        }}
       >
         User Management
       </Typography>
@@ -161,22 +181,28 @@ const UserManagement = () => {
         <DataGrid
           rows={users}
           columns={columns}
-          getRowId={(row) => row._id}
-          checkboxSelection={false}
-        disableSelectionOnClick
-        autoHeight={false}
-        hideFooter={true}
-        sx={{
-          height: containerHeight,
+          checkboxSelection
+          disableSelectionOnClick
+          autoHeight={false}
+          hideFooter={true}
+          selectionModel={selectionModel}
+          onSelectionModelChange={(newSelectionModel) =>
+            setSelectionModel(newSelectionModel as string[])
+          }
+          components={{
+            Toolbar: CustomTableToolbar,
+          }}
+          sx={{
+            height: containerHeight,
           '& .MuiDataGrid-main': {
             overflow: 'hidden'
-          },
+            },
           '& .MuiDataGrid-row:hover': {
             backgroundColor: 'rgba(0, 0, 0, 0.04)'
-          },
-          '& .MuiDataGrid-cell': {
-            padding: '8px',
-            whiteSpace: 'normal',
+            },
+            '& .MuiDataGrid-cell': {
+              padding: '8px',
+              whiteSpace: 'normal',
             wordWrap: 'break-word'
           },
                   /* Dark Mode */
@@ -189,9 +215,50 @@ const UserManagement = () => {
             padding: '8px',
             fontWeight: 'bold'
           }
-        }}
+          }}
         />
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the selected users? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteUsers}
+            color="error"
+            variant="contained"
+            startIcon={<DeleteIcon />}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Toggle Allowed Dialog */}
+      <Dialog open={toggleDialogOpen} onClose={() => setToggleDialogOpen(false)}>
+        <DialogTitle>Change User Permission</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to {currentUser?.isAllowed ? 'disallow' : 'allow'} this user?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setToggleDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleAllowedToggle} color="primary" variant="contained">
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
