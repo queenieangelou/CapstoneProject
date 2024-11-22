@@ -95,6 +95,8 @@ const App = () => {
   const authProvider: AuthProvider = {
     login: async ({ credential }: CredentialResponse) => {
       const profileObj = credential ? parseJwt(credential) : null;
+
+      // Save user to MongoDB
       if (profileObj) {
         const response = await fetch('http://localhost:8080/api/v1/users', {
           method: 'POST',
@@ -129,157 +131,119 @@ const App = () => {
       return Promise.resolve();
     },
     logout: () => {
-      return new Promise<void>((resolve) => {
-        const token = localStorage.getItem('token');
-        const user = localStorage.getItem('user');
-    
-        // Clear local storage
+      const token = localStorage.getItem('token');
+
+      if (token && typeof window !== 'undefined') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        
-        // Reset axios headers
         axios.defaults.headers.common = {};
-    
-        // Reset admin state
-        setIsAdmin(false);
-    
-        // Revoke Google token if available
-        if (token && window.google?.accounts?.id) {
-          try {
-            window.google.accounts.id.revoke(token, () => {
-              // Use window.location to force navigation to login page
-              window.location.href = '/';
-              resolve();
-            });
-          } catch (error) {
-            console.error('Error revoking token:', error);
-            window.location.href = '/';
-            resolve();
-          }
-        } else {
-          // Force navigation to login page if no Google token
-          window.location.href = '/';
-          resolve();
-        }
-      });
+        window.google?.accounts.id.revoke(token, () => Promise.resolve());
+      }
+
+      return Promise.resolve();
     },
-    
     checkError: () => Promise.resolve(),
     checkAuth: async () => {
       const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
-    
-      if (token && user) {
-        const userData = JSON.parse(user);
-        // Explicitly set admin state when checking authentication
-        setIsAdmin(userData.isAdmin || false);
+
+      if (token) {
         return Promise.resolve();
       }
       return Promise.reject();
     },
-    
+
     getPermissions: () => Promise.resolve(),
     getUserIdentity: async () => {
       const user = localStorage.getItem('user');
       if (user) {
-        const userData = JSON.parse(user);
-        // Always set admin state when getting user identity
-        setIsAdmin(userData.isAdmin || false);
-        return Promise.resolve(userData);
+        return Promise.resolve(JSON.parse(user));
       }
-      
-      // Reset admin state if no user found
-      setIsAdmin(false);
-      return Promise.resolve(null);
     },
-    
   };
 
-  const baseResources = [
-    {
-      name: 'properties',
-      list: AllProperties,
-      show: PropertyDetails,
-      create: CreateProperty,
-      edit: EditProperty,
-      icon: <VillaOutlined />,
-    },
-    {
-      name: 'procurements', // LINK
-      list: AllProcurements,
-      show: ProcurementDetails,
-      create: CreateProcurement,
-      edit: EditProcurement,
-      icon: <WarehouseOutlined />,
-    },
-    {
-      name: 'deployments', // LINK
-      list: AllDeployments,
-      show: DeploymentDetails,
-      create: CreateDeployment,
-      edit: EditDeployment,
-      icon: <NoCrashOutlined />,
-    },
-    {
-      name: 'expenses', // LINK
-      list: AllExpenses,
-      show: ExpenseDetails,
-      create: CreateExpense,
-      edit: EditExpense,
-      icon: <WalletOutlined/>,
-    },
-    {
-      name: 'sales', // LINK
-      list: AllSales,
-      show: SaleDetails,
-      create: CreateSale,
-      edit: EditSale,
-      icon: <AttachMoneyOutlined/>,
-    },
-    {
-      name: 'agents',
-      list: Agents,
-      show: AgentProfile,
-      icon: <PeopleAltOutlined />,
-    },
-    {
-      name: 'my-profile',
-      options: { label: 'My Profile' },
-      list: MyProfile,
-      icon: <AccountCircleOutlined />,
-    },
-  ];
+  const generateResources = () => {
+    const baseResources = [
+      {
+        name: 'properties',
+        list: AllProperties,
+        show: PropertyDetails,
+        create: CreateProperty,
+        edit: EditProperty,
+        icon: <VillaOutlined />,
+      },
+      {
+        name: 'procurements',
+        list: AllProcurements,
+        show: ProcurementDetails,
+        create: CreateProcurement,
+        edit: EditProcurement,
+        icon: <WarehouseOutlined />,
+      },
+      {
+        name: 'deployments',
+        list: AllDeployments,
+        show: DeploymentDetails,
+        create: CreateDeployment,
+        edit: EditDeployment,
+        icon: <NoCrashOutlined />,
+      },
+      {
+        name: 'expenses',
+        list: AllExpenses,
+        show: ExpenseDetails,
+        create: CreateExpense,
+        edit: EditExpense,
+        icon: <WalletOutlined/>,
+      },
+      {
+        name: 'sales',
+        list: AllSales,
+        show: SaleDetails,
+        create: CreateSale,
+        edit: EditSale,
+        icon: <AttachMoneyOutlined/>,
+      },
+      {
+        name: 'agents',
+        list: Agents,
+        show: AgentProfile,
+        icon: <PeopleAltOutlined />,
+      },
+      {
+        name: 'my-profile',
+        options: { label: 'My Profile' },
+        list: MyProfile,
+        icon: <AccountCircleOutlined />,
+      },
+    ];
 
-  const resources = React.useMemo(() => {
+    // Add user management resource only for admin users
     if (isAdmin) {
-      return [
-        ...baseResources,
-        {
-          name: 'user-management',
-          list: UserManagement,
+      baseResources.push({
+        name: 'user-management',
+        list: UserManagement,
           options: { label: 'User Management' },
-          icon: <ManageAccounts />,
-        },
-      ];
+        icon: <ManageAccounts />,
+      });
     }
     return baseResources;
-  }, [isAdmin]);
+  };
 
   return (
     <ColorModeContextProvider>
       <CssBaseline />
       <GlobalStyles styles={{ html: { WebkitFontSmoothing: 'auto' } }} />
       <RefineSnackbarProvider>
-          <Refine
-            dataProvider={dataProvider('http://localhost:8080/api/v1')}
-            notificationProvider={notificationProvider}
-            ReadyPage={ReadyPage}
-            catchAll={<ErrorComponent />}
-            resources={resources}
-            Title={Title}
-            Sider={Sider}
-            Layout={Layout}
-            Header={Header}
+        <Refine
+          dataProvider={dataProvider('http://localhost:8080/api/v1')}
+          notificationProvider={notificationProvider}
+          ReadyPage={ReadyPage}
+          catchAll={<ErrorComponent />}
+          resources={generateResources()}
+          Title={Title}
+          Sider={Sider}
+          Layout={Layout}
+          Header={Header}
             routerProvider={{
               ...routerProvider,
               routes: [
@@ -293,10 +257,10 @@ const App = () => {
                 },
               ],
             }}
-            authProvider={authProvider}
-            LoginPage={Login}
-            DashboardPage={Home}
-          />
+          authProvider={authProvider}
+          LoginPage={Login}
+          DashboardPage={Home}
+        />
       </RefineSnackbarProvider>
     </ColorModeContextProvider>
   );

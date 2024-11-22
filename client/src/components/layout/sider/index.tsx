@@ -41,6 +41,7 @@ import { Title as DefaultTitle } from '../title';
 export const Sider: typeof DefaultSider = ({ render }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [opened, setOpened] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [viewHeight, setViewHeight] = useState('100vh');
   
   const { pathname } = useLocation();
@@ -53,6 +54,15 @@ export const Sider: typeof DefaultSider = ({ render }) => {
     ? 'linear-gradient(0deg, rgba(18,18,18,1)  10%, rgba(51,48,0,1) 40%, rgba(102,97,0,1) 80%, rgba(255,240,0,1) 100%)'
     : 'linear-gradient(0deg, rgba(255,255,255,1) 10%, rgba(255,251,214,1) 40%, rgba(255,246,153,1) 80%, rgba(255,240,0,1) 100%)';
 
+    useEffect(() => {
+      // Check isAdmin status from localStorage
+      const user = localStorage.getItem('user');
+      if (user) {
+        const userData = JSON.parse(user);
+        setIsAdmin(!!userData.isAdmin); // Convert to boolean with !!
+      }
+    }, []);
+  
   // Dynamic height calculation
   useEffect(() => {
     const updateHeight = () => {
@@ -101,6 +111,12 @@ export const Sider: typeof DefaultSider = ({ render }) => {
 
   const renderTreeView = (tree: ITreeMenu[], selectedKey: string) => tree.map((item: ITreeMenu) => {
     const { icon, label, route, name, children, parentName } = item;
+
+    // Skip rendering user-management for non-admin users
+    if (name === 'user-management' && !isAdmin) {
+      return null;
+    }
+
     const isOpen = open[route || ''] || false;
 
     const isSelected = route === selectedKey;
@@ -333,8 +349,8 @@ export const Sider: typeof DefaultSider = ({ render }) => {
     </Tooltip>
   );
 
-  const items = renderTreeView(menuItems, selectedKey);
-
+  const items = renderTreeView(menuItems, selectedKey).filter((item): item is React.ReactElement => item !== null);
+    
   const renderSider = () => {
     if (render) {
       return render({
