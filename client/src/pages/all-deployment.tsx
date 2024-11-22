@@ -32,7 +32,7 @@ const AllDeployments = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     open: false,
     id: null as string | null,
-    deploymentSeq: ''
+    seq: ''
   });
 
   const {
@@ -199,7 +199,7 @@ const AllDeployments = () => {
     setDeleteConfirmation({
       open: true,
       id,
-      deploymentSeq: seq
+      seq
     });
   };
 
@@ -213,12 +213,12 @@ const AllDeployments = () => {
         {
           onSuccess: () => {
             // Optional: Add success notification
-            setDeleteConfirmation({ open: false, id: null, deploymentSeq: '' });
+            setDeleteConfirmation({ open: false, id: null, seq: '' });
           },
           onError: (error) => {
             console.error('Delete error:', error);
             // Optional: Add error handling
-            setDeleteConfirmation({ open: false, id: null, deploymentSeq: '' });
+            setDeleteConfirmation({ open: false, id: null, seq: '' });
           }
         }
       );
@@ -227,7 +227,7 @@ const AllDeployments = () => {
 
 
   const cancelDelete = () => {
-    setDeleteConfirmation({ open: false, id: null, deploymentSeq: '' });
+    setDeleteConfirmation({ open: false, id: null, seq: '' });
   };
 
   const columns: GridColDef[] = [
@@ -345,38 +345,32 @@ const AllDeployments = () => {
       headerName: 'Released Date',
       flex: 1,
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      align: 'center',
-      width: 120,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          <CustomIconButton
-            title="View"
-            icon={<Visibility />}
-            backgroundColor="primary.light"
-            color="primary.dark"
-            handleClick={() => navigate(`/deployments/show/${params.row.id}`)}
-          />
-          <CustomIconButton
-            title="Edit"
-            icon={<Edit />}
-            backgroundColor="warning.light"
-            color="warning.dark"
-            handleClick={() => navigate(`/deployments/edit/${params.row.id}`)}
-          />
-          <CustomIconButton
-            title="Delete"
-            icon={<Delete />}
-            backgroundColor="error.light"
-            color="error.dark"
-            handleClick={() => handleDeleteClick(params.row.id, params.row.seq)}
-          />
-        </Stack>
-      ),
-    },
   ];
+
+  const handleView = (id: string) => {
+    navigate(`/deployments/show/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/deployments/edit/${id}`);
+  };
+
+  const handleDelete = (ids: string[]) => {
+    if (ids.length === 1) {
+      const deployment = rows.find(row => row.id === ids[0]);
+      setDeleteConfirmation({
+        open: true,
+        id: ids[0],
+        seq: deployment?.seq || ''
+      });
+    } else {
+      setDeleteConfirmation({
+        open: true,
+        id: ids.join(','),
+        seq: `${ids.length} items`
+      });
+    }
+  };
 
   const rows = filteredRows.map((deployment) => ({
     id: deployment._id,
@@ -491,6 +485,9 @@ const AllDeployments = () => {
           rows={rows}
           columns={columns}
           containerHeight="100%"
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </Box>
       {/* Confirmation Dialog */}
@@ -566,7 +563,7 @@ const AllDeployments = () => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete Deployment Sequence {deleteConfirmation.deploymentSeq}? 
+            Are you sure you want to delete Deployment Sequence {deleteConfirmation.seq}? 
             This action cannot be undone.
           </DialogContentText>
         </DialogContent>

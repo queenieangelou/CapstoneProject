@@ -61,7 +61,9 @@ const DeploymentSchema = new mongoose.Schema({
   trackCode: {
     type: String,
     required: true,
-  }
+  },
+  deleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
 });
 
 const deploymentModel = mongoose.model('Deployment', DeploymentSchema);

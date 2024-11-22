@@ -37,7 +37,7 @@ const AllSales = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     open: false,
     id: null as string | null,
-    saleSeq: ''
+    seq: ''
   });
 
   const { 
@@ -72,7 +72,7 @@ const AllSales = () => {
     setDeleteConfirmation({
       open: true,
       id,
-      saleSeq: seq
+      seq
     });
   };
 
@@ -86,11 +86,11 @@ const AllSales = () => {
         },
         {
           onSuccess: () => {
-            setDeleteConfirmation({ open: false, id: null, saleSeq: '' });
+            setDeleteConfirmation({ open: false, id: null, seq: '' });
           },
           onError: (error) => {
             console.error('Delete error:', error);
-            setDeleteConfirmation({ open: false, id: null, saleSeq: '' });
+            setDeleteConfirmation({ open: false, id: null, seq: '' });
           }
         }
       );
@@ -99,7 +99,7 @@ const AllSales = () => {
 
   // Cancel delete action
   const cancelDelete = () => {
-    setDeleteConfirmation({ open: false, id: null, saleSeq: '' });
+    setDeleteConfirmation({ open: false, id: null, seq: '' });
   };
 
   const columns: GridColDef[] = [
@@ -110,39 +110,33 @@ const AllSales = () => {
     { field: 'amount', headerName: 'Amount', type: 'number', flex: 1 },
     { field: 'netOfVAT', headerName: 'Net of VAT', type: 'number', flex: 1 },
     { field: 'outputVAT', headerName: 'Output VAT', type: 'number', flex: 1 },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      align: 'center',
-      width: 120,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          <CustomIconButton
-            title="View"
-            icon={<Visibility />}
-            backgroundColor="primary.light"
-            color="primary.dark"
-            handleClick={() => navigate(`/sales/show/${params.row.id}`)}
-          />
-          <CustomIconButton
-            title="Edit"
-            icon={<Edit />}
-            backgroundColor="warning.light"
-            color="warning.dark"
-            handleClick={() => navigate(`/sales/edit/${params.row.id}`)}
-          />
-          <CustomIconButton
-            title="Delete"
-            icon={<Delete />}
-            backgroundColor="error.light"
-            color="error.dark"
-            handleClick={() => handleDeleteClick(params.row.id, params.row.seq)}
-          />
-        </Stack>
-      ),
-    },
   ];
 
+  const handleView = (id: string) => {
+    navigate(`/sales/show/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/sales/edit/${id}`);
+  };
+
+  const handleDelete = (ids: string[]) => {
+    if (ids.length === 1) {
+      const sale = rows.find(row => row.id === ids[0]);
+      setDeleteConfirmation({
+        open: true,
+        id: ids[0],
+        seq: sale?.seq || ''
+      });
+    } else {
+      setDeleteConfirmation({
+        open: true,
+        id: ids.join(','),
+        seq: `${ids.length} items`
+      });
+    }
+  };
+  
   const rows = filteredRows.map((sale) => ({
     id: sale._id,
     _id: sale._id,
@@ -156,22 +150,22 @@ const AllSales = () => {
   }));
 
   if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
+  return (
+    <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <CircularProgress />
+    </Box>
+  );
+}
 
-  if (isError) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography variant="h6" color="error">
-          Error loading sales data
-        </Typography>
-      </Box>
-    );
-  }
+if (isError) {
+  return (
+    <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <Typography variant="h6" color="error">
+        Error loading sales data
+      </Typography>
+    </Box>
+  );
+}
 
   return (
     <Paper 
@@ -251,6 +245,9 @@ const AllSales = () => {
           rows={rows}
           columns={columns}
           containerHeight="100%"
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </Box>
 
@@ -266,7 +263,7 @@ const AllSales = () => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete Sales Sequence {deleteConfirmation.saleSeq}? 
+            Are you sure you want to delete Sales Sequence {deleteConfirmation.seq}? 
             This action cannot be undone.
           </DialogContentText>
         </DialogContent>

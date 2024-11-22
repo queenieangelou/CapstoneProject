@@ -25,7 +25,7 @@ const AllExpenses = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     open: false,
     id: null as string | null,
-    expenseSeq: ''
+    seq: ''
   });
 
   
@@ -61,7 +61,7 @@ const AllExpenses = () => {
     setDeleteConfirmation({
       open: true,
       id,
-      expenseSeq: seq
+      seq
     });
   };
 
@@ -75,11 +75,11 @@ const AllExpenses = () => {
         },
         {
           onSuccess: () => {
-            setDeleteConfirmation({ open: false, id: null, expenseSeq: '' });
+            setDeleteConfirmation({ open: false, id: null, seq: '' });
           },
           onError: (error) => {
             console.error('Delete error:', error);
-            setDeleteConfirmation({ open: false, id: null, expenseSeq: '' });
+            setDeleteConfirmation({ open: false, id: null, seq: '' });
           }
         }
       );
@@ -88,7 +88,7 @@ const AllExpenses = () => {
 
   // Cancel delete action
   const cancelDelete = () => {
-    setDeleteConfirmation({ open: false, id: null, expenseSeq: '' });
+    setDeleteConfirmation({ open: false, id: null, seq: '' });
   };
 
 
@@ -135,38 +135,32 @@ const AllExpenses = () => {
         </Typography>
       )
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      align: 'center',
-      width: 120,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          <CustomIconButton
-            title="View"
-            icon={<Visibility />}
-            backgroundColor="primary.light"
-            color="primary.dark"
-            handleClick={() => navigate(`/expenses/show/${params.row.id}`)}
-          />
-          <CustomIconButton
-            title="Edit"
-            icon={<Edit />}
-            backgroundColor="warning.light"
-            color="warning.dark"
-            handleClick={() => navigate(`/expenses/edit/${params.row.id}`)}
-          />
-          <CustomIconButton
-            title="Delete"
-            icon={<Delete />}
-            backgroundColor="error.light"
-            color="error.dark"
-            handleClick={() => handleDeleteClick(params.row.id, params.row.seq)}
-          />
-        </Stack>
-      ),
-    }
   ];
+
+  const handleView = (id: string) => {
+    navigate(`/sales/show/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/sales/edit/${id}`);
+  };
+
+  const handleDelete = (ids: string[]) => {
+    if (ids.length === 1) {
+      const expense = rows.find(row => row.id === ids[0]);
+      setDeleteConfirmation({
+        open: true,
+        id: ids[0],
+        seq: expense?.seq || ''
+      });
+    } else {
+      setDeleteConfirmation({
+        open: true,
+        id: ids.join(','),
+        seq: `${ids.length} items`
+      });
+    }
+  };
 
   const rows = filteredRows.map((expense) => ({
     id: expense._id,
@@ -281,6 +275,9 @@ const AllExpenses = () => {
           rows={rows}
           columns={columns}
           containerHeight="100%"
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </Box>
 
@@ -297,7 +294,7 @@ const AllExpenses = () => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete Expense Sequence {deleteConfirmation.expenseSeq}? 
+            Are you sure you want to delete Expense Sequence {deleteConfirmation.seq}? 
             This action cannot be undone.
           </DialogContentText>
         </DialogContent>

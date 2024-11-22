@@ -62,6 +62,8 @@ const ProcurementSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
+  deleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
 });
 
 const procurementModel = mongoose.model('Procurement', ProcurementSchema);

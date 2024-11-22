@@ -12,7 +12,7 @@ const getAllProcurements = async (req, res) => {
     _end, _order, _start, _sort, supplierName_like = '',
   } = req.query;
 
-  const query = {};
+  const query = { deleted: false };
 
   if (supplierName_like) {
     query.supplierName = { $regex: supplierName_like, $options: 'i' };
@@ -224,26 +224,62 @@ const deleteProcurement = async (req, res) => {
   session.startTransaction();
 
   try {
-    const procurement = await Procurement.findById(id).populate('creator').populate('part').session(session);
-    if (!procurement) return res.status(404).json({ message: 'Procurement not found.' });
+    // Handle multiple IDs
+    const ids = id.split(',');
 
-    const part = procurement.part;
-    if (part) {
-      part.qtyLeft -= procurement.quantityBought;
-      part.procurements.pull(procurement._id);
-      await part.save({ session });
+    // Validate all IDs first
+    const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
+    if (!validIds) {
+      return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    procurement.creator.allProcurements.pull(procurement._id);
-    await procurement.creator.save({ session });
+    // Perform soft delete for all selected procurements
+    const updateResult = await Procurement.updateMany(
+      { 
+        _id: { $in: ids },
+        deleted: false // Only update non-deleted procurements
+      },
+      {
+        $set: {
+          deleted: true,
+          deletedAt: new Date()
+        }
+      },
+      { session }
+    );
 
-    await Procurement.findByIdAndDelete(id).session(session);
+    // If no procurements were modified, return a 404 error
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({ message: 'No procurements found to delete' });
+    }
+
+    // Restore quantities for all parts related to the deleted procurements
+    const procurements = await Procurement.find({ _id: { $in: ids } }).populate('part').session(session);
+    for (const procurement of procurements) {
+      const part = procurement.part;
+      if (part) {
+        part.qtyLeft += procurement.quantityBought;
+        part.procurements.pull(procurement._id);
+        await part.save({ session });
+      }
+
+      // Remove procurement from creator's allProcurements array
+      const creator = procurement.creator;
+      if (creator && creator.allProcurements) {
+        creator.allProcurements.pull(procurement._id);
+        await creator.save({ session });
+      }
+    }
+
     await session.commitTransaction();
-    res.status(200).json({ message: 'Procurement deleted successfully' });
+    res.status(200).json({ 
+      message: `Successfully deleted ${updateResult.modifiedCount} procurement(s)`,
+      deletedCount: updateResult.modifiedCount
+    });
   } catch (error) {
     await session.abortTransaction();
     console.error('Error deleting procurement:', error);
-    res.status(500).json({ message: 'Failed to delete procurement.', error: error.message });
+    res.status(500).json({ message: 'Failed to delete procurements', error: error.message });
   } finally {
     session.endSession();
   }

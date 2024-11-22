@@ -11,7 +11,7 @@ const getAllSales = async (req, res) => {
     _end, _order, _start, _sort, clientName_like = '',
   } = req.query;
 
-  const query = {};
+  const query = { deleted: false }; // Add this condition to exclude soft-deleted sales
 
   if (clientName_like) {
     query.clientName = { $regex: clientName_like, $options: 'i' };
@@ -163,23 +163,52 @@ const deleteSale = async (req, res) => {
   session.startTransaction();
 
   try {
-    const sale = await Sale.findById(id).populate('creator').session(session);
+    // Handle multiple IDs
+    const ids = id.split(',');
 
-    if (!sale) {
-      return res.status(404).json({ message: 'Sale not found' });
+    // Validate all IDs first
+    const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
+    if (!validIds) {
+      return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    // Remove sale from user's sales list if needed
-    if (sale.creator && sale.creator.allSales) {
-      sale.creator.allSales.pull(sale._id);
-      await sale.creator.save({ session });
+    // Perform soft delete for all selected sales
+    const updateResult = await Sale.updateMany(
+      { 
+        _id: { $in: ids },
+        deleted: false // Only update non-deleted sales
+      },
+      {
+        $set: {
+          deleted: true,
+          deletedAt: new Date()
+        }
+      },
+      { session }
+    );
+
+    // If no sales were modified, return a 404 error
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({ message: 'No sales found to delete' });
     }
-    await Sale.findByIdAndDelete(id).session(session);
+
+    // Remove sales from user's allSales array
+    const sales = await Sale.find({ _id: { $in: ids } }).populate('creator').session(session);
+    for (const sale of sales) {
+      if (sale.creator && sale.creator.allSales) {
+        sale.creator.allSales.pull(sale._id);
+        await sale.creator.save({ session });
+      }
+    }
+
     await session.commitTransaction();
-    res.status(200).json({ message: 'Sale deleted successfully' });
+    res.status(200).json({ 
+      message: `Successfully deleted ${updateResult.modifiedCount} sale(s)`,
+      deletedCount: updateResult.modifiedCount
+    });
   } catch (error) {
     await session.abortTransaction();
-    res.status(500).json({ message: 'Failed to delete sale, please try again later', error: error.message });
+    res.status(500).json({ message: 'Failed to delete sales, please try again later', error: error.message });
   } finally {
     session.endSession();
   }

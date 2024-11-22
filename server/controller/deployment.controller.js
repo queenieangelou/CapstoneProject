@@ -11,7 +11,7 @@ const getAllDeployments = async (req, res) => {
     _end, _order, _start, _sort, searchField, searchValue = '',
   } = req.query;
 
-  const query = {};
+  const query = { deleted: false };
 
   // Handle search based on various fields
   if (searchValue) {
@@ -418,49 +418,71 @@ const deleteDeployment = async (req, res) => {
   session.startTransaction();
 
   try {
-    const deployment = await Deployment.findById(id)
-      .populate('creator')
-      .populate({
-        path: 'parts.part',
-        model: 'Part'
-      })
-      .session(session);
+    // Handle multiple IDs
+    const ids = id.split(',');
 
-    if (!deployment) {
-      return res.status(404).json({ message: 'Deployment not found' });
+    // Validate all IDs first
+    const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
+    if (!validIds) {
+      return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    // Restore quantities for all parts
-    if (deployment.parts && deployment.parts.length > 0) {
-      for (const partEntry of deployment.parts) {
-        if (partEntry.part) {
-          partEntry.part.qtyLeft += partEntry.quantityUsed;
-          if (partEntry.part.deployments) {
-            partEntry.part.deployments.pull(deployment._id);
-          }
-          await partEntry.part.save({ session });
+    // Perform soft delete for all selected deployments
+    const updateResult = await Deployment.updateMany(
+      { 
+        _id: { $in: ids },
+        deleted: false // Only update non-deleted deployments
+      },
+      {
+        $set: {
+          deleted: true,
+          deletedAt: new Date()
         }
+      },
+      { session }
+    );
+
+    // If no deployments were modified, return a 404 error
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({ message: 'No deployments found to delete' });
+    }
+
+    // Restore quantities for all parts used in the deleted deployments
+    const deployments = await Deployment.find({ _id: { $in: ids } }).session(session);
+    for (const deployment of deployments) {
+      if (deployment.parts && deployment.parts.length > 0) {
+        for (const partEntry of deployment.parts) {
+          if (partEntry.part) {
+            partEntry.part.qtyLeft += partEntry.quantityUsed;
+            if (partEntry.part.deployments) {
+              partEntry.part.deployments.pull(deployment._id);
+            }
+            await partEntry.part.save({ session });
+          }
+        }
+      }
+
+      // Remove deployment from user's allDeployments if needed
+      const creator = await User.findById(deployment.creator).session(session);
+      if (creator && creator.allDeployments) {
+        creator.allDeployments.pull(deployment._id);
+        await creator.save({ session });
       }
     }
 
-    // Remove deployment from user's deployments if needed
-    const creator = await User.findById(deployment.creator).session(session);
-    if (creator && creator.allDeployments) {
-      creator.allDeployments.pull(deployment._id);
-      await creator.save({ session });
-    }
-
-    // Delete the deployment
-    await Deployment.findByIdAndDelete(id).session(session);
     await session.commitTransaction();
-    res.status(200).json({ message: 'Deployment deleted successfully' });
+    res.status(200).json({ 
+      message: `Successfully deleted ${updateResult.modifiedCount} deployment(s)`,
+      deletedCount: updateResult.modifiedCount
+    });
   } catch (error) {
     await session.abortTransaction();
-    res.status(500).json({ message: 'Failed to delete deployment', error: error.message });
+    res.status(500).json({ message: 'Failed to delete deployments', error: error.message });
   } finally {
     session.endSession();
   }
 };
+
 
 export {
   getAllDeployments,

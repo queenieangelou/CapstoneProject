@@ -34,6 +34,8 @@ const SaleSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
+  deleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
 });
 
 const saleModel = mongoose.model('Sale', SaleSchema);

@@ -134,38 +134,32 @@ const AllProcurements = () => {
         </Typography>
       )
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      align: 'center',
-      width: 120,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          <CustomIconButton
-            title="View"
-            icon={<Visibility />}
-            backgroundColor="primary.light"
-            color="primary.dark"
-            handleClick={() => navigate(`/procurements/show/${params.row.id}`)}
-          />
-          <CustomIconButton
-            title="Edit"
-            icon={<Edit />}
-            backgroundColor="warning.light"
-            color="warning.dark"
-            handleClick={() => navigate(`/procurements/edit/${params.row.id}`)}
-          />
-          <CustomIconButton
-            title="Delete"
-            icon={<Delete />}
-            backgroundColor="error.light"
-            color="error.dark"
-            handleClick={() => handleDeleteClick(params.row.id, params.row.seq)}
-          />
-        </Stack>
-      ),
-    }
 ];
+
+const handleView = (id: string) => {
+  navigate(`/procurements/show/${id}`);
+};
+
+const handleEdit = (id: string) => {
+  navigate(`/procurements/edit/${id}`);
+};
+
+const handleDelete = (ids: string[]) => {
+  if (ids.length === 1) {
+    const procurement = rows.find(row => row.id === ids[0]);
+    setDeleteConfirmation({
+      open: true,
+      id: ids[0],
+      seq: procurement?.seq || ''
+    });
+  } else {
+    setDeleteConfirmation({
+      open: true,
+      id: ids.join(','),
+      seq: `${ids.length} items`
+    });
+  }
+};
 
     const rows = filteredRows.map((procurement) => ({
         id: procurement._id,
@@ -282,11 +276,14 @@ const AllProcurements = () => {
           rows={rows}
           columns={columns}
           containerHeight="100%"
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
         </Box>
 
  {/* Delete Confirmation Dialog */}
- <Dialog
+  <Dialog
         open={deleteConfirmation.open}
         onClose={cancelDelete}
         aria-labelledby="delete-dialog-title"

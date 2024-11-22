@@ -56,6 +56,16 @@ const clientNames = [
   'Reliable Auto Services'
 ];
 
+// Helper function to generate random boolean values
+const getRandomBoolean = () => Math.random() > 0.5;
+
+// Helper function to generate random date (within a specific range)
+const getRandomDate = (startDate, endDate) => {
+  const start = startDate.getTime();
+  const end = endDate.getTime();
+  return new Date(start + Math.random() * (end - start));
+};
+
 const generateTrackCode = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   return Array(8).fill(0).map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
@@ -74,6 +84,7 @@ const generateRandomDate = (start, end) => {
   return date.toISOString().split('T')[0];
 };
 
+// Seed function
 async function seedDatabase() {
   try {
     await connectDB(process.env.MONGODB_URL);
@@ -98,7 +109,9 @@ async function seedDatabase() {
     const createdParts = await Part.insertMany(
       partsList.map(part => ({
         ...part,
-        qtyLeft: 0
+        qtyLeft: 0,
+        deleted: getRandomBoolean(),  // Add random deleted field
+        deletedAt: getRandomBoolean() ? getRandomDate(new Date(2020, 0, 1), new Date()) : null, // If deleted, set a date
       }))
     );
     console.log(`Created ${createdParts.length} parts`);
@@ -106,15 +119,15 @@ async function seedDatabase() {
     // Create procurements
     const procurements = [];
     let procurementSeq = 1;
-    
-    for(const part of createdParts) {
+
+    for (const part of createdParts) {
       const numProcurements = Math.floor(Math.random() * 3) + 1;
-      for(let i = 0; i < numProcurements; i++) {
+      for (let i = 0; i < numProcurements; i++) {
         const quantityBought = Math.floor(Math.random() * 50) + 10;
         const amount = Math.floor(Math.random() * 10000) + 1000;
         const netOfVAT = amount / 1.12;
         const inputVAT = amount - netOfVAT;
-        
+
         procurements.push({
           seq: procurementSeq++,
           date: generateRandomDate(new Date(2024, 0, 1), new Date()),
@@ -130,10 +143,10 @@ async function seedDatabase() {
           inputVAT: parseFloat(inputVAT.toFixed(2)),
           isNonVat: false,
           noValidReceipt: false,
-          creator: user._id
+          creator: user._id,
+          deleted: getRandomBoolean(),
+          deletedAt: getRandomBoolean() ? getRandomDate(new Date(2020, 0, 1), new Date()) : null,
         });
-
-        // Update part quantity
         part.qtyLeft += quantityBought;
       }
       await part.save();
@@ -146,7 +159,7 @@ async function seedDatabase() {
     const deployments = [];
     let deploymentSeq = 1;
 
-    for(let i = 0; i < 20; i++) {
+    for (let i = 0; i < 20; i++) {
       const numParts = Math.floor(Math.random() * 3) + 1;
       const selectedParts = createdParts
         .sort(() => 0.5 - Math.random())
@@ -174,7 +187,9 @@ async function seedDatabase() {
         creator: user._id,
         repairStatus: ['Pending', 'In Progress', 'Completed'][Math.floor(Math.random() * 3)],
         repairedDate: deploymentDate,
-        trackCode: generateTrackCode()
+        trackCode: generateTrackCode(),
+        deleted: getRandomBoolean(),
+        deletedAt: getRandomBoolean() ? getRandomDate(new Date(2020, 0, 1), new Date()) : null,
       });
     }
 
@@ -185,10 +200,8 @@ async function seedDatabase() {
     const sales = [];
     let saleSeq = 1;
 
-    // Create sales records - some based on deployments, some independent
-    for(const deployment of createdDeployments) {
+    for (const deployment of createdDeployments) {
       if (deployment.releaseStatus) {
-        // Create a sale record for completed deployments
         const amount = Math.floor(Math.random() * 50000) + 20000;
         const netOfVAT = amount / 1.12;
         const outputVAT = amount - netOfVAT;
@@ -201,13 +214,14 @@ async function seedDatabase() {
           amount,
           netOfVAT: parseFloat(netOfVAT.toFixed(2)),
           outputVAT: parseFloat(outputVAT.toFixed(2)),
-          creator: user._id
+          creator: user._id,
+          deleted: getRandomBoolean(),
+          deletedAt: getRandomBoolean() ? getRandomDate(new Date(2020, 0, 1), new Date()) : null,
         });
       }
     }
 
-    // Add some additional independent sales
-    for(let i = 0; i < 15; i++) {
+    for (let i = 0; i < 15; i++) {
       const amount = Math.floor(Math.random() * 100000) + 30000;
       const netOfVAT = amount / 1.12;
       const outputVAT = amount - netOfVAT;
@@ -220,7 +234,9 @@ async function seedDatabase() {
         amount,
         netOfVAT: parseFloat(netOfVAT.toFixed(2)),
         outputVAT: parseFloat(outputVAT.toFixed(2)),
-        creator: user._id
+        creator: user._id,
+        deleted: getRandomBoolean(),
+        deletedAt: getRandomBoolean() ? getRandomDate(new Date(2020, 0, 1), new Date()) : null,
       });
     }
 
@@ -231,7 +247,7 @@ async function seedDatabase() {
     const expenses = [];
     let expenseSeq = 1;
 
-    for(let i = 0; i < 30; i++) {
+    for (let i = 0; i < 30; i++) {
       const amount = Math.floor(Math.random() * 50000) + 5000;
       const isNonVat = Math.random() > 0.8;
       const netOfVAT = isNonVat ? amount : amount / 1.12;
@@ -250,7 +266,9 @@ async function seedDatabase() {
         inputVAT: parseFloat(inputVAT.toFixed(2)),
         isNonVat,
         noValidReceipt: Math.random() > 0.9,
-        creator: user._id
+        creator: user._id,
+        deleted: getRandomBoolean(),
+        deletedAt: getRandomBoolean() ? getRandomDate(new Date(2020, 0, 1), new Date()) : null,
       });
     }
 
@@ -258,12 +276,6 @@ async function seedDatabase() {
     console.log(`Created ${createdExpenses.length} expenses`);
 
     console.log('Database seeding completed successfully!');
-    console.log(`Summary:
-    - Parts: ${createdParts.length}
-    - Procurements: ${createdProcurements.length}
-    - Deployments: ${createdDeployments.length}
-    - Sales: ${createdSales.length}
-    - Expenses: ${createdExpenses.length}`);
     process.exit(0);
   } catch (error) {
     console.error('Error seeding database:', error);

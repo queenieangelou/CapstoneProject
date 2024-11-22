@@ -132,7 +132,7 @@ const Dashboard = () => {
 
   return (
     <Box>
-      <Typography fontSize={25} fontWeight={700} color="#11142D">
+      <Typography fontSize={25} fontWeight={700}>
         Dashboard
       </Typography>
 
@@ -164,16 +164,16 @@ const Dashboard = () => {
             { label: 'Total Procurements', value: totalProcurements, data: procurementData, color: '#3F51B5' },
             { label: 'Total Deployments', value: totalDeployments, data: deploymentData, color: '#FFC107' },
         ].map((item, index) => (
-            <Box key={index} p={4} bgcolor="white" borderRadius="15px" flex={1} minWidth="200px">
-                <Typography fontSize={18} fontWeight={600} color="#11142D">
+            <Box key={index} p={4} borderRadius="15px" flex={1} minWidth="200px">
+                <Typography fontSize={18} fontWeight={600}>
                     {item.label}
                 </Typography>
-                <Typography fontSize={24} fontWeight={700} color="#11142D">
+                <Typography fontSize={24} fontWeight={700}>
                     {item.value.toLocaleString()}
                 </Typography>
                 <Box mt={2}>
                     {renderMiniChart(
-                        Object.values(item.data).map(i => Number(i.totalAmount || i.value || i.deployments || 0)), 
+                        Object.values(item.data).map(i => Number(i.totalSales || i.totalAmount || i.value || i.deployments || 0)), 
                         item.color
                     )}
                 </Box>
@@ -181,83 +181,135 @@ const Dashboard = () => {
         ))}
     </Box>
 
-      {/* Charts and Data Display */}
-      <Box mt="20px" display="flex" flexWrap="wrap" gap={4}>
-        {/* Procurement Chart */}
-        <Box flex={1} minWidth="400px" p={4} bgcolor="white" borderRadius="15px">
-          <Typography fontSize={18} fontWeight={600} color="#11142D">
-            Procurement Overview
-          </Typography>
-          <Chart
-            type="bar"
-            series={[
-              { name: "Total Amount", data: Object.values(procurementData).map((item) => item.totalAmount) },
-              { name: "VAT Amount", data: Object.values(procurementData).map((item) => item.vatAmount) },
-              { name: "Non-VAT Amount", data: Object.values(procurementData).map((item) => item.nonVatAmount) }
-            ]}
-            options={{
-              chart: { type: 'bar' },
-              xaxis: { categories: Object.keys(procurementData) },
-            }}
-            height={300}
-          />
-        </Box>
-        
-        {/* Deployment Chart with ApexCharts */}
-        <Box flex={1} minWidth="400px" p={4} bgcolor="white" borderRadius="15px">
-          <Typography fontSize={18} fontWeight={600} color="#11142D">
-            Deployment Status
-          </Typography>
-          <Chart
-            type="line"
-            series={[
-              { name: "Deployments", data: Object.values(deploymentData).map((item) => item.deployments) },
-              { name: "Releases", data: Object.values(deploymentData).map((item) => item.releases) }
-            ]}
-            options={{
-              chart: { type: 'line' },
-              xaxis: { categories: Object.keys(deploymentData) }
-            }}
-            height={300}
-          />
-        </Box>
-        </Box>
+{/* Charts and Data Display */}
+<Box mt="20px" display="flex" flexWrap="wrap" gap={4}>
+  {/* Procurement Chart */}
+  <Box flex={1} minWidth="400px" p={4} borderRadius="15px">
+    <Typography fontSize={18} fontWeight={600}>
+      Procurement Overview
+    </Typography>
+    <Chart
+      type="bar"
+      series={[
+        { name: "Total Amount", data: Object.values(procurementData).map((item) => item.totalAmount)},
+        { name: "VAT Amount", data: Object.values(procurementData).map((item) => item.vatAmount) },
+        { name: "Non-VAT Amount", data: Object.values(procurementData).map((item) => item.nonVatAmount)}
+      ]}
+      options={{
+        chart: { type: 'bar' },
+        plotOptions: {
+          bar: {
+            dataLabels: {
+              position: 'center',
+            },
+          }
+        },
+        dataLabels: {
+          enabled: false,
+        },
+        xaxis: { categories: Object.keys(procurementData) },
+        yaxis: {
+          labels: {
+            formatter: (value) => Number(value).toFixed(2),
+          }
+        },
+        tooltip: {
+          y: {
+            formatter: (value) => Number(value).toFixed(2),
+          }
+        }
+      }}
+      height={300}
+    />
+  </Box>
 
-        <Stack mt="25px" width="100%" direction={{ xs: 'column', lg: 'row' }} gap={4}>
-        {/* Sales Performance with ApexCharts */}
-          <Box flex={2} p={4} bgcolor="white" borderRadius="15px">
-            <Typography fontSize={18} fontWeight={600} color="#11142D">
-              Sales Performance
-            </Typography>
-            <Chart
-              type="bar"
-              series={[
-                { name: "Total Sales", data: Object.values(salesData).map((item) => item.totalSales) },
-                { name: "Output VAT", data: Object.values(salesData).map((item) => item.outputVAT) }
-              ]}
-              options={{
-                chart: { type: 'bar' },
-                xaxis: { categories: Object.keys(salesData) },
-              }}
-              height={300}
-            />
-          </Box>
-
-        {/* Expense Distribution with ApexCharts */}
-          <Box flex={1} p={4} bgcolor="white" borderRadius="15px">
-            <Typography fontSize={18} fontWeight={600} color="#11142D">
-              Expense Distribution
-            </Typography>
-            <Chart
-              type="pie"
-              series={Object.values(expenseData).map((item) => item.value)}
-              options={{
-                labels: Object.keys(expenseData),
-                legend: { position: 'bottom' }
-              }}
-              height={300}
-            />
-      </Box>
+  {/* Deployment Chart with ApexCharts */}
+  <Box flex={1} minWidth="400px" p={4} borderRadius="15px">
+    <Typography fontSize={18} fontWeight={600}>
+      Deployment Status
+    </Typography>
+    <Chart
+      type="line"
+      series={[
+        { name: "Deployments", data: Object.values(deploymentData).map((item) => item.deployments) },
+        { name: "Releases", data: Object.values(deploymentData).map((item) => item.releases) }
+      ]}
+      options={{
+        chart: { type: 'line' },
+        dataLabels: {
+          enabled: false,
+        },
+        xaxis: { categories: Object.keys(deploymentData) },
+        yaxis: {
+          labels: {
+            formatter: (value) => Number(value).toFixed(2),
+          }
+        },
+        tooltip: {
+          y: {
+            formatter: (value) => Number(value).toFixed(2),
+          }
+        }
+      }}
+      height={300}
+    />
+  </Box>
+  </Box>
+  <Stack mt="25px" width="100%" direction={{ xs: 'column', lg: 'row' }} gap={4}>
+  {/* Sales Performance with ApexCharts */}
+    <Box flex={2} p={4} borderRadius="15px">
+      <Typography fontSize={18} fontWeight={600}>
+        Sales Performance
+      </Typography>
+      <Chart
+        type="bar"
+        series={[
+          { name: "Total Sales", data: Object.values(salesData).map((item) => item.totalSales) },
+          { name: "Output VAT", data: Object.values(salesData).map((item) => item.outputVAT) }
+        ]}
+        options={{
+          chart: { type: 'bar' },
+          dataLabels: {
+            enabled: false,
+          },
+          xaxis: { categories: Object.keys(salesData) },
+          yaxis: {
+            labels: {
+              formatter: (value) => Number(value).toFixed(2),
+            }
+          },
+          tooltip: {
+            y: {
+              formatter: (value) => Number(value).toFixed(2),
+            }
+          }
+        }}
+        height={300}
+      />
+    </Box>
+  {/* Expense Distribution with ApexCharts */}
+    <Box flex={1} p={4} borderRadius="15px">
+      <Typography fontSize={18} fontWeight={600}>
+        Expense Distribution
+      </Typography>
+      <Chart
+        type="pie"
+        series={Object.values(expenseData).map((item) => item.value)}
+        options={{
+          labels: Object.keys(expenseData),
+          legend: { position: 'bottom' },
+          dataLabels: {
+            enabled: false,
+          },
+          tooltip: {
+            y: {
+              formatter: (value) => Number(value).toFixed(2),
+            }
+          }
+        }}
+        height={300}
+      />
+    </Box>
         </Stack>
     </Box>
   );

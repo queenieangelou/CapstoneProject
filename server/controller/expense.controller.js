@@ -10,7 +10,7 @@ const getAllExpenses = async (req, res) => {
     _end, _order, _start, _sort, supplierName_like = '',
   } = req.query;
 
-  const query = {};
+  const query = { deleted: false };
 
   if (supplierName_like) {
     query.supplierName = { $regex: supplierName_like, $options: 'i' };
@@ -224,23 +224,52 @@ const deleteExpense = async (req, res) => {
   session.startTransaction();
 
   try {
-    const expense = await Expense.findById(id).populate('creator').session(session);
+    // Handle multiple IDs
+    const ids = id.split(',');
 
-    if (!expense) {
-      return res.status(404).json({ message: 'Expense not found' });
+    // Validate all IDs first
+    const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
+    if (!validIds) {
+      return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    // Remove expense from user's expenses list if needed
-    if (expense.creator && expense.creator.allExpenses) {
-      expense.creator.allExpenses.pull(expense._id);
-      await expense.creator.save({ session });
+    // Perform soft delete for all selected expenses
+    const updateResult = await Expense.updateMany(
+      { 
+        _id: { $in: ids },
+        deleted: false // Only update non-deleted expenses
+      },
+      {
+        $set: {
+          deleted: true,
+          deletedAt: new Date()
+        }
+      },
+      { session }
+    );
+
+    // If no expenses were modified, return a 404 error
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({ message: 'No expenses found to delete' });
     }
-    await Expense.findByIdAndDelete(id).session(session);
+
+    // Remove expenses from user's allExpenses array
+    const expenses = await Expense.find({ _id: { $in: ids } }).populate('creator').session(session);
+    for (const expense of expenses) {
+      if (expense.creator && expense.creator.allExpenses) {
+        expense.creator.allExpenses.pull(expense._id);
+        await expense.creator.save({ session });
+      }
+    }
+
     await session.commitTransaction();
-    res.status(200).json({ message: 'Expense deleted successfully' });
+    res.status(200).json({ 
+      message: `Successfully deleted ${updateResult.modifiedCount} expense(s)`,
+      deletedCount: updateResult.modifiedCount
+    });
   } catch (error) {
     await session.abortTransaction();
-    res.status(500).json({ message: 'Failed to delete expense, please try again later', error: error.message });
+    res.status(500).json({ message: 'Failed to delete expenses, please try again later', error: error.message });
   } finally {
     session.endSession();
   }
