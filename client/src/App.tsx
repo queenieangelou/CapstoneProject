@@ -89,6 +89,13 @@ const App = () => {
   const [isAdmin, setIsAdmin] = React.useState(false);
 
   React.useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const parsedUser = JSON.parse(user); // Safe to parse as user is not null
+      if (parsedUser.isAdmin) {
+        setIsAdmin(parsedUser.isAdmin);
+      }
+    }
     suppressConsoleErrors();
   }, []);
 
@@ -120,7 +127,7 @@ const App = () => {
               isAdmin: data.isAdmin,
             }),
           );
-          setIsAdmin(data.isAdmin);
+          setIsAdmin(data.isAdmin); // Set isAdmin after login
         } else {
           return Promise.reject();
         }
@@ -222,7 +229,7 @@ const App = () => {
       baseResources.push({
         name: 'user-management',
         list: UserManagement,
-          options: { label: 'User Management' },
+        options: { label: 'User Management' },
         icon: <ManageAccounts />,
       });
     }
