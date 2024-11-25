@@ -11,7 +11,7 @@ import {
   Box,
   Stack
 } from '@pankod/refine-mui';
-import { Delete, Edit, Visibility } from '@mui/icons-material';
+import { Delete, Edit, Visibility, Restore } from '@mui/icons-material';
 import { ColorModeContext } from 'contexts';
 import CustomIconButton from 'components/common/CustomIconButton';
 
@@ -22,6 +22,7 @@ interface CustomTableProps {
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (ids: string[]) => void;
+  onRestore?: (ids: string[]) => void; // Add onRestore prop
 }
 
 const CustomTableToolbar = ({
@@ -29,65 +30,111 @@ const CustomTableToolbar = ({
   onView,
   onEdit,
   onDelete,
-  selectedId
+  onRestore,
+  selectedId,
+  rows
 }: {
   numSelected: number;
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (ids: string[]) => void;
+  onRestore?: (ids: string[]) => void;
   selectedId?: string;
-}) => (
-  <Toolbar
-    sx={{
-      pl: { sm: 2 },
-      pr: { xs: 1, sm: 1 },
-      ...(numSelected > 0 && {
-        bgcolor: 'rgba(25, 118, 210, 0.08)',
-      }),
-      display: 'flex',
-      justifyContent: 'space-between',
-    }}
-  >
-    <Typography
-      sx={{ flex: '1 1 100%' }}
-      color="inherit"
-      variant="subtitle1"
-      component="div"
-    >
-      {numSelected > 0 ? `${numSelected} selected` : 'All Records'}
-    </Typography>
+  rows: any[];
+}) => {
+  // Find the selected row(s)
+  const selectedRows = rows.filter(row => selectedId?.split(',').includes(row.id));
+  
+  // Check if all selected rows have the same deleted status
+  const allDeleted = selectedRows.every(row => row.deleted);
+  const noneDeleted = selectedRows.every(row => !row.deleted);
 
-    {numSelected > 0 && (
-      <Stack direction="row" spacing={1}>
-        {numSelected === 1 && (
-          <>
-            <CustomIconButton
-              title="View"
-              icon={<Visibility />}
-              backgroundColor="primary.light"
-              color="primary.dark"
-              handleClick={() => selectedId && onView?.(selectedId)}
-            />
-            <CustomIconButton
-              title="Edit"
-              icon={<Edit />}
-              backgroundColor="warning.light"
-              color="warning.dark"
-              handleClick={() => selectedId && onEdit?.(selectedId)}
-            />
-          </>
-        )}
-        <CustomIconButton
-          title={`Delete ${numSelected > 1 ? `(${numSelected})` : ''}`}
-          icon={<Delete />}
-          backgroundColor="error.light"
-          color="error.dark"
-          handleClick={() => selectedId && onDelete?.(selectedId.split(','))}
-        />
-      </Stack>
-    )}
-  </Toolbar>
-);
+  return (
+    <Toolbar
+      sx={{
+        pl: { sm: 2 },
+        pr: { xs: 1, sm: 1 },
+        ...(numSelected > 0 && {
+          bgcolor: 'rgba(25, 118, 210, 0.08)',
+        }),
+        display: 'flex',
+        justifyContent: 'space-between',
+      }}
+    >
+      <Typography
+        sx={{ flex: '1 1 100%' }}
+        color="inherit"
+        variant="subtitle1"
+        component="div"
+      >
+        {numSelected > 0 ? `${numSelected} selected` : 'All Records'}
+      </Typography>
+
+      {numSelected > 0 && (
+        <Stack direction="row" spacing={1}>
+          {numSelected === 1 && (
+            <>
+              {/* Always show View button */}
+              <CustomIconButton
+                title="View"
+                icon={<Visibility />}
+                backgroundColor="primary.light"
+                color="primary.dark"
+                handleClick={() => selectedId && onView?.(selectedId)}
+              />
+
+              {/* Edit button only for non-deleted items */}
+              {noneDeleted && (
+                <CustomIconButton
+                  title="Edit"
+                  icon={<Edit />}
+                  backgroundColor="warning.light"
+                  color="warning.dark"
+                  handleClick={() => selectedId && onEdit?.(selectedId)}
+                />
+              )}
+
+              {/* Restore button only for deleted items */}
+              {allDeleted && onRestore && (
+                <CustomIconButton
+                  title="Restore"
+                  icon={<Restore />}
+                  backgroundColor="success.light"
+                  color="success.dark"
+                  handleClick={() => selectedId && onRestore(selectedId.split(','))}
+                />
+              )}
+            </>
+          )}
+  
+          {numSelected > 1 && allDeleted && (
+            <>
+              {/* Restore button shown when all selected are deleted */}
+              {onRestore && (
+                <CustomIconButton
+                  title={`Restore ${numSelected}`}
+                  icon={<Restore />}
+                  backgroundColor="success.light"
+                  color="success.dark"
+                  handleClick={() => selectedId && onRestore(selectedId.split(','))}
+                />
+              )}
+            </>
+          )}
+  
+          {/* Delete button always shown */}
+          <CustomIconButton
+            title={`Delete ${numSelected > 1 ? `(${numSelected})` : ''}`}
+            icon={<Delete />}
+            backgroundColor="error.light"
+            color="error.dark"
+            handleClick={() => selectedId && onDelete?.(selectedId.split(','))}
+          />
+        </Stack>
+      )}
+    </Toolbar>
+  );
+};
 
 const CustomTable: React.FC<CustomTableProps> = ({
   rows,
@@ -95,7 +142,8 @@ const CustomTable: React.FC<CustomTableProps> = ({
   containerHeight = '100%',
   onView,
   onEdit,
-  onDelete
+  onDelete,
+  onRestore // Add onRestore prop
 }) => {
   const { mode } = useContext(ColorModeContext);
   const [selectionModel, setSelectionModel] = useState<GridSelectionModel>([]);
@@ -120,7 +168,9 @@ const CustomTable: React.FC<CustomTableProps> = ({
               onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}
+              onRestore={onRestore} // Pass onRestore
               selectedId={selectionModel.join(',')}
+              rows={rows} // Pass rows to determine button visibility
             />
           ),
         }}

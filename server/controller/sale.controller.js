@@ -11,7 +11,7 @@ const getAllSales = async (req, res) => {
     _end, _order, _start, _sort, clientName_like = '',
   } = req.query;
 
-  const query = { deleted: false }; // Add this condition to exclude soft-deleted sales
+  const query = {}; // Add this condition to exclude soft-deleted sales
 
   if (clientName_like) {
     query.clientName = { $regex: clientName_like, $options: 'i' };
@@ -214,10 +214,75 @@ const deleteSale = async (req, res) => {
   }
 };
 
+const restoreSale = async (req, res) => {
+  const { id } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Handle multiple IDs
+    const ids = id.split(',');
+
+    // Validate all IDs first
+    const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
+    if (!validIds) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+
+    // Perform restore for all selected sales
+    const updateResult = await Sale.updateMany(
+      { 
+        _id: { $in: ids },
+        deleted: true // Only restore previously deleted sales
+      },
+      {
+        $set: {
+          deleted: false,
+        },
+        $unset: {
+          deletedAt: 1 // Remove the deletedAt timestamp
+        }
+      },
+      { session }
+    );
+
+    // If no sales were modified, return a 404 error
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({ message: 'No sales found to restore' });
+    }
+
+    // Re-add sales to user's allSales array if needed
+    const sales = await Sale.find({ _id: { $in: ids } }).populate('creator').session(session);
+    for (const sale of sales) {
+      if (sale.creator) {
+        if (!sale.creator.allSales) {
+          sale.creator.allSales = [];
+        }
+        if (!sale.creator.allSales.includes(sale._id)) {
+          sale.creator.allSales.push(sale._id);
+          await sale.creator.save({ session });
+        }
+      }
+    }
+
+    await session.commitTransaction();
+    res.status(200).json({ 
+      message: `Successfully restored ${updateResult.modifiedCount} sale(s)`,
+      restoredCount: updateResult.modifiedCount
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(500).json({ message: 'Failed to restore sales, please try again later', error: error.message });
+  } finally {
+    session.endSession();
+  }
+};
+
 export {
   getAllSales,
   getSaleDetail,
   createSale,
   updateSale,
   deleteSale,
+  restoreSale,
 };

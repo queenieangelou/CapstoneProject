@@ -10,7 +10,7 @@ const getAllExpenses = async (req, res) => {
     _end, _order, _start, _sort, supplierName_like = '',
   } = req.query;
 
-  const query = { deleted: false };
+  const query = {};
 
   if (supplierName_like) {
     query.supplierName = { $regex: supplierName_like, $options: 'i' };
@@ -275,10 +275,75 @@ const deleteExpense = async (req, res) => {
   }
 };
 
+const restoreExpense = async (req, res) => {
+  const { id } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Handle multiple IDs
+    const ids = id.split(',');
+
+    // Validate all IDs first
+    const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
+    if (!validIds) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+
+    // Perform restore for all selected expenses
+    const updateResult = await Expense.updateMany(
+      { 
+        _id: { $in: ids },
+        deleted: true // Only restore previously deleted expenses
+      },
+      {
+        $set: {
+          deleted: false,
+        },
+        $unset: {
+          deletedAt: 1 // Remove the deletedAt timestamp
+        }
+      },
+      { session }
+    );
+
+    // If no expenses were modified, return a 404 error
+    if (updateResult.modifiedCount === 0) {
+      return res.status(404).json({ message: 'No expenses found to restore' });
+    }
+
+    // Re-add expenses to user's allExpenses array if needed
+    const expenses = await Expense.find({ _id: { $in: ids } }).populate('creator').session(session);
+    for (const expense of expenses) {
+      if (expense.creator) {
+        if (!expense.creator.allExpenses) {
+          expense.creator.allExpenses = [];
+        }
+        if (!expense.creator.allExpenses.includes(expense._id)) {
+          expense.creator.allExpenses.push(expense._id);
+          await expense.creator.save({ session });
+        }
+      }
+    }
+
+    await session.commitTransaction();
+    res.status(200).json({ 
+      message: `Successfully restored ${updateResult.modifiedCount} expense(s)`,
+      restoredCount: updateResult.modifiedCount
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(500).json({ message: 'Failed to restore expenses, please try again later', error: error.message });
+  } finally {
+    session.endSession();
+  }
+};
+
 export {
   getAllExpenses,
   getExpenseDetail,
   createExpense,
   updateExpense,
   deleteExpense,
+  restoreExpense,
 };

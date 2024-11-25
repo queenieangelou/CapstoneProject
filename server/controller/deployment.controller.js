@@ -11,7 +11,7 @@ const getAllDeployments = async (req, res) => {
     _end, _order, _start, _sort, searchField, searchValue = '',
   } = req.query;
 
-  const query = { deleted: false };
+  const query = {};
 
   // Handle search based on various fields
   if (searchValue) {
@@ -494,6 +494,82 @@ const deleteDeployment = async (req, res) => {
   }
 };
 
+const restoreDeployment = async (req, res) => {
+  const { id } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Handle multiple IDs
+    const ids = id.split(',').map(id => id.trim());
+
+    // Validate all IDs first
+    const validIds = ids.every((id) => mongoose.Types.ObjectId.isValid(id));
+    if (!validIds) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+
+    // Fetch deployments to be restored
+    const deployments = await Deployment.find({
+      _id: { $in: ids },
+      deleted: true,
+    }).populate('parts.part').populate('creator').session(session);
+
+    if (!deployments.length) {
+      return res.status(404).json({ message: 'No deployments found to restore' });
+    }
+
+    // Restore each deployment and update associated parts and creator
+    for (const deployment of deployments) {
+      // Update parts
+      if (deployment.parts && deployment.parts.length > 0) {
+        for (const partEntry of deployment.parts) {
+          if (partEntry.part) {
+            await Part.findByIdAndUpdate(partEntry.part._id, {
+              $inc: { qtyLeft: -partEntry.quantityUsed },
+              $addToSet: { deployments: deployment._id }
+            }, { session });
+          }
+        }
+      }
+
+      // Update creator
+      if (deployment.creator) {
+        await User.findByIdAndUpdate(deployment.creator._id, {
+          $addToSet: { allDeployments: deployment._id }
+        }, { session });
+      }
+    }
+
+    // Restore deployments
+    const updateResult = await Deployment.updateMany(
+      {
+        _id: { $in: ids },
+        deleted: true,
+      },
+      {
+        $set: { deleted: false },
+        $unset: { deletedAt: 1 },
+      },
+      { session }
+    );
+
+    await session.commitTransaction();
+    res.status(200).json({
+      message: `Successfully restored ${updateResult.modifiedCount} deployment(s)`,
+      restoredCount: updateResult.modifiedCount,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Error restoring deployment:', error);
+    res.status(500).json({
+      message: 'Failed to restore deployments, please try again later',
+      error: error.message,
+    });
+  } finally {
+    session.endSession();
+  }
+};
 
 export {
   getAllDeployments,
@@ -501,4 +577,5 @@ export {
   createDeployment,
   updateDeployment,
   deleteDeployment,
+  restoreDeployment,
 };

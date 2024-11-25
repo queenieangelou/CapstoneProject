@@ -13,7 +13,7 @@ const getAllProcurements = async (req, res) => {
     _end, _order, _start, _sort, supplierName_like = '',
   } = req.query;
 
-  const query = { deleted: false };
+  const query = {};
 
   if (supplierName_like) {
     query.supplierName = { $regex: supplierName_like, $options: 'i' };
@@ -316,6 +316,82 @@ const deleteProcurement = async (req, res) => {
     session.endSession();
   }
 };
+const restoreProcurement = async (req, res) => {
+  const { id } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    // Handle multiple IDs
+    const ids = id.split(',').map(id => id.trim());
+    
+    // Validate all IDs first
+    const validIds = ids.every((id) => mongoose.Types.ObjectId.isValid(id));
+    if (!validIds) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+
+    // Fetch all procurements to be restored
+    const procurements = await Procurement.find({ 
+      _id: { $in: ids }, 
+      deleted: true 
+    }).populate('part').populate('creator').session(session);
+
+    if (procurements.length === 0) {
+      return res.status(404).json({ message: 'No procurements found to restore' });
+    }
+
+    // Perform restore for all selected procurements
+    const updateResult = await Procurement.updateMany(
+      {
+        _id: { $in: ids },
+        deleted: true
+      },
+      {
+        $set: { deleted: false },
+        $unset: { deletedAt: 1 }
+      },
+      { session }
+    );
+
+    // Restore associated parts and creators
+    for (const procurement of procurements) {
+      // Restore Part
+      if (procurement.part) {
+        await Part.findByIdAndUpdate(procurement.part._id, {
+          $set: { 
+            deleted: false,
+            deletedAt: undefined,
+            qtyLeft: procurement.part.qtyLeft + procurement.quantityBought
+          },
+          $addToSet: { procurements: procurement._id }
+        }, { session });
+      }
+
+      // Restore Creator
+      if (procurement.creator) {
+        await User.findByIdAndUpdate(procurement.creator._id, {
+          $set: { deleted: false },
+          $addToSet: { allProcurements: procurement._id }
+        }, { session });
+      }
+    }
+
+    await session.commitTransaction();
+    res.status(200).json({
+      message: `Successfully restored ${updateResult.modifiedCount} procurement(s)`,
+      restoredCount: updateResult.modifiedCount,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Error restoring procurement:', error);
+    res.status(500).json({
+      message: 'Failed to restore procurements, please try again later',
+      error: error.message,
+    });
+  } finally {
+    session.endSession();
+  }
+};
 
 export {
   getAllProcurements,
@@ -323,4 +399,5 @@ export {
   createProcurement,
   updateProcurement,
   deleteProcurement,
+  restoreProcurement
 };
