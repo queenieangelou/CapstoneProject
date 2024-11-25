@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React, { useState, useMemo } from 'react';
-import { useTable, useDelete } from '@pankod/refine-core';
+import { useTable } from '@pankod/refine-core';
 import { 
   GridColDef, 
   Box, 
@@ -8,22 +8,16 @@ import {
   Typography, 
   CircularProgress, 
   Stack,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button
+  TextField
 } from '@pankod/refine-mui';
-import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
+import { Add } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-import CustomIconButton from 'components/common/CustomIconButton';
 import CustomButton from 'components/common/CustomButton';
 import CustomTable from 'components/common/CustomTable';
 import useDynamicHeight from 'hooks/useDynamicHeight';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const AllSales = () => {
   const navigate = useNavigate();
@@ -36,11 +30,14 @@ const AllSales = () => {
   
   const {
     deleteConfirmation,
+    error,
     handleTableDelete,
     confirmDelete,
     cancelDelete,
+    closeErrorDialog,
   } = useDeleteWithConfirmation({
-    resource: 'sales'
+    resource: 'sales',
+    redirectPath: '/sales',
   });
 
   const { 
@@ -209,12 +206,13 @@ if (isError) {
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />
+      <ErrorDialog
+        open={error.open}
+        errorMessage={error.message}
+        onClose={closeErrorDialog}
+      />
     </Paper>
   );
 };
 
 export default AllSales;
-
-function handleMultipleDelete(ids: string[], rows: { id: any; _id: any; seq: any; date: string; clientName: any; tin: any; amount: any; netOfVAT: any; outputVAT: any; }[]) {
-  throw new Error('Function not implemented.');
-}

@@ -1,10 +1,11 @@
 import { Add } from '@mui/icons-material';
-import { useDelete, useTable, useUpdate } from '@pankod/refine-core';
+import { useTable, useUpdate } from '@pankod/refine-core';
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, GridColDef, GridRenderCellParams, MenuItem, Paper, Select, Snackbar, Stack, Switch, TextField, Typography } from '@pankod/refine-mui';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import CustomButton from 'components/common/CustomButton';
 import CustomTable from 'components/common/CustomTable';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import useDynamicHeight from 'hooks/useDynamicHeight';
 import { useMemo, useState } from 'react';
@@ -12,7 +13,6 @@ import { useMemo, useState } from 'react';
 
 
 const AllDeployments = () => {
-  const { mutate: deleteDeployment } = useDelete();
   const { mutate: updateDeployment } = useUpdate();
   const containerHeight = useDynamicHeight();
   const navigate = useNavigate();
@@ -34,11 +34,14 @@ const AllDeployments = () => {
 
   const {
     deleteConfirmation,
+    error,
     handleTableDelete,
     confirmDelete,
     cancelDelete,
+    closeErrorDialog,
   } = useDeleteWithConfirmation({
     resource: 'deployments',
+    redirectPath: '/deployments',
   });
   
   const {
@@ -511,6 +514,11 @@ const AllDeployments = () => {
           contentText={`Are you sure you want to delete Deployments Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
           onConfirm={confirmDelete}
           onCancel={cancelDelete}
+        />
+        <ErrorDialog
+          open={error.open}
+          errorMessage={error.message}
+          onClose={closeErrorDialog}
         />
     </Paper>
   );

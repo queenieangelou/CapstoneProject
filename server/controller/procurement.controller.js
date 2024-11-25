@@ -2,6 +2,7 @@
 import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Procurement from '../mongodb/models/procurement.js';
+import Deployment from '../mongodb/models/deployment.js';
 import User from '../mongodb/models/user.js';
 import Part from '../mongodb/models/part.js';
 
@@ -233,6 +234,29 @@ const deleteProcurement = async (req, res) => {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
 
+    // Fetch all procurements to be deleted
+    const procurements = await Procurement.find({ _id: { $in: ids } }).populate('part').session(session);
+    if (procurements.length === 0) {
+      return res.status(404).json({ message: 'No procurements found to delete' });
+    }
+
+    // Check if any part associated with the procurements is used in a deployment
+    for (const procurement of procurements) {
+      const part = procurement.part;
+      if (part) {
+        const deploymentsUsingPart = await Deployment.find({
+          'parts.part': part._id,
+          deleted: false, // Ignore deleted deployments
+        }).session(session);
+
+        if (deploymentsUsingPart.length > 0) {
+          return res.status(400).json({
+            message: `Cannot delete procurement. Part "${part.partName}" is already used in deployment(s).`,
+          });
+        }
+      }
+    }
+
     // Perform soft delete for all selected procurements
     const updateResult = await Procurement.updateMany(
       { 
@@ -253,12 +277,20 @@ const deleteProcurement = async (req, res) => {
       return res.status(404).json({ message: 'No procurements found to delete' });
     }
 
-    // Restore quantities for all parts related to the deleted procurements
-    const procurements = await Procurement.find({ _id: { $in: ids } }).populate('part').session(session);
+    // Update associated parts and creator records
     for (const procurement of procurements) {
       const part = procurement.part;
       if (part) {
-        part.qtyLeft += procurement.quantityBought;
+        // Check if this is a newly added part through this procurement
+        const isNewlyAddedPart = part.procurements.length === 1 &&
+          part.procurements[0].toString() === procurement._id.toString();
+        if (isNewlyAddedPart) {
+          // Soft delete the part if it was newly added through this procurement
+          part.deleted = true;
+          part.deletedAt = new Date();
+        }
+        // Update part quantities and references regardless
+        part.qtyLeft -= procurement.quantityBought;
         part.procurements.pull(procurement._id);
         await part.save({ session });
       }

@@ -1,17 +1,16 @@
 // AllExpenses.tsx
 /* eslint-disable */
-import React, { useMemo, useState, useEffect } from 'react';
-import { useTable, useDelete } from '@pankod/refine-core';
-import { DataGrid, GridColDef, Box, Paper, Typography, CircularProgress, IconButton, Tooltip, TextField, Stack, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@pankod/refine-mui';
-import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
-import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { useTable } from '@pankod/refine-core';
+import { GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack } from '@pankod/refine-mui';
+import { Add } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-import CustomIconButton from 'components/common/CustomIconButton';
 import CustomButton from 'components/common/CustomButton';
 import useDynamicHeight from 'hooks/useDynamicHeight';
 import CustomTable from 'components/common/CustomTable';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const AllExpenses = () => {
   const navigate = useNavigate();
@@ -23,11 +22,14 @@ const AllExpenses = () => {
 
   const {
     deleteConfirmation,
+    error,
     handleTableDelete,
     confirmDelete,
     cancelDelete,
+    closeErrorDialog,
   } = useDeleteWithConfirmation({
-    resource: 'expenses'
+    resource: 'expenses',
+    redirectPath: '/expenses',
   });
 
   
@@ -238,6 +240,11 @@ const AllExpenses = () => {
         contentText={`Are you sure you want to delete Expenses Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+      <ErrorDialog
+        open={error.open}
+        errorMessage={error.message}
+        onClose={closeErrorDialog}
       />
     </Paper>
   );

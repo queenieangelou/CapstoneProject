@@ -1,21 +1,20 @@
 //client\src\pages\all-procurements.tsx
 /* eslint-disable */
 import { useMemo, useState } from 'react';
-import { GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, Button, DialogContent, DialogContentText, Dialog, DialogActions, DialogTitle } from '@pankod/refine-mui';
-import { Add, Edit, Visibility, Delete } from '@mui/icons-material';
+import { GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack } from '@pankod/refine-mui';
+import { Add } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-import { useDelete, useTable } from '@pankod/refine-core';
-import CustomIconButton from 'components/common/CustomIconButton';
+import { useTable } from '@pankod/refine-core';
 import CustomButton from 'components/common/CustomButton';
 import useDynamicHeight from 'hooks/useDynamicHeight';
 import CustomTable from 'components/common/CustomTable';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const AllProcurements = () => {
   const navigate = useNavigate();
   const containerHeight = useDynamicHeight();
-  const { mutate: deleteProcurement } = useDelete();
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,11 +23,14 @@ const AllProcurements = () => {
 
   const {
     deleteConfirmation,
+    error,
     handleTableDelete,
     confirmDelete,
     cancelDelete,
+    closeErrorDialog,
   } = useDeleteWithConfirmation({
-    resource: 'procurements'
+    resource: 'procurements',
+    redirectPath: '/procurements',
   });
 
   const { 
@@ -240,6 +242,11 @@ const handleEdit = (id: string) => {
     contentText={`Are you sure you want to delete Procurements Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
     onConfirm={confirmDelete}
     onCancel={cancelDelete}
+  />
+    <ErrorDialog
+    open={error.open}
+    errorMessage={error.message}
+    onClose={closeErrorDialog}
   />
     </Paper>
     );

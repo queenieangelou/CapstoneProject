@@ -276,13 +276,15 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
           alignItems: 'center'
         }}>
           <FormControl sx={{ flex: 2 }}>
+          <InputLabel htmlFor="part">Part & Brand</InputLabel>
             <Select
               value={entry.partId}
               onChange={handlePartChange(index)}
-              displayEmpty
+              input={<OutlinedInput label="Part & Brand" />}
             >
-              <MenuItem value="">Select a part</MenuItem>
-              {existingParts.map((part) => (
+              {existingParts
+                .filter(part => !part.deleted == true) // Filter out deleted parts
+                .map((part) => (
                 <MenuItem key={part._id} value={`${part.partName}|${part.brandName}`}>
                   {`${part.partName} - ${part.brandName} (Available: ${part.qtyLeft})`}
                 </MenuItem>

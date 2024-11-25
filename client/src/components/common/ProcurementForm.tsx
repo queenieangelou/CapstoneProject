@@ -314,9 +314,11 @@ const ProcurementForm = ({
               onChange={handlePartChange}
               input={<OutlinedInput label="Part & Brand" />}
             >
-              {existingParts.map((part) => (
+              {existingParts
+                .filter(part => !part.deleted == true) // Filter out deleted parts
+                .map((part) => (
                 <MenuItem key={part._id} value={`${part.partName}|${part.brandName}`}>
-                  {`${part.partName} - ${part.brandName}`}
+                  {`${part.partName} - ${part.brandName} (Available: ${part.qtyLeft})`}
                 </MenuItem>
               ))}
               <MenuItem value="new">Add New Part</MenuItem>

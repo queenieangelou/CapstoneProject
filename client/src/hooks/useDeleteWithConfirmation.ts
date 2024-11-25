@@ -1,3 +1,4 @@
+// client/src/hooks/useDeleteWithConfirmation.ts
 import { useState } from 'react';
 import { useDelete } from '@pankod/refine-core';
 import { useNavigate } from '@pankod/refine-react-router-v6';
@@ -6,6 +7,11 @@ interface DeleteConfirmationState {
   open: boolean;
   id: string | null;
   seq: string;
+}
+
+interface ErrorState {
+  open: boolean;
+  message: string;
 }
 
 interface UseDeleteWithConfirmationProps {
@@ -28,8 +34,11 @@ const useDeleteWithConfirmation = ({
     id: null,
     seq: ''
   });
+  const [error, setError] = useState<ErrorState>({
+    open: false,
+    message: ''
+  });
 
-  // For single item deletion (button click)
   const handleDeleteClick = (id: string, seq: string) => {
     setDeleteConfirmation({
       open: true,
@@ -38,7 +47,6 @@ const useDeleteWithConfirmation = ({
     });
   };
 
-  // For table/multiple deletion
   const handleTableDelete = (ids: string[], rows: any[]) => {
     if (ids.length === 1) {
       const item = rows.find(row => row.id === ids[0]);
@@ -71,9 +79,23 @@ const useDeleteWithConfirmation = ({
             }
             onSuccess?.();
           },
-          onError: (error) => {
+          onError: (error: any) => {
             console.error('Delete error:', error);
             setDeleteConfirmation({ open: false, id: null, seq: '' });
+            
+            // Extract error message from the backend response
+            let errorMessage = 'An error occurred while deleting the item.';
+            if (error.response?.data?.message) {
+              errorMessage = error.response.data.message;
+            } else if (error.message) {
+              errorMessage = error.message;
+            }
+            
+            setError({
+              open: true,
+              message: errorMessage
+            });
+            
             onError?.(error);
           }
         }
@@ -85,12 +107,18 @@ const useDeleteWithConfirmation = ({
     setDeleteConfirmation({ open: false, id: null, seq: '' });
   };
 
+  const closeErrorDialog = () => {
+    setError({ open: false, message: '' });
+  };
+
   return {
     deleteConfirmation,
-    handleDeleteClick,    // For single item deletion
-    handleTableDelete,    // For table/multiple deletion
+    error,
+    handleDeleteClick,
+    handleTableDelete,
     confirmDelete,
     cancelDelete,
+    closeErrorDialog,
   };
 };
 

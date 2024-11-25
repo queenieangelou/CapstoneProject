@@ -15,6 +15,8 @@ const PartsSchema = new mongoose.Schema({
     required: true,
     default: 0,  // Start with 0 quantity until parts are procured
   },
+  deleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
   procurements: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Procurement' }] // Make sure this is defined
 });
 
