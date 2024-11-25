@@ -225,7 +225,7 @@ const deleteExpense = async (req, res) => {
 
   try {
     // Handle multiple IDs
-    const ids = id.split(',');
+    const ids = id.split(',').map(id => id.trim());
 
     // Validate all IDs first
     const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
@@ -233,39 +233,46 @@ const deleteExpense = async (req, res) => {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    // Perform soft delete for all selected expenses
-    const updateResult = await Expense.updateMany(
-      { 
-        _id: { $in: ids },
-        deleted: false // Only update non-deleted expenses
-      },
-      {
-        $set: {
-          deleted: true,
-          deletedAt: new Date()
-        }
-      },
-      { session }
-    );
+    // Find expenses to determine action
+    const expenses = await Expense.find({ _id: { $in: ids } }).session(session);
 
-    // If no expenses were modified, return a 404 error
-    if (updateResult.modifiedCount === 0) {
-      return res.status(404).json({ message: 'No expenses found to delete' });
+    let actionCount = 0;
+    for (const expense of expenses) {
+      if (expense.deleted === false) {
+        // Soft delete for non-deleted expenses
+        expense.deleted = true;
+        expense.deletedAt = new Date();
+        await expense.save({ session });
+        actionCount++;
+
+        // Remove expense from creator's allExpenses array
+        if (expense.creator) {
+          await User.findByIdAndUpdate(expense.creator, {
+            $pull: { allExpenses: expense._id }
+          }, { session });
+        }
+      } else if (expense.deleted === true) {
+        // Hard delete for already soft-deleted expenses
+        await Expense.findByIdAndDelete(expense._id, { session });
+        actionCount++;
+
+        // Completely remove expense from creator's allExpenses array
+        if (expense.creator) {
+          await User.findByIdAndUpdate(expense.creator, {
+            $pull: { allExpenses: expense._id }
+          }, { session });
+        }
+      }
     }
 
-    // Remove expenses from user's allExpenses array
-    const expenses = await Expense.find({ _id: { $in: ids } }).populate('creator').session(session);
-    for (const expense of expenses) {
-      if (expense.creator && expense.creator.allExpenses) {
-        expense.creator.allExpenses.pull(expense._id);
-        await expense.creator.save({ session });
-      }
+    if (actionCount === 0) {
+      return res.status(404).json({ message: 'No expenses found to deleted' });
     }
 
     await session.commitTransaction();
     res.status(200).json({ 
-      message: `Successfully deleted ${updateResult.modifiedCount} expense(s)`,
-      deletedCount: updateResult.modifiedCount
+      message: `Successfully deleted ${actionCount} expense(s)`,
+      processedCount: actionCount
     });
   } catch (error) {
     await session.abortTransaction();

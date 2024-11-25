@@ -2,7 +2,7 @@
 import express from 'express';
 
 import {
-  createExpense, deleteExpense, getAllExpenses, getExpenseDetail, updateExpense,
+  createExpense, deleteExpense, getAllExpenses, getExpenseDetail, updateExpense, restoreExpense,
 } from '../controller/expense.controller.js';
 
 const router = express.Router();
@@ -26,5 +26,9 @@ router
 router
   .route('/:id')
   .delete(deleteExpense);
+
+router
+  .route('/:id/restore')
+  .patch(restoreExpense);
 
 export default router;

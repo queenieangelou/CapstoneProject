@@ -419,7 +419,7 @@ const deleteDeployment = async (req, res) => {
 
   try {
     // Handle multiple IDs
-    const ids = id.split(',');
+    const ids = id.split(',').map(id => id.trim());
 
     // Validate all IDs first
     const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
@@ -427,64 +427,69 @@ const deleteDeployment = async (req, res) => {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    // Fetch deployments with populated parts before deletion
-    const deployments = await Deployment.find({ 
-      _id: { $in: ids },
-      deleted: false
-    })
-    .populate('parts.part')
-    .session(session);
+    // Find deployments to determine action
+    const deployments = await Deployment.find({ _id: { $in: ids } }).session(session);
 
-    if (!deployments.length) {
-      return res.status(404).json({ message: 'No deployments found to delete' });
-    }
-
-    // Update parts quantities
+    let actionCount = 0;
     for (const deployment of deployments) {
-      if (deployment.parts && deployment.parts.length > 0) {
-        for (const partEntry of deployment.parts) {
-          if (partEntry.part && partEntry.part._id) {
-            // Fetch the actual Part document
-            const part = await Part.findById(partEntry.part._id).session(session);
-            if (part) {
-              part.qtyLeft += partEntry.quantityUsed;
-              if (part.deployments) {
-                part.deployments = part.deployments.filter(
-                  dep => !dep.equals(deployment._id)
-                );
-              }
-              await part.save({ session });
+      if (deployment.deleted === false) {
+        // Soft delete for non-deleted deployments
+        deployment.deleted = true;
+        deployment.deletedAt = new Date();
+        await deployment.save({ session });
+        
+        // Update parts quantities
+        if (deployment.parts && deployment.parts.length > 0) {
+          for (const partEntry of deployment.parts) {
+            if (partEntry.part) {
+              await Part.findByIdAndUpdate(partEntry.part, {
+                $inc: { qtyLeft: partEntry.quantityUsed },
+                $pull: { deployments: deployment._id }
+              }, { session });
             }
           }
         }
-      }
 
-      // Remove deployment from user's allDeployments
-      if (deployment.creator) {
-        await User.updateOne(
-          { _id: deployment.creator },
-          { $pull: { allDeployments: deployment._id } },
-          { session }
-        );
+        // Remove from creator's allDeployments
+        if (deployment.creator) {
+          await User.findByIdAndUpdate(deployment.creator, {
+            $pull: { allDeployments: deployment._id }
+          }, { session });
+        }
+        actionCount++;
+      } else if (deployment.deleted === true) {
+        // Hard delete for already soft-deleted deployments
+        await Deployment.findByIdAndDelete(deployment._id, { session });
+
+        // Update parts
+        if (deployment.parts && deployment.parts.length > 0) {
+          for (const partEntry of deployment.parts) {
+            if (partEntry.part) {
+              await Part.findByIdAndUpdate(partEntry.part, {
+                $pull: { deployments: deployment._id }
+              }, { session });
+            }
+          }
+        }
+
+        // Remove from creator's allDeployments
+        if (deployment.creator) {
+          await User.findByIdAndUpdate(deployment.creator, {
+            $pull: { allDeployments: deployment._id }
+          }, { session });
+        }
+        actionCount++;
       }
     }
 
-    // Perform soft delete for all selected deployments
-    const updateResult = await Deployment.updateMany(
-      { _id: { $in: ids }, deleted: false },
-      {
-        $set: {
-          deleted: true,
-          deletedAt: new Date()
-        }
-      },
-      { session }
-    );
+    if (actionCount === 0) {
+      return res.status(404).json({ message: 'No deployments found to delete' });
+    }
 
     await session.commitTransaction();
     res.status(200).json({ 
-      message: `Successfully deleted ${updateResult.modifiedCount} deployment(s)`,
-      deletedCount: updateResult.modifiedCount
+      message: `Successfully deleted ${actionCount} deployment(s)`,
+      processedCount: actionCount
     });
   } catch (error) {
     await session.abortTransaction();

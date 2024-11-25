@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, { useState, useMemo } from 'react';
 import { useTable } from '@pankod/refine-core';
 import { 
@@ -8,7 +7,9 @@ import {
   Typography, 
   CircularProgress, 
   Stack,
-  TextField
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@pankod/refine-mui';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
@@ -16,7 +17,9 @@ import CustomButton from 'components/common/CustomButton';
 import CustomTable from 'components/common/CustomTable';
 import useDynamicHeight from 'hooks/useDynamicHeight';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
+import RestoreConfirmationDialog from 'components/common/RestoreConfirmationDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
+import useRestoreWithConfirmation from 'hooks/useRestoreWithConfirmation';
 import ErrorDialog from 'components/common/ErrorDialog';
 
 const AllSales = () => {
@@ -27,15 +30,29 @@ const AllSales = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [deletedFilter, setDeletedFilter] = useState('active');
   
+  // Use both delete and restore hooks
   const {
     deleteConfirmation,
-    error,
+    error: deleteError,
     handleTableDelete,
     confirmDelete,
     cancelDelete,
-    closeErrorDialog,
+    closeErrorDialog: closeDeleteErrorDialog,
   } = useDeleteWithConfirmation({
+    resource: 'sales',
+    redirectPath: '/sales',
+  });
+
+  const {
+    restoreConfirmation,
+    error: restoreError,
+    handleTableRestore,
+    confirmRestore,
+    cancelRestore,
+    closeErrorDialog: closeRestoreErrorDialog,
+  } = useRestoreWithConfirmation({
     resource: 'sales',
     redirectPath: '/sales',
   });
@@ -49,7 +66,7 @@ const AllSales = () => {
 
   const allSales = data?.data ?? [];
 
-  // Filter the data based on search term and date range
+  // Rest of the existing filtering and data preparation logic remains the same
   const filteredRows = useMemo(() => {
     return allSales.filter((sale) => {
       const saleDate = new Date(sale.date);
@@ -63,9 +80,13 @@ const AllSales = () => {
         (!startDate || saleDate >= new Date(startDate)) &&
         (!endDate || saleDate <= new Date(endDate));
 
-      return matchesSearch && matchesDateRange;
+      const matchesDeletedFilter = 
+        (deletedFilter === 'active' && !sale.deleted) || 
+        (deletedFilter === 'deleted' && sale.deleted);
+
+      return matchesSearch && matchesDateRange && matchesDeletedFilter;
     });
-  }, [allSales, searchTerm, startDate, endDate]);
+  }, [allSales, searchTerm, startDate, endDate, deletedFilter]);
 
   const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -75,6 +96,7 @@ const AllSales = () => {
     { field: 'amount', headerName: 'Amount', type: 'number', flex: 1 },
     { field: 'netOfVAT', headerName: 'Net of VAT', type: 'number', flex: 1 },
     { field: 'outputVAT', headerName: 'Output VAT', type: 'number', flex: 1 },
+    { field: 'deleted', headerName: 'Deleted', type: 'boolean', flex: 1 },
   ];
 
   const handleView = (id: string) => {
@@ -95,25 +117,26 @@ const AllSales = () => {
     amount: sale.amount,
     netOfVAT: sale.netOfVAT,
     outputVAT: sale.outputVAT,
+    deleted: sale.deleted || false,
   }));
 
   if (isLoading) {
-  return (
-    <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-      <CircularProgress />
-    </Box>
-  );
-}
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-if (isError) {
-  return (
-    <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-      <Typography variant="h6" color="error">
-        Error loading sales data
-      </Typography>
-    </Box>
-  );
-}
+  if (isError) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Typography variant="h6" color="error">
+          Error loading sales data
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Paper 
@@ -147,7 +170,7 @@ if (isError) {
         <Stack 
           direction={{ xs: 'column', sm: 'row' }} 
           spacing={2} 
-          sx={{ flex: 1 }}
+          sx={{ flex: 1, alignItems: 'center' }}
         >
           <TextField
             size="small"
@@ -173,6 +196,16 @@ if (isError) {
             onChange={(e) => setEndDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
           />
+          <ToggleButtonGroup
+            color="primary"
+            value={deletedFilter}
+            exclusive
+            onChange={(e, value) => setDeletedFilter(value)}
+            size="small"
+          >
+            <ToggleButton value="active">Active</ToggleButton>
+            <ToggleButton value="deleted">Deleted</ToggleButton>
+          </ToggleButtonGroup>
         </Stack>
 
         <CustomButton
@@ -196,7 +229,8 @@ if (isError) {
           onView={handleView}
           onEdit={handleEdit}
           onDelete={(ids) => handleTableDelete(ids, rows)}
-          />
+          onRestore={(ids) => handleTableRestore(ids, rows)}
+        />
       </Box>
 
       {/* Delete Confirmation Dialog */}
@@ -206,10 +240,25 @@ if (isError) {
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />
+
+      {/* Restore Confirmation Dialog */}
+      <RestoreConfirmationDialog
+        open={restoreConfirmation.open}
+        contentText={`Are you sure you want to restore ${restoreConfirmation.seq}?`}
+        onConfirm={confirmRestore}
+        onCancel={cancelRestore}
+      />
+
+      {/* Error Dialogs */}
       <ErrorDialog
-        open={error.open}
-        errorMessage={error.message}
-        onClose={closeErrorDialog}
+        open={deleteError.open}
+        errorMessage={deleteError.message}
+        onClose={closeDeleteErrorDialog}
+      />
+      <ErrorDialog
+        open={restoreError.open}
+        errorMessage={restoreError.message}
+        onClose={closeRestoreErrorDialog}
       />
     </Paper>
   );

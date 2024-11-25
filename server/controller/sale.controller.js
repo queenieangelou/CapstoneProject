@@ -164,7 +164,7 @@ const deleteSale = async (req, res) => {
 
   try {
     // Handle multiple IDs
-    const ids = id.split(',');
+    const ids = id.split(',').map(id => id.trim());
 
     // Validate all IDs first
     const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
@@ -172,39 +172,46 @@ const deleteSale = async (req, res) => {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    // Perform soft delete for all selected sales
-    const updateResult = await Sale.updateMany(
-      { 
-        _id: { $in: ids },
-        deleted: false // Only update non-deleted sales
-      },
-      {
-        $set: {
-          deleted: true,
-          deletedAt: new Date()
-        }
-      },
-      { session }
-    );
+    // Find sales to determine action
+    const sales = await Sale.find({ _id: { $in: ids } }).session(session);
 
-    // If no sales were modified, return a 404 error
-    if (updateResult.modifiedCount === 0) {
-      return res.status(404).json({ message: 'No sales found to delete' });
+    let actionCount = 0;
+    for (const sale of sales) {
+      if (sale.deleted === false) {
+        // Soft delete for non-deleted sales
+        sale.deleted = true;
+        sale.deletedAt = new Date();
+        await sale.save({ session });
+        actionCount++;
+
+        // Remove sale from creator's allSales array
+        if (sale.creator) {
+          await User.findByIdAndUpdate(sale.creator, {
+            $pull: { allSales: sale._id }
+          }, { session });
+        }
+      } else if (sale.deleted === true) {
+        // Hard delete for already soft-deleted sales
+        await Sale.findByIdAndDelete(sale._id, { session });
+        actionCount++;
+
+        // Completely remove sale from creator's allSales array
+        if (sale.creator) {
+          await User.findByIdAndUpdate(sale.creator, {
+            $pull: { allSales: sale._id }
+          }, { session });
+        }
+      }
     }
 
-    // Remove sales from user's allSales array
-    const sales = await Sale.find({ _id: { $in: ids } }).populate('creator').session(session);
-    for (const sale of sales) {
-      if (sale.creator && sale.creator.allSales) {
-        sale.creator.allSales.pull(sale._id);
-        await sale.creator.save({ session });
-      }
+    if (actionCount === 0) {
+      return res.status(404).json({ message: 'No sales found to deleted' });
     }
 
     await session.commitTransaction();
     res.status(200).json({ 
-      message: `Successfully deleted ${updateResult.modifiedCount} sale(s)`,
-      deletedCount: updateResult.modifiedCount
+      message: `Successfully deleted ${actionCount} sale(s)`,
+      processedCount: actionCount
     });
   } catch (error) {
     await session.abortTransaction();

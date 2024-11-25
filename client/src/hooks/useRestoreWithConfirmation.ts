@@ -1,3 +1,4 @@
+// client/src/hooks/useRestoreWithConfirmation.ts
 import { useState } from "react";
 import { useNotification, useInvalidate } from "@pankod/refine-core";
 import { useNavigate } from "@pankod/refine-react-router-v6";
@@ -66,72 +67,64 @@ const useRestoreWithConfirmation = ({
     }
   };
 
-  const confirmRestore = () => {
+  const confirmRestore = async () => {
     if (restoreConfirmation.ids.length > 0) {
-      const restorePromises = restoreConfirmation.ids.map((id) =>
-        fetch(`http://localhost:8080/api/v1/sales/${id}/restore`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        })
-      );
-
-      Promise.all(restorePromises)
-        .then((responses) => {
-          const allSuccessful = responses.every((response) => response.ok);
-
-          if (allSuccessful) {
-            setRestoreConfirmation({ open: false, ids: [], seq: '' });
-
-            // Trigger success notification
-            open?.({
-              type: 'success',
-              message: 'Success',
-              description: 'Successfully restored the item(s).',
-            });
-
-            if (redirectPath) {
-              navigate(redirectPath);
-            }
-
-            invalidate({
-              resource,
-              invalidates: ["list"],
-            });
-
-            onSuccess?.();
-          } else {
-            throw new Error('Some items could not be restored');
-          }
-        })
-        .catch((error: unknown) => {
-          console.error('Restore error:', error);
-          setRestoreConfirmation({ open: false, ids: [], seq: '' });
-
-          let errorMessage = 'An error occurred while restoring the item(s).';
-
-          if (error instanceof Error) {
-            errorMessage = error.message;
-          } else if (typeof error === 'string') {
-            errorMessage = error;
-          }
-
-          setError({
-            open: true,
-            message: errorMessage,
+      try {
+        // Sequential restore instead of Promise.all
+        for (const id of restoreConfirmation.ids) {
+          const response = await fetch(`http://localhost:8080/api/v1/${resource}/${id}/restore`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
           });
-
-          // Trigger error notification
-          open?.({
-            type: 'error',
-            message: 'Error',
-            description: errorMessage,
-          });
-
-          onError?.(error);
+  
+          if (!response.ok) {
+            throw new Error(`Failed to restore item ${id}`);
+          }
+        }
+  
+        setRestoreConfirmation({ open: false, ids: [], seq: '' });
+  
+        open?.({
+          type: 'success',
+          message: 'Success',
+          description: `Successfully restored ${restoreConfirmation.ids.length} item(s).`,
         });
+  
+        if (redirectPath) {
+          navigate(redirectPath);
+        }
+  
+        invalidate({
+          resource,
+          invalidates: ["list"],
+        });
+  
+        onSuccess?.();
+  
+      } catch (error) {
+        console.error('Restore error:', error);
+        setRestoreConfirmation({ open: false, ids: [], seq: '' });
+  
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : 'An error occurred while restoring the item(s).';
+  
+        setError({
+          open: true,
+          message: errorMessage,
+        });
+  
+        open?.({
+          type: 'error',
+          message: 'Error',
+          description: errorMessage,
+        });
+  
+        onError?.(error);
+      }
     }
   };
 

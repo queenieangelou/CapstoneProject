@@ -1,7 +1,7 @@
 //client\src\pages\all-procurements.tsx
 /* eslint-disable */
 import { useMemo, useState } from 'react';
-import { GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack } from '@pankod/refine-mui';
+import { GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, ToggleButtonGroup, ToggleButton } from '@pankod/refine-mui';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { useTable } from '@pankod/refine-core';
@@ -11,6 +11,8 @@ import CustomTable from 'components/common/CustomTable';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import ErrorDialog from 'components/common/ErrorDialog';
+import RestoreConfirmationDialog from 'components/common/RestoreConfirmationDialog';
+import useRestoreWithConfirmation from 'hooks/useRestoreWithConfirmation';
 
 const AllProcurements = () => {
   const navigate = useNavigate();
@@ -20,15 +22,29 @@ const AllProcurements = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [deletedFilter, setDeletedFilter] = useState('active');
 
+  // Use both delete and restore hooks
   const {
     deleteConfirmation,
-    error,
+    error: deleteError,
     handleTableDelete,
     confirmDelete,
     cancelDelete,
-    closeErrorDialog,
+    closeErrorDialog: closeDeleteErrorDialog,
   } = useDeleteWithConfirmation({
+    resource: 'procurements',
+    redirectPath: '/procurements',
+  });
+
+  const {
+    restoreConfirmation,
+    error: restoreError,
+    handleTableRestore,
+    confirmRestore,
+    cancelRestore,
+    closeErrorDialog: closeRestoreErrorDialog,
+  } = useRestoreWithConfirmation({
     resource: 'procurements',
     redirectPath: '/procurements',
   });
@@ -56,9 +72,13 @@ const AllProcurements = () => {
         (!startDate || procurementDate >= new Date(startDate)) &&
         (!endDate || procurementDate <= new Date(endDate));
 
-      return matchesSearch && matchesDateRange;
+        const matchesDeletedFilter = 
+        (deletedFilter === 'active' && !procurement.deleted) || 
+        (deletedFilter === 'deleted' && procurement.deleted);
+
+      return matchesSearch && matchesDateRange && matchesDeletedFilter;
     });
-  }, [allProcurements, searchTerm, startDate, endDate]);
+  }, [allProcurements, searchTerm, startDate, endDate, deletedFilter]);
 
     const columns: GridColDef[] = [
     { field: 'seq', headerName: 'Seq', flex: 1 },
@@ -105,6 +125,7 @@ const AllProcurements = () => {
         </Typography>
       )
     },
+    { field: 'deleted', headerName: 'Deleted', type: 'boolean', flex: 1 },
 ];
 
 const handleView = (id: string) => {
@@ -131,7 +152,8 @@ const handleEdit = (id: string) => {
         netOfVAT: procurement.netOfVAT?.toFixed(2),
         inputVAT: procurement.inputVAT?.toFixed(2),
         isNonVat: procurement.isNonVat,
-        noValidReceipt: procurement.noValidReceipt
+        noValidReceipt: procurement.noValidReceipt,
+        deleted: procurement.deleted || false,
     }));
 
     if (isLoading) {
@@ -184,7 +206,7 @@ const handleEdit = (id: string) => {
         <Stack 
           direction={{ xs: 'column', sm: 'row' }} 
           spacing={2} 
-          sx={{ flex: 1 }}
+          sx={{ flex: 1, alignItems: 'center'  }}
         >
           <TextField
             size="small"
@@ -210,6 +232,16 @@ const handleEdit = (id: string) => {
             onChange={(e) => setEndDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
           />
+          <ToggleButtonGroup
+            color="primary"
+            value={deletedFilter}
+            exclusive
+            onChange={(e, value) => setDeletedFilter(value)}
+            size="small"
+          >
+            <ToggleButton value="active">Active</ToggleButton>
+            <ToggleButton value="deleted">Deleted</ToggleButton>
+          </ToggleButtonGroup>
         </Stack>
 
         <CustomButton
@@ -233,21 +265,37 @@ const handleEdit = (id: string) => {
           onView={handleView}
           onEdit={handleEdit}
           onDelete={(ids) => handleTableDelete(ids, rows)}
+          onRestore={(ids) => handleTableRestore(ids, rows)}
         />
         </Box>
 
- {/* Delete Confirmation Dialog */}
-  <DeleteConfirmationDialog
-    open={deleteConfirmation.open}
-    contentText={`Are you sure you want to delete Procurements Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
-    onConfirm={confirmDelete}
-    onCancel={cancelDelete}
-  />
-    <ErrorDialog
-    open={error.open}
-    errorMessage={error.message}
-    onClose={closeErrorDialog}
-  />
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={deleteConfirmation.open}
+        contentText={`Are you sure you want to delete Procurements Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
+
+      {/* Restore Confirmation Dialog */}
+      <RestoreConfirmationDialog
+        open={restoreConfirmation.open}
+        contentText={`Are you sure you want to restore ${restoreConfirmation.seq}?`}
+        onConfirm={confirmRestore}
+        onCancel={cancelRestore}
+      />
+
+      {/* Error Dialogs */}
+      <ErrorDialog
+        open={deleteError.open}
+        errorMessage={deleteError.message}
+        onClose={closeDeleteErrorDialog}
+      />
+      <ErrorDialog
+        open={restoreError.open}
+        errorMessage={restoreError.message}
+        onClose={closeRestoreErrorDialog}
+      />
     </Paper>
     );
 };

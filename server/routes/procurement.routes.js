@@ -1,7 +1,7 @@
 import express from 'express';
 
 import {
-  createProcurement, deleteProcurement, getAllProcurements, getProcurementDetail, updateProcurement,
+  createProcurement, deleteProcurement, getAllProcurements, getProcurementDetail, updateProcurement, restoreProcurement,
 } from '../controller/procurement.controller.js';
 
 const router = express.Router();
@@ -25,5 +25,9 @@ router
 router
   .route('/:id')
   .delete(deleteProcurement);
+
+router
+  .route('/:id/restore')
+  .patch(restoreProcurement);
 
 export default router;

@@ -1,13 +1,15 @@
 import { Add } from '@mui/icons-material';
 import { useTable, useUpdate } from '@pankod/refine-core';
-import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, GridColDef, GridRenderCellParams, MenuItem, Paper, Select, Snackbar, Stack, Switch, TextField, Typography } from '@pankod/refine-mui';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, GridColDef, GridRenderCellParams, MenuItem, Paper, Select, Snackbar, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@pankod/refine-mui';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import CustomButton from 'components/common/CustomButton';
 import CustomTable from 'components/common/CustomTable';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
 import ErrorDialog from 'components/common/ErrorDialog';
+import RestoreConfirmationDialog from 'components/common/RestoreConfirmationDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import useDynamicHeight from 'hooks/useDynamicHeight';
+import useRestoreWithConfirmation from 'hooks/useRestoreWithConfirmation';
 import { useMemo, useState } from 'react';
 
 
@@ -21,6 +23,8 @@ const AllDeployments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [deletedFilter, setDeletedFilter] = useState('active');
+
   const [dialogState, setDialogState] = useState({
     open: false,
     message: '',
@@ -32,18 +36,31 @@ const AllDeployments = () => {
     message: ''
   });
 
+  // Use both delete and restore hooks
   const {
     deleteConfirmation,
-    error,
+    error: deleteError,
     handleTableDelete,
     confirmDelete,
     cancelDelete,
-    closeErrorDialog,
+    closeErrorDialog: closeDeleteErrorDialog,
   } = useDeleteWithConfirmation({
     resource: 'deployments',
     redirectPath: '/deployments',
   });
   
+  const {
+    restoreConfirmation,
+    error: restoreError,
+    handleTableRestore,
+    confirmRestore,
+    cancelRestore,
+    closeErrorDialog: closeRestoreErrorDialog,
+  } = useRestoreWithConfirmation({
+    resource: 'deployments',
+    redirectPath: '/deployments',
+  });
+
   const {
     tableQueryResult: { data, isLoading, isError }
   } = useTable({
@@ -76,9 +93,13 @@ const AllDeployments = () => {
         (!startDate || deploymentDate >= new Date(startDate)) &&
         (!endDate || deploymentDate <= new Date(endDate));
 
-      return matchesSearch && matchesDateRange;
+      const matchesDeletedFilter =
+        (deletedFilter === 'active' && !deployment.deleted) || 
+        (deletedFilter === 'deleted' && deployment.deleted);
+
+      return matchesSearch && matchesDateRange && matchesDeletedFilter;
     });
-  }, [allDeployments, searchTerm, startDate, endDate]);
+  }, [allDeployments, searchTerm, startDate, endDate, deletedFilter]);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -319,6 +340,7 @@ const AllDeployments = () => {
       headerName: 'Released Date',
       flex: 1,
     },
+    { field: 'deleted', headerName: 'Deleted', type: 'boolean', flex: 1 },
   ];
 
   const handleView = (id: string) => {
@@ -344,6 +366,7 @@ const AllDeployments = () => {
     releaseDate: deployment.releaseDate ? new Date(deployment.releaseDate).toLocaleDateString() : 'N/A',
     repairStatus: deployment.repairStatus,
     repairedDate: deployment.repairedDate ? new Date(deployment.repairedDate).toLocaleDateString() : 'N/A',
+    deleted: deployment.deleted || false,
   }));
 
   if (isLoading) {
@@ -396,7 +419,7 @@ const AllDeployments = () => {
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={2}
-          sx={{ flex: 1 }}
+          sx={{ flex: 1, alignItems: 'center' }}
         >
           <TextField
             size="small"
@@ -422,6 +445,16 @@ const AllDeployments = () => {
             onChange={(e) => setEndDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
           />
+          <ToggleButtonGroup
+            color="primary"
+            value={deletedFilter}
+            exclusive
+            onChange={(e, value) => setDeletedFilter(value)}
+            size="small"
+          >
+            <ToggleButton value="active">Active</ToggleButton>
+            <ToggleButton value="deleted">Deleted</ToggleButton>
+          </ToggleButtonGroup>
         </Stack>
 
         <CustomButton
@@ -445,6 +478,7 @@ const AllDeployments = () => {
           onView={handleView}
           onEdit={handleEdit}
           onDelete={(ids) => handleTableDelete(ids, rows)}
+          onRestore={(ids) => handleTableRestore(ids, rows)}
           />
       </Box>
       {/* Confirmation Dialog */}
@@ -515,10 +549,25 @@ const AllDeployments = () => {
           onConfirm={confirmDelete}
           onCancel={cancelDelete}
         />
+
+        {/* Restore Confirmation Dialog */}
+        <RestoreConfirmationDialog
+          open={restoreConfirmation.open}
+          contentText={`Are you sure you want to restore ${restoreConfirmation.seq}?`}
+          onConfirm={confirmRestore}
+          onCancel={cancelRestore}
+        />
+
+        {/* Error Dialogs */}
         <ErrorDialog
-          open={error.open}
-          errorMessage={error.message}
-          onClose={closeErrorDialog}
+          open={deleteError.open}
+          errorMessage={deleteError.message}
+          onClose={closeDeleteErrorDialog}
+        />
+        <ErrorDialog
+          open={restoreError.open}
+          errorMessage={restoreError.message}
+          onClose={closeRestoreErrorDialog}
         />
     </Paper>
   );
