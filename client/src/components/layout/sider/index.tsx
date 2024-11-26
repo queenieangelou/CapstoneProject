@@ -258,7 +258,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
   const dashboard = hasDashboard ? (
     <CanAccess resource="dashboard" action="list">
       <Tooltip
-        title={translate('dashboard.title', 'Dashboard')}
+        title={translate('dashboard.title', 'Summary')}
         placement="right"
         disableHoverListener={!collapsed}
         arrow
@@ -296,7 +296,7 @@ export const Sider: typeof DefaultSider = ({ render }) => {
             <Dashboard />
           </ListItemIcon>
           <ListItemText
-            primary={translate('dashboard.title', 'Dashboard')}
+            primary={translate('dashboard.title', 'Summary')}
             primaryTypographyProps={{
               noWrap: true,
               fontSize: '16px',

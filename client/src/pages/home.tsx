@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useList } from '@pankod/refine-core';
-import { Typography, Box, Stack, TextField } from '@pankod/refine-mui';
+import { Typography, Box, Stack, TextField, FormControl, InputLabel, MenuItem, Select } from '@pankod/refine-mui';
 import Chart from 'react-apexcharts';
 
 const Dashboard = () => {
@@ -8,20 +8,83 @@ const Dashboard = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // New Year and Month filter states
+  const [selectedYear, setSelectedYear] = useState('ALL');
+  const [selectedMonth, setSelectedMonth] = useState('ALL');
+
+  useEffect(() => {
+    if (startDate || endDate) {
+      // If date range is used, reset year and month
+      setSelectedYear('ALL');
+      setSelectedMonth('ALL');
+    }
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (selectedYear !== 'ALL' || selectedMonth !== 'ALL') {
+      // If year or month is used, reset date range
+      setStartDate('');
+      setEndDate('');
+    }
+  }, [selectedYear, selectedMonth]);
+
   // Fetch data from the resources
   const { data: procurements } = useList({ resource: 'procurements' });
   const { data: deployments } = useList({ resource: 'deployments' });
   const { data: sales } = useList({ resource: 'sales' });
   const { data: expenses } = useList({ resource: 'expenses' });
 
-  // Function to filter data based on selected date range
-  const isWithinDateRange = (dateString: string) => {
-    if (!startDate && !endDate) return true;
+  // Function to filter data based on selected date range, year, and month
+  const isWithinFilter = (dateString: string) => {
+    // If all filters are default, return true
+    if (!startDate && !endDate && selectedYear === 'ALL' && selectedMonth === 'ALL') return true;
+
     const date = new Date(dateString);
-    const start = startDate ? new Date(startDate) : null;
-    const end = endDate ? new Date(endDate) : null;
-    return (!start || date >= start) && (!end || date <= end);
+
+    // Check date range filters
+    if (startDate || endDate) {
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+      return (!start || date >= start) && (!end || date <= end);
+    }
+
+    // Check year and month filters
+    const yearCheck = selectedYear === 'ALL' || date.getFullYear().toString() === selectedYear;
+    const monthCheck = selectedMonth === 'ALL' || (date.getMonth() + 1).toString().padStart(2, '0') === selectedMonth;
+
+    return yearCheck && monthCheck;
   };
+
+
+  // Generate years and months for dropdowns
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    [procurements, deployments, sales, expenses].forEach(dataset => {
+      if (dataset?.data) {
+        dataset.data.forEach(item => {
+          years.add(new Date(item.date).getFullYear().toString());
+        });
+      }
+    });
+    return ['ALL', ...Array.from(years).sort()];
+  }, [procurements, deployments, sales, expenses]);
+
+  const monthOptions = [
+    { value: 'ALL', label: 'ALL' },
+    { value: '01', label: 'January' },
+    { value: '02', label: 'February' },
+    { value: '03', label: 'March' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'May' },
+    { value: '06', label: 'June' },
+    { value: '07', label: 'July' },
+    { value: '08', label: 'August' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ];
+  
 
   // Helper function to get month name
   const getMonthName = (dateString: string) => {
@@ -30,27 +93,26 @@ const Dashboard = () => {
     return monthNames[parseInt(month, 10) - 1];
   };
 
-  // Filter and process procurement data
-  const procurementData = useMemo(() => {
-    if (!procurements?.data) return [];
-    const filteredData = procurements.data.filter((item) => isWithinDateRange(item.date));
-    return filteredData.reduce((acc, curr) => {
-      const month = getMonthName(curr.date);
-      if (!acc[month]) acc[month] = { month, totalAmount: 0, vatAmount: 0, nonVatAmount: 0 };
-      acc[month].totalAmount += Number(curr.amount) || 0;
-      acc[month].vatAmount += Number(curr.inputVAT) || 0;
-      acc[month].nonVatAmount += Number(curr.netOfVAT) || 0;
-      return acc;
-    }, {});
-  }, [procurements, startDate, endDate]);
-
+// Update these useMemo methods to use isWithinFilter
+const procurementData = useMemo(() => {
+  if (!procurements?.data) return [];
+  const filteredData = procurements.data.filter((item) => isWithinFilter(item.date));
+  return filteredData.reduce((acc, curr) => {
+    const month = getMonthName(curr.date);
+    if (!acc[month]) acc[month] = { month, totalAmount: 0, vatAmount: 0, nonVatAmount: 0 };
+    acc[month].totalAmount += Number(curr.amount) || 0;
+    acc[month].vatAmount += Number(curr.inputVAT) || 0;
+    acc[month].nonVatAmount += Number(curr.netOfVAT) || 0;
+    return acc;
+  }, {});
+}, [procurements, startDate, endDate, selectedYear, selectedMonth]);
   // Calculate total procurements
   const totalProcurements = Object.values(procurementData).reduce((sum, item) => sum + item.totalAmount, 0);
 
   // Filter and process deployment data
   const deploymentData = useMemo(() => {
     if (!deployments?.data) return [];
-    const filteredData = deployments.data.filter((item) => isWithinDateRange(item.date));
+    const filteredData = deployments.data.filter((item) => isWithinFilter(item.date));
     return filteredData.reduce((acc, curr) => {
       const month = getMonthName(curr.date);
       if (!acc[month]) acc[month] = { month, deployments: 0, releases: 0 };
@@ -58,7 +120,7 @@ const Dashboard = () => {
       acc[month].releases += curr.releaseStatus ? 1 : 0;
       return acc;
     }, {});
-  }, [deployments, startDate, endDate]);
+  }, [deployments, startDate, endDate, selectedYear, selectedMonth]);
 
   // Calculate total deployments
   const totalDeployments = Object.values(deploymentData).reduce((sum, item) => sum + item.deployments, 0);
@@ -66,7 +128,7 @@ const Dashboard = () => {
   // Filter and process sales data
   const salesData = useMemo(() => {
     if (!sales?.data) return [];
-    const filteredData = sales.data.filter((item) => isWithinDateRange(item.date));
+    const filteredData = sales.data.filter((item) => isWithinFilter(item.date));
     return filteredData.reduce((acc, curr) => {
       const month = getMonthName(curr.date);
       if (!acc[month]) acc[month] = { month, totalSales: 0, outputVAT: 0 };
@@ -74,7 +136,7 @@ const Dashboard = () => {
       acc[month].outputVAT += Number(curr.outputVAT) || 0;
       return acc;
     }, {});
-  }, [sales, startDate, endDate]);
+  }, [sales, startDate, endDate, selectedYear, selectedMonth]);
 
   // Calculate total sales
   const totalSales = Object.values(salesData).reduce((sum, item) => sum + item.totalSales, 0);
@@ -82,14 +144,14 @@ const Dashboard = () => {
   // Filter and process expense data
   const expenseData = useMemo(() => {
     if (!expenses?.data) return [];
-    const filteredData = expenses.data.filter((item) => isWithinDateRange(item.date));
+    const filteredData = expenses.data.filter((item) => isWithinFilter(item.date));
     return filteredData.reduce((acc, curr) => {
       const category = curr.description || 'Other';
       if (!acc[category]) acc[category] = { name: category, value: 0 };
       acc[category].value += Number(curr.amount) || 0;
       return acc;
     }, {});
-  }, [expenses, startDate, endDate]);
+  }, [expenses, startDate, endDate, selectedYear, selectedMonth]);
 
   // Calculate total expenses
   const totalExpenses = Object.values(expenseData).reduce((sum, item) => sum + item.value, 0);
@@ -138,12 +200,15 @@ const Dashboard = () => {
 
       {/* Date Filter Inputs */}
       <Box display="flex" gap={2} mb={4}>
-        <TextField
+      <TextField
           size="small"
           label="Start Date"
           type="date"
           value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
+          onChange={(e) => {
+            setStartDate(e.target.value);
+            // Optional: You could add additional logic here if needed
+          }}
           InputLabelProps={{ shrink: true }}
         />
         <TextField
@@ -151,9 +216,44 @@ const Dashboard = () => {
           label="End Date"
           type="date"
           value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
+          onChange={(e) => {
+            setEndDate(e.target.value);
+            // Optional: You could add additional logic here if needed
+          }}
           InputLabelProps={{ shrink: true }}
         />
+                {/* Year Dropdown */}
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Year</InputLabel>
+          <Select
+            value={selectedYear}
+            label="Year"
+            onChange={(e) => setSelectedYear(e.target.value)}
+          >
+            {availableYears.map((year) => (
+              <MenuItem key={year} value={year}>
+                {year}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Month Dropdown */}
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Month</InputLabel>
+          <Select
+            value={selectedMonth}
+            label="Month"
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            {monthOptions.map((month) => (
+              <MenuItem key={month.value} value={month.value}>
+                {month.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
       </Box>
 
       {/* Summary Cards */}
