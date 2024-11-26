@@ -1,4 +1,4 @@
-// client/src/hooks/useDeleteWithConfirmation.ts
+// hooks/useDeleteWithConfirmation.ts
 import { useState } from 'react';
 import { useDelete } from '@pankod/refine-core';
 import { useNavigate } from '@pankod/refine-react-router-v6';
@@ -7,6 +7,7 @@ interface DeleteConfirmationState {
   open: boolean;
   id: string | null;
   seq: string;
+  isDeleted: boolean;
 }
 
 interface ErrorState {
@@ -32,36 +33,42 @@ const useDeleteWithConfirmation = ({
   const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmationState>({
     open: false,
     id: null,
-    seq: ''
+    seq: '',
+    isDeleted: false
   });
   const [error, setError] = useState<ErrorState>({
     open: false,
     message: ''
   });
 
-  const handleDeleteClick = (id: string, seq: string) => {
+  const handleDeleteClick = (id: string, seq: string, isDeleted: boolean) => {
     setDeleteConfirmation({
       open: true,
       id,
-      seq
+      seq,
+      isDeleted
     });
   };
 
   const handleTableDelete = (ids: string[], rows: any[]) => {
-    if (ids.length === 1) {
-      const item = rows.find(row => row.id === ids[0]);
-      setDeleteConfirmation({
+    // Check if all selected items have the same deletion status
+    const firstItemDeleted = rows.find(row => row.id === ids[0])?.deleted || false;
+    const allSameStatus = rows.every(row => (row.deleted || false) === firstItemDeleted);
+
+    if (!allSameStatus) {
+      setError({
         open: true,
-        id: ids[0],
-        seq: item?.seq || ''
+        message: 'Please select items with the same deletion status'
       });
-    } else {
-      setDeleteConfirmation({
-        open: true,
-        id: ids.join(','),
-        seq: `${ids.length} items`
-      });
+      return;
     }
+
+    setDeleteConfirmation({
+      open: true,
+      id: ids.join(','),
+      seq: `${ids.length} items`,
+      isDeleted: firstItemDeleted
+    });
   };
 
   const confirmDelete = () => {
@@ -73,7 +80,7 @@ const useDeleteWithConfirmation = ({
         },
         {
           onSuccess: () => {
-            setDeleteConfirmation({ open: false, id: null, seq: '' });
+            setDeleteConfirmation({ open: false, id: null, seq: '', isDeleted: false });
             if (redirectPath) {
               navigate(redirectPath);
             }
@@ -81,9 +88,8 @@ const useDeleteWithConfirmation = ({
           },
           onError: (error: any) => {
             console.error('Delete error:', error);
-            setDeleteConfirmation({ open: false, id: null, seq: '' });
+            setDeleteConfirmation({ open: false, id: null, seq: '', isDeleted: false });
             
-            // Extract error message from the backend response
             let errorMessage = 'An error occurred while deleting the item.';
             if (error.response?.data?.message) {
               errorMessage = error.response.data.message;
@@ -104,7 +110,7 @@ const useDeleteWithConfirmation = ({
   };
 
   const cancelDelete = () => {
-    setDeleteConfirmation({ open: false, id: null, seq: '' });
+    setDeleteConfirmation({ open: false, id: null, seq: '', isDeleted: false });
   };
 
   const closeErrorDialog = () => {

@@ -8,8 +8,8 @@ import {
   CircularProgress, 
   Stack,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup
+  Button,
+  ButtonGroup
 } from '@pankod/refine-mui';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
@@ -96,7 +96,6 @@ const AllSales = () => {
     { field: 'amount', headerName: 'Amount', type: 'number', flex: 1 },
     { field: 'netOfVAT', headerName: 'Net of VAT', type: 'number', flex: 1 },
     { field: 'outputVAT', headerName: 'Output VAT', type: 'number', flex: 1 },
-    { field: 'deleted', headerName: 'Deleted', type: 'boolean', flex: 1 },
   ];
 
   const handleView = (id: string) => {
@@ -122,21 +121,43 @@ const AllSales = () => {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <Box
+        sx={{
+          height: containerHeight,
+          display: 'flex',
+          flexDirection: 'column',
+          m: 2,
+          overflow: 'hidden',
+          justifyContent: 'center', // Center vertically
+          alignItems: 'center',      // Center horizontally
+        }}
+      >
         <CircularProgress />
       </Box>
     );
   }
-
+  
   if (isError) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <Box
+        sx={{
+          height: containerHeight,
+          display: 'flex',
+          flexDirection: 'column',
+          m: 2,
+          overflow: 'hidden',
+          justifyContent: 'center',
+          alignItems: 'center',
+          color: 'error.main',
+        }}
+      >
         <Typography variant="h6" color="error">
-          Error loading sales data
+          Something went wrong. Please try again.
         </Typography>
       </Box>
     );
   }
+  
 
   return (
     <Paper 
@@ -196,16 +217,38 @@ const AllSales = () => {
             onChange={(e) => setEndDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
           />
-          <ToggleButtonGroup
-            color="primary"
-            value={deletedFilter}
-            exclusive
-            onChange={(e, value) => setDeletedFilter(value)}
-            size="small"
-          >
-            <ToggleButton value="active">Active</ToggleButton>
-            <ToggleButton value="deleted">Deleted</ToggleButton>
-          </ToggleButtonGroup>
+          <ButtonGroup>
+            <Button
+              variant={deletedFilter === 'active' ? 'contained' : 'outlined'}
+              onClick={() => setDeletedFilter('active')}
+              size="small"
+              sx={{
+                height: '40px',
+                backgroundColor: deletedFilter === 'active' ? 'primary.light' : 'inherit', // Apply primary.light
+                color: deletedFilter === 'active' ? 'primary.contrastText' : 'inherit',   // Ensure contrast text color
+                '&:hover': {
+                  backgroundColor: 'primary.main', // Add hover effect
+                },
+              }}
+            >
+              Active
+            </Button>
+            <Button
+              variant={deletedFilter === 'deleted' ? 'contained' : 'outlined'}
+              onClick={() => setDeletedFilter('deleted')}
+              size="small"
+              sx={{
+                height: '40px',
+                backgroundColor: deletedFilter === 'deleted' ? 'error.light' : 'inherit',
+                color: deletedFilter === 'deleted' ? 'error.contrastText' : 'inherit',
+                '&:hover': {
+                  backgroundColor: 'error.main',
+                },
+              }}
+            >
+              Deleted
+            </Button>
+          </ButtonGroup>
         </Stack>
 
         <CustomButton
@@ -236,7 +279,8 @@ const AllSales = () => {
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         open={deleteConfirmation.open}
-        contentText={`Are you sure you want to delete Sales Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+        isDeleted={deleteConfirmation.isDeleted}
+        contentText={deleteConfirmation.seq}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />

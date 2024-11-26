@@ -2,7 +2,7 @@
 /* eslint-disable */
 import { useMemo, useState } from 'react';
 import { useTable } from '@pankod/refine-core';
-import { GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, ToggleButtonGroup, ToggleButton } from '@pankod/refine-mui';
+import { GridColDef, Box, Paper, Typography, CircularProgress, TextField, Stack, Button, ButtonGroup } from '@pankod/refine-mui';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import CustomButton from 'components/common/CustomButton';
@@ -122,7 +122,6 @@ const AllExpenses = () => {
         </Typography>
       )
     },
-    { field: 'deleted', headerName: 'Deleted', type: 'boolean', flex: 1 },
   ];
 
   const handleView = (id: string) => {
@@ -228,16 +227,38 @@ const AllExpenses = () => {
             onChange={(e) => setEndDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
           />
-          <ToggleButtonGroup
-            color="primary"
-            value={deletedFilter}
-            exclusive
-            onChange={(e, value) => setDeletedFilter(value)}
-            size="small"
-          >
-            <ToggleButton value="active">Active</ToggleButton>
-            <ToggleButton value="deleted">Deleted</ToggleButton>
-          </ToggleButtonGroup>
+          <ButtonGroup>
+            <Button
+              variant={deletedFilter === 'active' ? 'contained' : 'outlined'}
+              onClick={() => setDeletedFilter('active')}
+              size="small"
+              sx={{
+                height: '40px',
+                backgroundColor: deletedFilter === 'active' ? 'primary.light' : 'inherit',
+                color: deletedFilter === 'active' ? 'primary.contrastText' : 'inherit',
+                '&:hover': {
+                  backgroundColor: 'primary.main',
+                },
+              }}
+            >
+              Active
+            </Button>
+            <Button
+              variant={deletedFilter === 'deleted' ? 'contained' : 'outlined'}
+              onClick={() => setDeletedFilter('deleted')}
+              size="small"
+              sx={{
+                height: '40px',
+                backgroundColor: deletedFilter === 'deleted' ? 'error.light' : 'inherit',
+                color: deletedFilter === 'deleted' ? 'error.contrastText' : 'inherit',
+                '&:hover': {
+                  backgroundColor: 'error.main',
+                },
+              }}
+            >
+              Deleted
+            </Button>
+          </ButtonGroup>
         </Stack>
 
         <CustomButton
@@ -269,7 +290,8 @@ const AllExpenses = () => {
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         open={deleteConfirmation.open}
-        contentText={`Are you sure you want to delete Expenses Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+        isDeleted={deleteConfirmation.isDeleted}
+        contentText={deleteConfirmation.seq}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />

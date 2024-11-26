@@ -1,4 +1,3 @@
-// components/common/CustomTable.tsx
 import React, { useContext, useState } from 'react';
 import { 
   DataGrid, 
@@ -22,7 +21,7 @@ interface CustomTableProps {
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (ids: string[]) => void;
-  onRestore?: (ids: string[]) => void; // Add onRestore prop
+  onRestore?: (ids: string[]) => void;
 }
 
 const CustomTableToolbar = ({
@@ -143,7 +142,7 @@ const CustomTable: React.FC<CustomTableProps> = ({
   onView,
   onEdit,
   onDelete,
-  onRestore // Add onRestore prop
+  onRestore
 }) => {
   const { mode } = useContext(ColorModeContext);
   const [selectionModel, setSelectionModel] = useState<GridSelectionModel>([]);
@@ -167,16 +166,37 @@ const CustomTable: React.FC<CustomTableProps> = ({
               onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}
-              onRestore={onRestore} // Pass onRestore
+              onRestore={onRestore}
               selectedId={selectionModel.join(',')}
-              rows={rows} // Pass rows to determine button visibility
+              rows={rows}
             />
           ),
         }}
         sx={{
           height: containerHeight,
+          // Beautiful scrollbar styling
           '& .MuiDataGrid-main': {
-            overflow: 'hidden'
+            overflow: 'hidden',
+            '& ::-webkit-scrollbar': {
+              width: '10px',
+              height: '10px',
+            },
+            '& ::-webkit-scrollbar-track': {
+              background: mode === 'light' ? '#f1f1f1' : '#2c2c2c',
+              borderRadius: '10px',
+            },
+            '& ::-webkit-scrollbar-thumb': {
+              background: mode === 'light' 
+                ? 'linear-gradient(45deg, #e0e0e0, #a0a0a0)' 
+                : 'linear-gradient(45deg, #4a4a4a, #2c2c2c)',
+              borderRadius: '10px',
+              transition: 'background 0.3s ease',
+            },
+            '& ::-webkit-scrollbar-thumb:hover': {
+              background: mode === 'light'
+                ? 'linear-gradient(45deg, #c0c0c0, #808080)'
+                : 'linear-gradient(45deg, #5a5a5a, #3c3c3c)',
+            },
           },
           '& .MuiDataGrid-row:hover': {
             backgroundColor: 'rgba(0, 0, 0, 0.04)'

@@ -171,7 +171,7 @@ const DeploymentDetails = () => {
               backgroundColor="error.light"
               color="error.dark"
               icon={<Delete />}
-              handleClick={() => handleDeleteClick(deploymentDetails._id, deploymentDetails.seq)} // Pass the id and seq
+              handleClick={() => handleDeleteClick(deploymentDetails._id, deploymentDetails.seq, deploymentDetails.deleted)} // Pass the id and seq
               />
           </Box>
         </Box>
@@ -229,7 +229,8 @@ const DeploymentDetails = () => {
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmationDialog
         open={deleteConfirmation.open}
-        contentText={`Are you sure you want to delete Sales Sequence ${deleteConfirmation.seq}? This action cannot be undone.`}
+        isDeleted={deleteConfirmation.isDeleted}
+        contentText={deleteConfirmation.seq}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />

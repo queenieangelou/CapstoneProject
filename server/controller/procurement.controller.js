@@ -224,77 +224,68 @@ const deleteProcurement = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    // Handle multiple IDs
     const ids = id.split(',').map(id => id.trim());
-    // Validate all IDs first
     const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
     if (!validIds) {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
-    // Find procurements to determine action
+
     const procurements = await Procurement.find({ _id: { $in: ids } }).populate('part').session(session);
     if (procurements.length === 0) {
       return res.status(404).json({ message: 'No procurements found to process' });
     }
-    // Check if any part is used in active deployments
-    for (const procurement of procurements) {
-      const part = procurement.part;
-      if (part) {
-        const deploymentsUsingPart = await Deployment.find({
-          'parts.part': part._id,
-          deleted: false,
-        }).session(session);
-        if (deploymentsUsingPart.length > 0) {
-          return res.status(400).json({
-            message: `Cannot delete procurement. Part "${part.partName}" is used in deployment(s).`,
-          });
-        }
-      }
-    }
+
     let actionCount = 0;
     for (const procurement of procurements) {
       if (procurement.deleted === false) {
-        // Soft delete for non-deleted procurements
+        // Soft delete procurement
         procurement.deleted = true;
         procurement.deletedAt = new Date();
         await procurement.save({ session });
-        
-        // Soft delete the part
+
         if (procurement.part) {
-          const part = await Part.findById(procurement.part);
+          const part = await Part.findById(procurement.part).session(session);
           if (part) {
-            part.deleted = true;
-            part.deletedAt = new Date();
             part.qtyLeft -= procurement.quantityBought;
+
+            // Check if there are any active procurements for this part
+            const hasActiveProcurements = await Procurement.countDocuments({
+              part: part._id,
+              deleted: false,
+            }).session(session) >= 1;
+
+            // Only soft delete the part if there are no active procurements
+            if (!hasActiveProcurements) {
+              part.deleted = true;
+              part.deletedAt = new Date();
+            }
             await part.save({ session });
           }
         }
-        
-        // Remove from creator's allProcurements
-        if (procurement.creator) {
-          await User.findByIdAndUpdate(procurement.creator, {
-            $pull: { allProcurements: procurement._id }
-          }, { session });
-        }
         actionCount++;
       } else if (procurement.deleted === true) {
-        // Hard delete for already soft-deleted procurements
+        // Hard delete procurement
         await Procurement.findByIdAndDelete(procurement._id, { session });
-        
-        // Hard delete the part
+
         if (procurement.part) {
-          await Part.findByIdAndDelete(procurement.part, { session });
-        }
-        
-        // Remove from creator's allProcurements
-        if (procurement.creator) {
-          await User.findByIdAndUpdate(procurement.creator, {
-            $pull: { allProcurements: procurement._id }
-          }, { session });
+          const part = await Part.findById(procurement.part).session(session);
+          if (part) {
+            // Check if there are any remaining procurements (active or deleted)
+            const hasRemainingProcurements = await Procurement.countDocuments({
+              part: part._id,
+              _id: { $ne: procurement._id } // Exclude current procurement being deleted
+            }).session(session) >= 1;
+
+            // Only delete the part if there are no remaining procurements
+            if (!hasRemainingProcurements) {
+              await Part.findByIdAndDelete(part._id, { session });
+            }
+          }
         }
         actionCount++;
       }
     }
+
     if (actionCount === 0) {
       return res.status(404).json({ message: 'No procurements found to delete' });
     }
@@ -302,7 +293,7 @@ const deleteProcurement = async (req, res) => {
     await session.commitTransaction();
     res.status(200).json({
       message: `Successfully deleted ${actionCount} procurement(s)`,
-      processedCount: actionCount
+      processedCount: actionCount,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -317,73 +308,45 @@ const restoreProcurement = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    // Handle multiple IDs
     const ids = id.split(',').map(id => id.trim());
-    
-    // Validate all IDs first
-    const validIds = ids.every((id) => mongoose.Types.ObjectId.isValid(id));
+    const validIds = ids.every(id => mongoose.Types.ObjectId.isValid(id));
     if (!validIds) {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    // Fetch all procurements to be restored
-    const procurements = await Procurement.find({ 
-      _id: { $in: ids }, 
-      deleted: true 
-    }).populate('part').populate('creator').session(session);
+    const procurements = await Procurement.find({
+      _id: { $in: ids },
+      deleted: true,
+    }).populate('part').session(session);
 
     if (procurements.length === 0) {
       return res.status(404).json({ message: 'No procurements found to restore' });
     }
 
-    // Perform restore for all selected procurements
-    const updateResult = await Procurement.updateMany(
-      {
-        _id: { $in: ids },
-        deleted: true
-      },
-      {
-        $set: { deleted: false },
-        $unset: { deletedAt: 1 }
-      },
-      { session }
-    );
-
-    // Restore associated parts and creators
     for (const procurement of procurements) {
-      // Restore Part
-      if (procurement.part) {
-        await Part.findByIdAndUpdate(procurement.part._id, {
-          $set: { 
-            deleted: false,
-            deletedAt: undefined,
-            qtyLeft: procurement.part.qtyLeft + procurement.quantityBought
-          },
-          $addToSet: { procurements: procurement._id }
-        }, { session });
-      }
+      procurement.deleted = false;
+      procurement.deletedAt = undefined;
 
-      // Restore Creator
-      if (procurement.creator) {
-        await User.findByIdAndUpdate(procurement.creator._id, {
-          $set: { deleted: false },
-          $addToSet: { allProcurements: procurement._id }
-        }, { session });
+      if (procurement.part) {
+        const part = await Part.findById(procurement.part).session(session);
+        if (part && part.deleted) { // Check if part exists AND is deleted
+          part.qtyLeft += procurement.quantityBought;
+          part.deleted = false;
+          part.deletedAt = undefined;
+          await part.save({ session });
+        }
       }
+      await procurement.save({ session });
     }
 
     await session.commitTransaction();
     res.status(200).json({
-      message: `Successfully restored ${updateResult.modifiedCount} procurement(s)`,
-      restoredCount: updateResult.modifiedCount,
+      message: `Successfully restored ${procurements.length} procurement(s)`,
+      restoredCount: procurements.length,
     });
   } catch (error) {
     await session.abortTransaction();
-    console.error('Error restoring procurement:', error);
-    res.status(500).json({
-      message: 'Failed to restore procurements, please try again later',
-      error: error.message,
-    });
+    res.status(500).json({ message: 'Failed to restore procurements', error: error.message });
   } finally {
     session.endSession();
   }
