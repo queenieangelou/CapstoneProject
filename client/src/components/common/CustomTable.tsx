@@ -156,7 +156,6 @@ const CustomTable: React.FC<CustomTableProps> = ({
         checkboxSelection
         disableSelectionOnClick
         autoHeight={false}
-        hideFooter={true}
         selectionModel={selectionModel}
         onSelectionModelChange={(newSelectionModel) => {
           setSelectionModel(newSelectionModel);

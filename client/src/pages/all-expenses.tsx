@@ -210,7 +210,7 @@ const AllExpenses = () => {
             placeholder="Search by supplier, TIN, or sequence"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ minWidth: '200px' }}
+            sx={{ minWidth: '300px' }}
           />
           <TextField
             size="small"
