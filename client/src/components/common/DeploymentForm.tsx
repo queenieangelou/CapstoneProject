@@ -15,22 +15,19 @@ import {
   FormHelperText,
   FormControlLabel,
   Checkbox,
-  Tooltip,
-  Button,
-  IconButton
-} from '@pankod/refine-mui';
+  Button} from '@pankod/refine-mui';
 import { FormPropsDeployment } from 'interfaces/common';
 import { useNavigate } from '@pankod/refine-react-router-v6';
-import { Add, Close, Delete, Publish, Remove } from '@mui/icons-material';
+import { Add, Close, Delete, Publish } from '@mui/icons-material';
 import CustomButton from './CustomButton';
 import CustomIconButton from './CustomIconButton';
 import { customRandom } from 'nanoid';
+import useNextSequence from 'hooks/useNextSequence';
 
 interface PartEntry {
   partId: string;
   quantityUsed: number;
 }
-
 
 const nanoid = customRandom('1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm', 7, size => {
   return (new Uint8Array(size)).map(() => 256 * Math.random()); 
@@ -52,10 +49,15 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
   const [trackCode, setTrackCode] = useState<string>(initialValues?.trackCode || nanoid);
   const [repairStatus, setRepairStatus] = useState<string>(initialValues?.repairStatus || 'Pending');
 
-
-
   const navigate = useNavigate();
   const isError = false;
+
+  // Use the custom hook for sequence logic
+  const { currentSeq, isLoading: sequenceLoading } = useNextSequence({
+    resource: "deployments",
+    type: type as "Create" | "Edit", // Assert type explicitly
+    initialValues,
+  });
 
   useEffect(() => {
     if (initialValues) {
@@ -117,32 +119,35 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
   };
 
   const onSubmit = (data: Record<string, any>) => {
-    const updatedData = { ...data };
+    const updatedData: Record<string, any> = {
+      ...data,
+      seq: currentSeq,
+    };
 
     // Filter out empty entries and format parts data
-    const validParts = partsEntries.filter(entry => 
+    const validParts = partsEntries.filter((entry) =>
       entry.partId && 
       entry.quantityUsed > 0 && 
       entry.quantityUsed <= (availableQuantities[entry.partId] || 0)
     );
     // Allow submission even if no parts are selected
-    updatedData.parts = validParts.map(entry => ({
+    updatedData.parts = validParts.map((entry) => ({
       part: entry.partId,
-      quantityUsed: entry.quantityUsed
+      quantityUsed: entry.quantityUsed,
     }));
 
     updatedData.deploymentStatus = deploymentStatus;
     updatedData.releaseStatus = releaseStatus;
+    updatedData.repairStatus = repairStatus;
     updatedData.deploymentDate = deploymentStatus ? data.deploymentDate : null;
     updatedData.releaseDate = releaseStatus ? data.releaseDate : null;
-    updatedData.repairStatus = repairStatus;
-    updatedData.repairedDate = repairStatus ? data.repairedDate: null;
+    updatedData.repairedDate = repairStatus ? data.repairedDate : null;
   
 
     onFinishHandler(updatedData);
   };
 
-  if (formLoading) {
+  if (formLoading || sequenceLoading || currentSeq === null) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
@@ -206,8 +211,9 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
               id="seq"
               type="number"
               label="Sequence Number"
-              {...register('seq', { required: true })}
-              defaultValue={initialValues?.seq || 0}
+              value={currentSeq}
+              disabled
+              {...register('seq')}
             />
           </FormControl>
 

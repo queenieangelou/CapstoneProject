@@ -2,7 +2,6 @@
 import { Close, Publish } from '@mui/icons-material';
 import {
   Box,
-  Button,
   Checkbox,
   CircularProgress,
   FormControl,
@@ -14,13 +13,13 @@ import {
   Select,
   SelectChangeEvent,
   TextField,
-  Tooltip,
   Typography
 } from '@pankod/refine-mui';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { FormPropsProcurement } from 'interfaces/common';
 import { useEffect, useState } from 'react';
 import CustomButton from './CustomButton';
+import useNextSequence from 'hooks/useNextSequence';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -50,6 +49,13 @@ const ProcurementForm = ({
   const navigate = useNavigate();
   
   const isError = false;
+
+  // Use the custom hook for sequence logic
+  const { currentSeq, isLoading: sequenceLoading } = useNextSequence({
+    resource: "procurements",
+    type: type as "Create" | "Edit", // Assert type explicitly
+    initialValues,
+  });
 
   useEffect(() => {
     if (initialValues && initialValues.partName && initialValues.brandName) {
@@ -112,7 +118,10 @@ const ProcurementForm = ({
   };
 
   const onSubmit = (data: Record<string, any>) => {
-    const updatedData = { ...data };
+    const updatedData: Record<string, any> = {
+      ...data,
+      seq: currentSeq // Add the sequence number
+    };
     if (selectedPart === 'new') {
       updatedData.partName = newPartName;
       updatedData.brandName = newBrandName;
@@ -146,7 +155,7 @@ const ProcurementForm = ({
     onFinishHandler(formData);
   };
 
-  if (formLoading) {
+  if (formLoading || sequenceLoading || currentSeq === null) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
@@ -213,8 +222,9 @@ const ProcurementForm = ({
               id="seq"
               type="number"
               label="Sequence Number"
-              {...register('seq', { required: true })}
-              defaultValue={initialValues?.seq || 0}
+              value={currentSeq}
+              disabled
+              {...register('seq')}
             />
           </FormControl>
   

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -9,14 +9,12 @@ import {
   CircularProgress,
   TextField,
   FormControlLabel,
-  Checkbox,
-  Tooltip,
-  Button
-} from '@pankod/refine-mui';
+  Checkbox} from '@pankod/refine-mui';
 import { FormPropsExpense } from 'interfaces/common';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import { Close, Publish } from '@mui/icons-material';
 import CustomButton from './CustomButton';
+import useNextSequence from 'hooks/useNextSequence';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -33,6 +31,13 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
   const [netOfVAT, setNetOfVAT] = useState(initialValues?.netOfVAT || 0);
   const [inputVAT, setInputVAT] = useState(initialValues?.inputVAT || 0);
   const navigate = useNavigate();
+
+  // Use the custom hook for sequence logic
+  const { currentSeq, isLoading: sequenceLoading } = useNextSequence({
+    resource: "expenses",
+    type: type as "Create" | "Edit", // Assert type explicitly
+    initialValues,
+  });
 
   // Function to calculate VAT components
   const calculateVATComponents = (totalAmount: number, isNoValidReceipt: boolean, isNonVAT: boolean) => {
@@ -113,6 +118,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
     const updatedData = { 
       ...data,
       isNonVat,
+      seq: currentSeq,
       noValidReceipt,
       amount: parseFloat(amount),
       inputVAT: parseFloat(inputVAT),
@@ -135,7 +141,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
     onFinishHandler(updatedData);
   };
 
-  if (formLoading) {
+  if (formLoading || sequenceLoading || currentSeq === null) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
@@ -189,8 +195,9 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
               id="seq"
               type="number"
               label="Sequence Number"
-              {...register('seq', { required: true })}
-              defaultValue={initialValues?.seq || 0}
+              value={currentSeq}
+              disabled
+              {...register('seq')}
             />
           </FormControl>
 

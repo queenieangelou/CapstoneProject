@@ -1,20 +1,19 @@
 import {
   Box,
-  Button,
   CircularProgress,
   FormControl,
   InputLabel,
   OutlinedInput,
   Paper,
   TextField,
-  Tooltip,
   Typography
 } from '@pankod/refine-mui';
 import { FormPropsSale } from 'interfaces/common';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Close, Publish } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import CustomButton from './CustomButton';
+import useNextSequence from 'hooks/useNextSequence';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -29,6 +28,13 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
   const [netOfVAT, setNetOfVAT] = useState(initialValues?.netOfVAT || 0);
   const [outputVAT, setOutputVAT] = useState(initialValues?.outputVAT || 0);
   const navigate = useNavigate();
+
+  // Use the custom hook for sequence logic
+  const { currentSeq, isLoading: sequenceLoading } = useNextSequence({
+    resource: "sales",
+    type: type as "Create" | "Edit", // Assert type explicitly
+    initialValues,
+  });
 
   // Function to calculate VAT components
   const calculateVATComponents = (totalAmount: number) => {
@@ -56,6 +62,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
   const onSubmit = (data: any) => {
     const updatedData = { 
       ...data,
+      seq: currentSeq,
       amount: parseFloat(amount),
       outputVAT: parseFloat(outputVAT),
       netOfVAT: parseFloat(netOfVAT)
@@ -64,7 +71,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
     onFinishHandler(updatedData);
   };
 
-  if (formLoading) {
+  if (formLoading || sequenceLoading || currentSeq === null) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
@@ -118,8 +125,9 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
               id="seq"
               type="number"
               label="Sequence Number"
-              {...register('seq', { required: true })}
-              defaultValue={initialValues?.seq || 0}
+              value={currentSeq}
+              disabled
+              {...register('seq')}
             />
           </FormControl>
 
