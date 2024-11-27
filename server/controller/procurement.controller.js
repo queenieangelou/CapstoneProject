@@ -267,21 +267,21 @@ const deleteProcurement = async (req, res) => {
         // Hard delete procurement
         await Procurement.findByIdAndDelete(procurement._id, { session });
 
-        if (procurement.part) {
-          const part = await Part.findById(procurement.part).session(session);
-          if (part) {
-            // Check if there are any remaining procurements (active or deleted)
-            const hasRemainingProcurements = await Procurement.countDocuments({
-              part: part._id,
-              _id: { $ne: procurement._id } // Exclude current procurement being deleted
-            }).session(session) >= 1;
+        // if (procurement.part) {
+        //   const part = await Part.findById(procurement.part).session(session);
+        //   if (part) {
+        //     // Check if there are any remaining procurements (active or deleted)
+        //     const hasRemainingProcurements = await Procurement.countDocuments({
+        //       part: part._id,
+        //       _id: { $ne: procurement._id } // Exclude current procurement being deleted
+        //     }).session(session) >= 1;
 
-            // Only delete the part if there are no remaining procurements
-            if (!hasRemainingProcurements) {
-              await Part.findByIdAndDelete(part._id, { session });
-            }
-          }
-        }
+        //     // Only delete the part if there are no remaining procurements
+        //     if (!hasRemainingProcurements) {
+        //       await Part.findByIdAndDelete(part._id, { session });
+        //     }
+        //   }
+        // }
         actionCount++;
       }
     }
