@@ -5,12 +5,14 @@ import { useGetIdentity, useOne } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import ExpenseForm from 'components/common/ExpenseForm';
-import { Box, CircularProgress } from '@pankod/refine-mui';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const EditExpense = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: user } = useGetIdentity();
+  const isError = false;
 
   const { data: expenseData, isLoading: isExpenseLoading } = useOne({
     resource: 'expenses',
@@ -36,11 +38,21 @@ const EditExpense = () => {
     });
   };
 
-  if (isExpenseLoading) {
+  if (formLoading || isExpenseLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading expenses form..."
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading expenses form"
+      />
     );
   }
 

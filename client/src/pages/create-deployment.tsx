@@ -4,6 +4,8 @@ import { Box, CircularProgress } from '@pankod/refine-mui';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import DeploymentForm from 'components/common/DeploymentForm';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 // Define a type for the parts
 interface Part {
@@ -15,8 +17,9 @@ interface Part {
 const CreateDeployment = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity()
+  const isError = false;
 
-  const { data: partsResponse, isLoading } = useList<Part>({
+  const { data: partsResponse, isLoading: isPartLoading } = useList<Part>({
     resource: 'parts'
   });
 
@@ -35,12 +38,22 @@ const CreateDeployment = () => {
 
         navigate('/deployments');
   };
-  // Handle loading state if needed
-  if (isLoading || formLoading) {
+  
+  if (formLoading || isPartLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading deployment form..."
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading deployment form"
+      />
     );
   }
 

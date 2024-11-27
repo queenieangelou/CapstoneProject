@@ -158,21 +158,21 @@ const AllProcurements = () => {
   }));
 
   if (isLoading) {
-      return (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-              <CircularProgress />
-          </Box>
-      );
+    return (
+      <LoadingDialog 
+        open={isLoading}
+        loadingMessage="Loading procurements data..."
+      />
+    );
   }
 
   if (isError) {
-      return (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-              <Typography variant="h6" color="error">
-                  Error loading procurements data
-              </Typography>
-          </Box>
-      );
+    return (
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading procurements data"
+      />
+    );
   }
 
   return (

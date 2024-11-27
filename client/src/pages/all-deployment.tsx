@@ -373,19 +373,19 @@ const AllDeployments = () => {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={isLoading}
+        loadingMessage="Loading deployments data..."
+      />
     );
   }
 
   if (isError) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography variant="h6" color="error">
-          Error loading deployments data
-        </Typography>
-      </Box>
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading deployments data"
+      />
     );
   }
 

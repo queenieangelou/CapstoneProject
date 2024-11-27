@@ -124,43 +124,21 @@ const AllSales = () => {
 
   if (isLoading) {
     return (
-      <Box
-        sx={{
-          height: containerHeight,
-          display: 'flex',
-          flexDirection: 'column',
-          m: 2,
-          overflow: 'hidden',
-          justifyContent: 'center', // Center vertically
-          alignItems: 'center',      // Center horizontally
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={isLoading}
+        loadingMessage="Loading sales data..."
+      />
     );
   }
-  
+
   if (isError) {
     return (
-      <Box
-        sx={{
-          height: containerHeight,
-          display: 'flex',
-          flexDirection: 'column',
-          m: 2,
-          overflow: 'hidden',
-          justifyContent: 'center',
-          alignItems: 'center',
-          color: 'error.main',
-        }}
-      >
-        <Typography variant="h6" color="error">
-          Something went wrong. Please try again.
-        </Typography>
-      </Box>
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading sales data"
+      />
     );
   }
-  
 
   return (
     <Paper 

@@ -20,6 +20,8 @@ import { FormPropsProcurement } from 'interfaces/common';
 import { useEffect, useState } from 'react';
 import CustomButton from './CustomButton';
 import useNextSequence from 'hooks/useNextSequence';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -157,19 +159,19 @@ const ProcurementForm = ({
 
   if (formLoading || sequenceLoading || currentSeq === null) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading procurement form..."
+      />
     );
   }
 
   if (isError) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography variant="h6" color="error">
-          Error loading procurements data
-        </Typography>
-      </Box>
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading procurement form"
+      />
     );
   }
 

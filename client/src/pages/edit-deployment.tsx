@@ -5,13 +5,16 @@ import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import DeploymentForm from 'components/common/DeploymentForm';
 import { Box, CircularProgress, Typography } from '@pankod/refine-mui';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const EditDeployment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: user } = useGetIdentity();
+  const isError = false;
 
-  const { data: deploymentData, isLoading: isDeploymentLoading, isError: isDeploymentError, error: deploymentError } = useOne({
+  const { data: deploymentData, isLoading: isDeploymentsLoading } = useOne({
     resource: 'deployments',
     id: id as string,
     queryOptions: {
@@ -19,7 +22,7 @@ const EditDeployment = () => {
     }
   });
 
-  const { data: partsData, isLoading: isPartsLoading, isError: isPartsError, error: partsError } = useList({
+  const { data: partsData, isLoading: isPartsLoading} = useList({
     resource: 'parts',
     queryOptions: {
       enabled: true, // Always fetch parts
@@ -82,23 +85,24 @@ const EditDeployment = () => {
   };
 
   // Handle loading state
-  if (isDeploymentLoading || isPartsLoading) {
+  if (formLoading || isDeploymentsLoading || isPartsLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading deployment form..."
+      />
     );
   }
-  // Handle error states
-  if (isDeploymentError || isPartsError) {
+
+  if (isError) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography color="error" variant="h6">
-          Error: {(deploymentError as Error)?.message || (partsError as unknown as Error)?.message || 'Failed to load data'}
-        </Typography>
-      </Box>
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading deployment form"
+      />
     );
   }
+  
   // Check if we have the required data
   if (!deploymentData?.data || !partsData?.data) {
     return (

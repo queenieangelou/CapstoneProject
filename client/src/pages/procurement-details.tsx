@@ -5,7 +5,8 @@ import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import CustomButton from 'components/common/CustomButton';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
-import { useState } from 'react';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const ProcurementDetails = () => {
   const navigate = useNavigate();
@@ -28,17 +29,19 @@ const ProcurementDetails = () => {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={isLoading}
+        loadingMessage="Loading procurement details..."
+      />
     );
   }
 
   if (isError) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <Typography variant="h6" color="error">Error</Typography>
-      </Box>
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading procurement details"
+      />
     );
   }
 

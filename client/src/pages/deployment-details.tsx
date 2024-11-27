@@ -6,7 +6,8 @@ import CustomButton from 'components/common/CustomButton';
 import DeleteConfirmationDialog from 'components/common/DeleteConfirmationDialog';
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import { Key, useState } from 'react';
-
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const DeploymentDetails = () => {
   const navigate = useNavigate();
@@ -30,17 +31,19 @@ const DeploymentDetails = () => {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={isLoading}
+        loadingMessage="Loading deployment details..."
+      />
     );
   }
 
   if (isError) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <Typography variant="h6" color="error">Error</Typography>
-      </Box>
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading deployment details"
+      />
     );
   }
 

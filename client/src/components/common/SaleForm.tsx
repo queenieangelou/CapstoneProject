@@ -14,6 +14,8 @@ import { Close, Publish } from '@mui/icons-material';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import CustomButton from './CustomButton';
 import useNextSequence from 'hooks/useNextSequence';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -28,6 +30,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
   const [netOfVAT, setNetOfVAT] = useState(initialValues?.netOfVAT || 0);
   const [outputVAT, setOutputVAT] = useState(initialValues?.outputVAT || 0);
   const navigate = useNavigate();
+  const isError = false;
 
   // Use the custom hook for sequence logic
   const { currentSeq, isLoading: sequenceLoading } = useNextSequence({
@@ -73,9 +76,19 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
 
   if (formLoading || sequenceLoading || currentSeq === null) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading sales form..."
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading sales form"
+      />
     );
   }
 

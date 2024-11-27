@@ -13,7 +13,7 @@ import { Error as ErrorIcon } from '@mui/icons-material';
 interface ErrorDialogProps {
   open: boolean;
   errorMessage: string;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 const ErrorDialog: React.FC<ErrorDialogProps> = ({
@@ -21,10 +21,12 @@ const ErrorDialog: React.FC<ErrorDialogProps> = ({
   errorMessage,
   onClose,
 }) => {
+  const handleClose = onClose || (() => {});
+
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       aria-labelledby="error-dialog-title"
       aria-describedby="error-dialog-description"
     >
@@ -45,13 +47,14 @@ const ErrorDialog: React.FC<ErrorDialogProps> = ({
           {errorMessage}
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary" variant="contained">
-          Close
-        </Button>
-      </DialogActions>
+      {onClose && (
+        <DialogActions>
+          <Button onClick={handleClose} color="primary" variant="contained">
+            Close
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };
-
 export default ErrorDialog;

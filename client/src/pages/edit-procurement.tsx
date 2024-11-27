@@ -5,12 +5,14 @@ import { useGetIdentity, useOne, useList } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import ProcurementForm from 'components/common/ProcurementForm';
-import { Box, CircularProgress } from '@pankod/refine-mui';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const EditProcurement = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: user } = useGetIdentity();
+  const isError = false;
 
   const { data: procurementData, isLoading: isProcurementLoading } = useOne({
     resource: 'procurements',
@@ -44,11 +46,21 @@ const EditProcurement = () => {
     });
   };
 
-  if (isProcurementLoading || isPartsLoading) {
+  if (formLoading || isProcurementLoading || isPartsLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading procurement form..."
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading procurment form"
+      />
     );
   }
 

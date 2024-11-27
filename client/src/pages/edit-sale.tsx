@@ -5,13 +5,15 @@ import { useGetIdentity, useOne } from '@pankod/refine-core';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate, useParams } from '@pankod/refine-react-router-v6';
 import SaleForm from 'components/common/SaleForm';
-import { Box, CircularProgress } from '@pankod/refine-mui';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const EditSale = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: user } = useGetIdentity();
-  
+  const isError = false;
+
   const { data: saleData, isLoading: isSaleLoading } = useOne({
     resource: 'sales',
     id: id as string,
@@ -40,11 +42,21 @@ const EditSale = () => {
     });
   };
 
-  if (isSaleLoading) {
+  if (formLoading || isSaleLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading sales form..."
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading sales form"
+      />
     );
   }
 

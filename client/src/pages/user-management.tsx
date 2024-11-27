@@ -21,7 +21,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { ColorModeContext } from 'contexts';
 import CustomIconButton from 'components/common/CustomIconButton';
 import useDynamicHeight from 'hooks/useDynamicHeight';
-import { Edit, Visibility } from '@mui/icons-material';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 const UserManagement = () => {
   const { data, isLoading, isError, refetch } = useList({
@@ -145,19 +146,19 @@ const UserManagement = () => {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={isLoading}
+        loadingMessage="Loading users data..."
+      />
     );
   }
 
   if (isError) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography variant="h6" color="error">
-          Something went wrong!
-        </Typography>
-      </Box>
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading users data"
+      />
     );
   }
 

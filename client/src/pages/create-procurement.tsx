@@ -4,6 +4,8 @@ import { Box, CircularProgress } from '@pankod/refine-mui';
 import { FieldValues, useForm } from '@pankod/refine-react-hook-form';
 import { useNavigate } from '@pankod/refine-react-router-v6';
 import ProcurementForm from 'components/common/ProcurementForm';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 // Define a type for the parts
 interface Part {
@@ -15,9 +17,10 @@ interface Part {
 const CreateProcurement = () => {
   const navigate = useNavigate();
   const { data: user } = useGetIdentity();
+  const isError = false;
 
   // Fetch existing parts
-  const { data: partsResponse, isLoading } = useList<Part>({
+  const { data: partsResponse, isLoading: isPartLoading } = useList<Part>({
     resource: 'parts', // Adjust resource name based on your API
   });
 
@@ -37,12 +40,21 @@ const CreateProcurement = () => {
     navigate('/procurements');
   };
 
-  // Handle loading state if needed
-  if (isLoading || formLoading) {
+  if (formLoading || isPartLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading procurement form..."
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading procurement form"
+      />
     );
   }
 

@@ -23,6 +23,8 @@ import CustomButton from './CustomButton';
 import CustomIconButton from './CustomIconButton';
 import { customRandom } from 'nanoid';
 import useNextSequence from 'hooks/useNextSequence';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
 interface PartEntry {
   partId: string;
@@ -149,19 +151,19 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
 
   if (formLoading || sequenceLoading || currentSeq === null) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingDialog 
+        open={formLoading}
+        loadingMessage="Loading deployment form..."
+      />
     );
   }
 
   if (isError) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Typography variant="h6" color="error">
-          Error loading procurements data
-        </Typography>
-      </Box>
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading deployment form"
+      />
     );
   }
 
