@@ -13,6 +13,7 @@ import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import ErrorDialog from 'components/common/ErrorDialog';
 import useRestoreWithConfirmation from 'hooks/useRestoreWithConfirmation';
 import RestoreConfirmationDialog from 'components/common/RestoreConfirmationDialog';
+import LoadingDialog from 'components/common/LoadingDialog';
 
 const AllExpenses = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const AllExpenses = () => {
     handleTableDelete,
     confirmDelete,
     cancelDelete,
+    isLoading: isDeleteLoading,
     closeErrorDialog: closeDeleteErrorDialog,
   } = useDeleteWithConfirmation({
     resource: 'expenses',
@@ -42,6 +44,7 @@ const AllExpenses = () => {
     handleTableRestore,
     confirmRestore,
     cancelRestore,
+    isLoading: isRestoreLoading,
     closeErrorDialog: closeRestoreErrorDialog,
   } = useRestoreWithConfirmation({
     resource: 'expenses',
@@ -302,6 +305,17 @@ const AllExpenses = () => {
         onConfirm={confirmRestore}
         onCancel={cancelRestore}
       />
+      
+      {/* Loading Dialogs */}
+      <LoadingDialog 
+        open={isDeleteLoading} 
+        loadingMessage="Please wait..." 
+      />
+      <LoadingDialog 
+        open={isRestoreLoading} 
+        loadingMessage="Please wait..." 
+      />
+
 
       {/* Error Dialogs */}
       <ErrorDialog

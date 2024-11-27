@@ -40,6 +40,7 @@ const useDeleteWithConfirmation = ({
     open: false,
     message: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDeleteClick = (id: string, seq: string, isDeleted: boolean) => {
     setDeleteConfirmation({
@@ -73,6 +74,7 @@ const useDeleteWithConfirmation = ({
 
   const confirmDelete = () => {
     if (deleteConfirmation.id) {
+      setIsLoading(true);
       deleteMutation(
         {
           resource,
@@ -85,6 +87,7 @@ const useDeleteWithConfirmation = ({
               navigate(redirectPath);
             }
             onSuccess?.();
+            setIsLoading(false);
           },
           onError: (error: any) => {
             console.error('Delete error:', error);
@@ -103,6 +106,7 @@ const useDeleteWithConfirmation = ({
             });
             
             onError?.(error);
+            setIsLoading(false);
           }
         }
       );
@@ -120,6 +124,7 @@ const useDeleteWithConfirmation = ({
   return {
     deleteConfirmation,
     error,
+    isLoading,
     handleDeleteClick,
     handleTableDelete,
     confirmDelete,

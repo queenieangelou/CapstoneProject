@@ -10,6 +10,7 @@ import RestoreConfirmationDialog from 'components/common/RestoreConfirmationDial
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import useDynamicHeight from 'hooks/useDynamicHeight';
 import useRestoreWithConfirmation from 'hooks/useRestoreWithConfirmation';
+import LoadingDialog from 'components/common/LoadingDialog';
 import { useMemo, useState } from 'react';
 
 
@@ -43,6 +44,7 @@ const AllDeployments = () => {
     handleTableDelete,
     confirmDelete,
     cancelDelete,
+    isLoading: isDeleteLoading,
     closeErrorDialog: closeDeleteErrorDialog,
   } = useDeleteWithConfirmation({
     resource: 'deployments',
@@ -55,6 +57,7 @@ const AllDeployments = () => {
     handleTableRestore,
     confirmRestore,
     cancelRestore,
+    isLoading: isRestoreLoading,
     closeErrorDialog: closeRestoreErrorDialog,
   } = useRestoreWithConfirmation({
     resource: 'deployments',
@@ -578,6 +581,16 @@ const AllDeployments = () => {
           contentText={`Are you sure you want to restore ${restoreConfirmation.seq}?`}
           onConfirm={confirmRestore}
           onCancel={cancelRestore}
+        />
+
+        {/* Loading Dialogs */}
+        <LoadingDialog 
+          open={isDeleteLoading} 
+          loadingMessage="Please wait..." 
+        />
+        <LoadingDialog 
+          open={isRestoreLoading} 
+          loadingMessage="Please wait..." 
         />
 
         {/* Error Dialogs */}

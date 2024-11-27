@@ -29,8 +29,8 @@ const useRestoreWithConfirmation = ({
   onSuccess,
   onError,
 }: UseRestoreWithConfirmationProps) => {
-  const invalidate = useInvalidate(); // Refine's invalidate hook for refreshing resources
-  const { open } = useNotification(); // Hook to trigger notifications
+  const invalidate = useInvalidate();
+  const { open } = useNotification();
   const navigate = useNavigate();
   const [restoreConfirmation, setRestoreConfirmation] = useState<RestoreConfirmationState>({
     open: false,
@@ -41,6 +41,7 @@ const useRestoreWithConfirmation = ({
     open: false,
     message: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRestoreClick = (id: string, seq: string) => {
     setRestoreConfirmation({
@@ -70,6 +71,7 @@ const useRestoreWithConfirmation = ({
   const confirmRestore = async () => {
     if (restoreConfirmation.ids.length === 0) return;
   
+    setIsLoading(true);
     try {
       const ids = restoreConfirmation.ids.join(',');
       const response = await fetch(
@@ -107,6 +109,8 @@ const useRestoreWithConfirmation = ({
       onSuccess?.();
     } catch (error) {
       handleRestoreError(error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -139,6 +143,7 @@ const useRestoreWithConfirmation = ({
   return {
     restoreConfirmation,
     error,
+    isLoading,
     handleRestoreClick,
     handleTableRestore,
     confirmRestore,

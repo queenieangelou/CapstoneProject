@@ -21,6 +21,7 @@ import RestoreConfirmationDialog from 'components/common/RestoreConfirmationDial
 import useDeleteWithConfirmation from 'hooks/useDeleteWithConfirmation';
 import useRestoreWithConfirmation from 'hooks/useRestoreWithConfirmation';
 import ErrorDialog from 'components/common/ErrorDialog';
+import LoadingDialog from 'components/common/LoadingDialog';
 
 const AllSales = () => {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ const AllSales = () => {
     handleTableDelete,
     confirmDelete,
     cancelDelete,
+    isLoading: isDeleteLoading,
     closeErrorDialog: closeDeleteErrorDialog,
   } = useDeleteWithConfirmation({
     resource: 'sales',
@@ -51,6 +53,7 @@ const AllSales = () => {
     handleTableRestore,
     confirmRestore,
     cancelRestore,
+    isLoading: isRestoreLoading,
     closeErrorDialog: closeRestoreErrorDialog,
   } = useRestoreWithConfirmation({
     resource: 'sales',
@@ -291,6 +294,16 @@ const AllSales = () => {
         contentText={`Are you sure you want to restore ${restoreConfirmation.seq}?`}
         onConfirm={confirmRestore}
         onCancel={cancelRestore}
+      />
+
+      {/* Loading Dialogs */}
+      <LoadingDialog 
+        open={isDeleteLoading} 
+        loadingMessage="Please wait..." 
+      />
+      <LoadingDialog 
+        open={isRestoreLoading} 
+        loadingMessage="Please wait..." 
       />
 
       {/* Error Dialogs */}
