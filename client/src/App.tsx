@@ -7,6 +7,7 @@ import {
   NoCrashOutlined,
   PeopleAltOutlined,
   StarOutlineRounded,
+  Timeline,
   VillaOutlined,
   WalletOutlined,
   WarehouseOutlined,
@@ -59,6 +60,7 @@ import AllExpenses from 'pages/all-expenses';
 import CreateExpense from 'pages/create-expense';
 import EditExpense from 'pages/edit-expense';
 import ExpenseDetails from 'pages/expense-details';
+import Forecast from 'pages/forecast';
 
 const axiosInstance = axios.create();
 axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
@@ -215,12 +217,9 @@ const App = () => {
   const generateResources = () => {
     const baseResources = [
       {
-        name: 'properties',
-        list: AllProperties,
-        show: PropertyDetails,
-        create: CreateProperty,
-        edit: EditProperty,
-        icon: <VillaOutlined />,
+        name: 'forecast',
+        list: Forecast,
+        icon: <Timeline />
       },
       {
         name: 'procurements',
@@ -255,17 +254,12 @@ const App = () => {
         icon: <AttachMoneyOutlined/>,
       },
       {
-        name: 'agents',
-        list: Agents,
-        show: AgentProfile,
-        icon: <PeopleAltOutlined />,
-      },
-      {
         name: 'my-profile',
         options: { label: 'My Profile' },
         list: MyProfile,
         icon: <AccountCircleOutlined />,
       },
+      
     ];
 
     // Add user management resource only for admin users
