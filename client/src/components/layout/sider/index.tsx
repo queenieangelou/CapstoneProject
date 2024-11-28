@@ -37,12 +37,14 @@ import {
 import { useLocation } from '@pankod/refine-react-router-v6';
 import { ColorModeContext } from 'contexts';
 import { Title as DefaultTitle } from '../title';
+import LogoutConfirmationDialog from 'components/common/LogutConfirmationDialog';
 
 export const Sider: typeof DefaultSider = ({ render }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [opened, setOpened] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewHeight, setViewHeight] = useState('100vh');
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   
   const { pathname } = useLocation();
 
@@ -79,6 +81,19 @@ export const Sider: typeof DefaultSider = ({ render }) => {
     if (collapsed) return 64;
     return 200;
   };
+
+const handleLogout = () => {
+  setLogoutDialogOpen(true); // Open the dialog
+};
+
+const confirmLogout = () => {
+  mutateLogout(); // Perform the logout action
+  setLogoutDialogOpen(false); // Close the dialog
+};
+
+const cancelLogout = () => {
+  setLogoutDialogOpen(false); // Close the dialog without any action
+};
 
   const t = useTranslate();
   const { Link } = useRouterContext();
@@ -311,43 +326,51 @@ export const Sider: typeof DefaultSider = ({ render }) => {
   ) : null;
 
   const logout = isExistAuthentication && (
-    <Tooltip
-      title={t('buttons.logout', 'Logout')}
-      placement="right"
-      disableHoverListener={!collapsed}
-      arrow
-    >
-      <ListItemButton
-        key="logout"
-        onClick={() => mutateLogout()}
-        sx={{
-          justifyContent: 'center',
-          margin: '10px auto',
-          borderRadius: '12px',
-          minHeight: '56px',
-          width: '90%',
-        }}
+    <>
+      <Tooltip
+        title={t('buttons.logout', 'Logout')}
+        placement="right"
+        disableHoverListener={!collapsed}
+        arrow
       >
-        <ListItemIcon
+        <ListItemButton
+          key="logout"
+          onClick={handleLogout}
           sx={{
             justifyContent: 'center',
-            minWidth: 36,
-            color: mode === 'dark' ? '#fff' : '#141414',
+            margin: '10px auto',
+            borderRadius: '12px',
+            minHeight: '56px',
+            width: '90%',
           }}
         >
-          <Logout />
-        </ListItemIcon>
-        <ListItemText
-          primary={t('buttons.logout', 'Logout')}
-          primaryTypographyProps={{
-            noWrap: true,
-            fontSize: '16px',
-            color: mode === 'dark' ? '#fff' : '#141414',
-          }}
-        />
-      </ListItemButton>
-    </Tooltip>
+          <ListItemIcon
+            sx={{
+              justifyContent: 'center',
+              minWidth: 36,
+              color: mode === 'dark' ? '#fff' : '#141414',
+            }}
+          >
+            <Logout />
+          </ListItemIcon>
+          <ListItemText
+            primary={t('buttons.logout', 'Logout')}
+            primaryTypographyProps={{
+              noWrap: true,
+              fontSize: '16px',
+              color: mode === 'dark' ? '#fff' : '#141414',
+            }}
+          />
+        </ListItemButton>
+      </Tooltip>
+      <LogoutConfirmationDialog
+        open={logoutDialogOpen}
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+      />
+    </>
   );
+  
 
   const items = renderTreeView(menuItems, selectedKey).filter((item): item is React.ReactElement => item !== null);
     

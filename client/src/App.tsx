@@ -88,6 +88,36 @@ const suppressConsoleErrors = () => {
 const App = () => {
   const [isAdmin, setIsAdmin] = React.useState(false);
 
+  // Add a function to check user authorization
+  const checkUserAuthorization = async () => {
+    try {
+      const user = localStorage.getItem('user');
+      if (!user) return;
+      
+      const parsedUser = JSON.parse(user);
+      const response = await fetch(`http://localhost:8080/api/v1/users/${parsedUser.userid}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        // If user is not found or unauthorized, trigger logout
+        authProvider.logout({} as any);  // Provide empty object as parameter
+        window.location.href = '/unauthorized';
+      }
+
+      const userData = await response.json();
+      if (!userData.isAllowed) {
+        // If user is explicitly not allowed, trigger logout
+        authProvider.logout({} as any);  // Provide empty object as parameter
+        window.location.href = '/unauthorized';
+      }
+    } catch (error) {
+      console.error('Error checking user authorization:', error);
+    }
+  };
+
   React.useEffect(() => {
     const user = localStorage.getItem('user');
     if (user) {
@@ -96,7 +126,17 @@ const App = () => {
         setIsAdmin(parsedUser.isAdmin);
       }
     }
+    
+    // Set up periodic authorization check
+    const authCheckInterval = setInterval(checkUserAuthorization, 30000); // Check every 30 seconds
+    
+    // Initial check
+    checkUserAuthorization();
+    
     suppressConsoleErrors();
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(authCheckInterval);
   }, []);
 
   const authProvider: AuthProvider = {
@@ -118,6 +158,11 @@ const App = () => {
         const data = await response.json();
 
         if (response.status === 200) {
+          if (!data.isAllowed) {
+            // Prevent login if user is not allowed
+            return Promise.reject(new Error('User is not allowed to access the system'));
+          }
+          
           localStorage.setItem(
             'user',
             JSON.stringify({
@@ -134,7 +179,6 @@ const App = () => {
       }
 
       localStorage.setItem('token', `${credential}`);
-
       return Promise.resolve();
     },
     logout: () => {
