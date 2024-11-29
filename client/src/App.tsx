@@ -216,7 +216,7 @@ const App = () => {
   const generateResources = () => {
     const baseResources = [
       {
-        name: 'forecast',
+        name: 'forecasting',
         list: Forecast,
         icon: <Timeline />,
         options: { label: 'Forecasting' }

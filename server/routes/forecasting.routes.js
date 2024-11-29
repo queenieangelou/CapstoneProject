@@ -1,15 +1,17 @@
 // server\routes\forecasting.routes.js
 import express from 'express';
 import {
-  generateSalesForecast,
-  generateExpenseForecast,
-  generateProcurementForecast,
-  generatePartDemandForecast
+    getProcurementForecast,
+    getPartDemandForecast,
+    getSalesForecast,
+    getExpensesForecast,
 } from '../controller/forecasting.controller.js';
 
 const router = express.Router();
 
-router.get('/sales/forecast', generateSalesForecast);
-router.get('/expense/forecast', generateExpenseForecast);
-router.get('/procurement/forecast', generateProcurementForecast);
-router.get('/part/:partId/forecast', generatePartDemandForecast);
+router.get('/procurement', getProcurementForecast);
+router.get('/parts-demand', getPartDemandForecast);
+router.get('/sales', getSalesForecast);
+router.get('/expenses', getExpensesForecast);
+
+export default router;

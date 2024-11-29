@@ -13,6 +13,7 @@ import saleRouter from './routes/sale.routes.js';
 import deploymentRouter from './routes/deployment.routes.js'
 import clientPortalRouter from './routes/clientPortal.routes.js'
 import expenseRouter from './routes/expense.routes.js';
+import forecastingRoutes from './routes/forecasting.routes.js';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use('/api/v1/sales', saleRouter);
 app.use('/api/v1/deployments', deploymentRouter);
 app.use('/api/v1/clientPortal', clientPortalRouter);
 app.use('/api/v1/expenses', expenseRouter);
+app.use('/api/forecasting', forecastingRoutes);
 
 const startServer = async () => {
   try {
