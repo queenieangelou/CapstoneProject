@@ -128,14 +128,14 @@ const AllDeployments = () => {
     // Check conditions ONLY for release status
     if (field === 'releaseStatus' && newValue) {
       // Show snackbar if deployment status is off
-      if (!currentDeployment.deploymentStatus) {
-        setSnackbar({
-          open: true,
-          message: "Cannot release when Deployment Status is OFF.",
-          severity: 'error'
-        });
-        return;
-      }
+      // if (!currentDeployment.deploymentStatus) {
+      //   setSnackbar({
+      //     open: true,
+      //     message: "Cannot release when Deployment Status is OFF.",
+      //     severity: 'error'
+      //   });
+      //   return;
+      // }
       
       // Show snackbar if vehicle is not repaired
       if (currentDeployment.repairStatus !== 'Repaired') {
@@ -152,9 +152,7 @@ const AllDeployments = () => {
     
     // Prepare update data
     const updateData = {
-      repairStatus: field === 'deploymentStatus' && newValue 
-        ? 'In Progress' 
-        : currentDeployment.repairStatus,
+      repairStatus: currentDeployment.repairStatus,
       repairedDate: currentDeployment.repairedDate,
       [field]: newValue,
       ...(field === 'deploymentStatus' && {

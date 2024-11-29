@@ -244,14 +244,14 @@ const updateDeployment = async (req, res) => {
         deployment.deploymentDate = deploymentDate;
 
         // If deployment status is set to false, also set release status to false
-        if (deployment.deploymentStatus === false) {
-          deployment.releaseStatus = false;
-          deployment.releaseDate = null;
-        }
+        // if (deployment.deploymentStatus === false) {
+        //   deployment.releaseStatus = false;
+        //   deployment.releaseDate = null;
+        // }
       }
 
       // Allow release status and date update only if deployment status is true
-      if (deployment.deploymentStatus === true && releaseStatus !== undefined) {
+      if ( releaseStatus !== undefined) {
         deployment.releaseStatus = releaseStatus;
         deployment.releaseDate = releaseDate;
       } else if (releaseStatus !== undefined) {
@@ -377,13 +377,13 @@ const updateDeployment = async (req, res) => {
       deployment.deploymentStatus = deploymentStatus;
       deployment.deploymentDate = deploymentDate;
 
-      if (deployment.deploymentStatus === false) {
-        deployment.releaseStatus = false;
-        deployment.releaseDate = null;
-      }
+      // if (deployment.deploymentStatus === false) {
+      //   deployment.releaseStatus = false;
+      //   deployment.releaseDate = null;
+      // }
     }
 
-    if (deployment.deploymentStatus === true && releaseStatus !== undefined) {
+    if (releaseStatus !== undefined) {
       deployment.releaseStatus = releaseStatus;
       deployment.releaseDate = releaseDate;
     }
