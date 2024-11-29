@@ -46,7 +46,7 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ endpoint, title }) => {
 
     const chartOptions: ApexOptions = {
         chart: {
-            type: 'line',
+            type: 'bar',
             toolbar: { show: false },
         },
         xaxis: {
@@ -74,7 +74,7 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ endpoint, title }) => {
             {loading ? (
                 <CircularProgress />
             ) : (
-                <ReactApexCharts options={chartOptions} series={[{ name: title, data }]} type="line" height={350} />
+                <ReactApexCharts options={chartOptions} series={[{ name: title, data }]} type="bar" height={350} />
             )}
         </Box>
     );
