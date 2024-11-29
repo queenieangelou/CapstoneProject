@@ -32,7 +32,6 @@ import { parseJwt } from 'utils/parse-jwt';
 
 import {
   AgentProfile,
-  Agents,
   AllProperties,
   CreateProcurement,
   CreateProperty,
@@ -219,7 +218,8 @@ const App = () => {
       {
         name: 'forecast',
         list: Forecast,
-        icon: <Timeline />
+        icon: <Timeline />,
+        options: { label: 'Forecasting' }
       },
       {
         name: 'procurements',
