@@ -1,8 +1,9 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { 
   DataGrid, 
   GridColDef,
-  GridSelectionModel 
+  GridSelectionModel, 
+  GridSortModel
 } from '@pankod/refine-mui';
 import { 
   Toolbar,
@@ -22,6 +23,7 @@ interface CustomTableProps {
   onEdit?: (id: string) => void;
   onDelete?: (ids: string[]) => void;
   onRestore?: (ids: string[]) => void;
+  initialSortModel?: GridSortModel; // Use GridSortModel type
 }
 
 const CustomTableToolbar = ({
@@ -142,15 +144,37 @@ const CustomTable: React.FC<CustomTableProps> = ({
   onView,
   onEdit,
   onDelete,
-  onRestore
+  onRestore,
+  initialSortModel = [],
 }) => {
   const { mode } = useContext(ColorModeContext);
   const [selectionModel, setSelectionModel] = useState<GridSelectionModel>([]);
+  const [sortModel, setSortModel] = useState<GridSortModel>(initialSortModel);
+
+  // Sorting logic for rows
+  const sortedRows = useMemo(() => {
+    if (sortModel.length === 0) return rows;
+
+    return [...rows].sort((a, b) => {
+      for (const sort of sortModel) {
+        const field = sort.field;
+        const value1 = a[field];
+        const value2 = b[field];
+
+        if (value1 !== value2) {
+          return sort.sort === 'asc' 
+            ? (value1 > value2 ? 1 : -1)
+            : (value1 < value2 ? 1 : -1);
+        }
+      }
+      return 0;
+    });
+  }, [rows, sortModel]);
 
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
       <DataGrid
-        rows={rows}
+        rows={sortedRows}
         columns={columns}
         checkboxSelection
         disableSelectionOnClick

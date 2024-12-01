@@ -92,7 +92,7 @@ const AllSales = () => {
   }, [allSales, searchTerm, startDate, endDate, deletedFilter]);
 
   const columns: GridColDef[] = [
-    { field: 'seq', headerName: 'Seq', flex: 1 },
+    { field: 'seq', headerName: 'Seq', flex: 1, sortable: true},
     { field: 'date', headerName: 'Date', flex: 1 },
     { field: 'clientName', headerName: 'Client Name', flex: 1 },
     { field: 'tin', headerName: 'TIN', flex: 1 },
@@ -254,6 +254,7 @@ const AllSales = () => {
           onEdit={handleEdit}
           onDelete={(ids) => handleTableDelete(ids, rows)}
           onRestore={(ids) => handleTableRestore(ids, rows)}
+          initialSortModel={[{ field: 'seq', sort: 'desc' }]}
         />
       </Box>
 

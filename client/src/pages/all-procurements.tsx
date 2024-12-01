@@ -84,7 +84,7 @@ const AllProcurements = () => {
   }, [allProcurements, searchTerm, startDate, endDate, deletedFilter]);
 
   const columns: GridColDef[] = [
-  { field: 'seq', headerName: 'Seq', flex: 1 },
+  { field: 'seq', headerName: 'Seq', flex: 1, sortable: true },
   { field: 'date', headerName: 'Date', flex: 1 },
   { field: 'supplierName', headerName: 'Supplier', flex: 1 },
   { field: 'reference', headerName: 'Ref', flex: 1 },
@@ -289,6 +289,7 @@ const AllProcurements = () => {
         onEdit={handleEdit}
         onDelete={(ids) => handleTableDelete(ids, rows)}
         onRestore={(ids) => handleTableRestore(ids, rows)}
+        initialSortModel={[{ field: 'seq', sort: 'desc' }]}
       />
       </Box>
 

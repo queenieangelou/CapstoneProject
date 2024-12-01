@@ -1,6 +1,5 @@
 import {
   Box,
-  CircularProgress,
   FormControl,
   InputLabel,
   OutlinedInput,
@@ -20,7 +19,7 @@ import ErrorDialog from 'components/common/ErrorDialog';
 const getTodayDate = () => {
   const today = new Date();
   const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+  const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
@@ -35,14 +34,12 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
   // Use the custom hook for sequence logic
   const { currentSeq, isLoading: sequenceLoading } = useNextSequence({
     resource: "sales",
-    type: type as "Create" | "Edit", // Assert type explicitly
+    type: type as "Create" | "Edit",
     initialValues,
   });
 
   // Function to calculate VAT components
   const calculateVATComponents = (totalAmount: number) => {
-    // Net Amount = Amount × (100/112)
-    // VAT = Amount × (12/112)
     const netAmount = totalAmount * (100/112);
     const vatAmount = totalAmount * (12/112);
 
@@ -68,7 +65,10 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
       seq: currentSeq,
       amount: parseFloat(amount),
       outputVAT: parseFloat(outputVAT),
-      netOfVAT: parseFloat(netOfVAT)
+      netOfVAT: parseFloat(netOfVAT),
+      // Ensure empty strings are allowed for clientName and tin
+      clientName: data.clientName || '',
+      tin: data.tin || ''
     };
     
     onFinishHandler(updatedData);
@@ -150,7 +150,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
               id="date"
               type="date"
               label="Date"
-              {...register('date', { required: true })}
+              {...register('date')}
               defaultValue={initialValues?.date || getTodayDate()}
             />
           </FormControl>
@@ -165,13 +165,13 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
           <TextField
             label="Client Name"
             variant="outlined"
-            {...register('clientName', { required: true })}
+            {...register('clientName')}
             defaultValue={initialValues?.clientName || ''}
           />
           <TextField
             label="TIN"
             variant="outlined"
-            {...register('tin', { required: true })}
+            {...register('tin')}
             defaultValue={initialValues?.tin || ''}
           />
         </Box>
@@ -182,7 +182,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
           type="number"
           value={amount}
           onChange={handleAmountChange}
-          inputProps={{ step: "0.01" }}
+          inputProps={{ step: "0.01", required: true }}
         />
 
         <Box sx={{ 

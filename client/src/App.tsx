@@ -3,6 +3,7 @@ import {
   AccountCircleOutlined,
   AttachMoneyOutlined,
   ChatBubbleOutline,
+  FileOpenSharp,
   ManageAccounts,
   NoCrashOutlined,
   PeopleAltOutlined,
@@ -60,6 +61,7 @@ import CreateExpense from 'pages/create-expense';
 import EditExpense from 'pages/edit-expense';
 import ExpenseDetails from 'pages/expense-details';
 import Forecast from 'pages/forecast';
+import ReportsPage from 'pages/reports';
 
 const axiosInstance = axios.create();
 axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
@@ -258,6 +260,11 @@ const App = () => {
         options: { label: 'My Profile' },
         list: MyProfile,
         icon: <AccountCircleOutlined />,
+      },
+      {
+        name: 'reports',
+        list: ReportsPage,
+        icon: <FileOpenSharp />
       },
       
     ];

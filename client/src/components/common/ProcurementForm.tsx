@@ -52,6 +52,19 @@ const ProcurementForm = ({
   
   const isError = false;
 
+  const [formErrors, setFormErrors] = useState<{
+    selectedPart?: string;
+    supplierName?: string;
+    reference?: string;
+    tin?: string;
+    address?: string;
+    description?: string;
+    quantityBought?: string;
+    amount?: string;
+  }>({});
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
   // Use the custom hook for sequence logic
   const { currentSeq, isLoading: sequenceLoading } = useNextSequence({
     resource: "procurements",
@@ -67,6 +80,8 @@ const ProcurementForm = ({
 
   const handlePartChange = (event: SelectChangeEvent<string>) => {
     setSelectedPart(event.target.value as string);
+
+    setFormErrors(prev => ({ ...prev, selectedPart: undefined }));
   };
 
   // Helper function to calculate VAT and net amount
@@ -88,6 +103,8 @@ const ProcurementForm = ({
     const { netAmount, vatAmount } = calculateVATComponents(newAmount, noValidReceipt, isNonVat);
     setNetOfVAT(netAmount);
     setInputVAT(vatAmount);
+
+    setFormErrors(prev => ({ ...prev, amount: undefined }));
   };
 
   const handleNoValidReceiptChange = (e: { target: { checked: any } }) => {
@@ -119,7 +136,65 @@ const ProcurementForm = ({
     }
   };
 
+  const validateForm = (data: Record<string, any>): boolean => {
+    const errors: typeof formErrors = {};
+
+    // Validate Part Selection
+    if (!selectedPart) {
+      errors.selectedPart = 'Please select a part or add a new part';
+    } else if (selectedPart === 'new') {
+      if (!newPartName.trim()) {
+        errors.selectedPart = 'New Part Name is required';
+      }
+      if (!newBrandName.trim()) {
+        errors.selectedPart = errors.selectedPart || 'New Brand Name is required';
+      }
+    }
+
+    // Validate Supplier Details if receipt is valid
+    if (!noValidReceipt) {
+      if (!data.supplierName?.trim()) {
+        errors.supplierName = 'Supplier Name is required';
+      }
+      if (!data.reference?.trim()) {
+        errors.reference = 'Reference is required';
+      }
+      if (!data.tin?.trim()) {
+        errors.tin = 'TIN is required';
+      }
+      if (!data.address?.trim()) {
+        errors.address = 'Address is required';
+      }
+    }
+
+    // Validate Description
+    if (!data.description?.trim()) {
+      errors.description = 'Description is required';
+    }
+
+    // Validate Quantity Bought
+    if (!data.quantityBought || data.quantityBought <= 0) {
+      errors.quantityBought = 'Quantity must be greater than 0';
+    }
+
+    // Validate Amount
+    if (amount <= 0) {
+      errors.amount = 'Amount must be greater than 0';
+    }
+
+    // Set errors and return validation status
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+
   const onSubmit = (data: Record<string, any>) => {
+    if (!validateForm(data)) {
+      setOpenSnackbar(true);
+      setSnackbarMessage('Please fill in all required fields correctly');
+      return;
+    }
+
     const updatedData: Record<string, any> = {
       ...data,
       seq: currentSeq // Add the sequence number
@@ -268,15 +343,21 @@ const ProcurementForm = ({
               '& .MuiFormControl-root': { flex: 1 },
             }}
           >
-            <FormControl>
-              <InputLabel htmlFor="supplierName">Supplier Name</InputLabel>
-              <OutlinedInput
-                id="supplierName"
-                label="Supplier Name"
-                {...register('supplierName', { required: true })}
-                defaultValue={initialValues?.supplierName || ""}
-              />
-            </FormControl>
+            <FormControl error={!!formErrors.supplierName}>
+                <InputLabel htmlFor="supplierName">Supplier Name</InputLabel>
+                <OutlinedInput
+                  id="supplierName"
+                  label="Supplier Name"
+                  {...register('supplierName', { required: true })}
+                  defaultValue={initialValues?.supplierName || ""}
+                  error={!!formErrors.supplierName}
+                />
+                {formErrors.supplierName && (
+                  <Typography color="error" variant="caption">
+                    {formErrors.supplierName}
+                  </Typography>
+                )}
+              </FormControl>
   
             <FormControl>
               <InputLabel htmlFor="reference">Reference</InputLabel>
@@ -319,12 +400,13 @@ const ProcurementForm = ({
             '& .MuiFormControl-root': { flex: 1 },
           }}
         >
-          <FormControl>
+          <FormControl  error={!!formErrors.selectedPart}>
             <InputLabel htmlFor="part">Part & Brand</InputLabel>
             <Select
               value={selectedPart}
               onChange={handlePartChange}
               input={<OutlinedInput label="Part & Brand" />}
+              error={!!formErrors.selectedPart}
             >
               {existingParts
                 .filter(part => !part.deleted == true) // Filter out deleted parts
@@ -340,7 +422,7 @@ const ProcurementForm = ({
           {/* Conditionally show New Part and Brand fields */}
           {selectedPart === 'new' && (
             <>
-              <FormControl>
+              <FormControl error={!!formErrors.selectedPart}>
                 <InputLabel htmlFor="newPartName">New Part Name</InputLabel>
                 <OutlinedInput
                   id="newPartName"
@@ -349,7 +431,7 @@ const ProcurementForm = ({
                   onChange={(e) => setNewPartName(e.target.value)}
                 />
               </FormControl>
-              <FormControl>
+              <FormControl error={!!formErrors.selectedPart}>
                 <InputLabel htmlFor="newBrandName">New Brand Name</InputLabel>
                 <OutlinedInput
                   id="newBrandName"

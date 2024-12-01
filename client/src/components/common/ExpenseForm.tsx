@@ -251,7 +251,7 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         {!noValidReceipt && (
           <>
             <TextField
-              label="Supplier Name"
+              label="Supplier's Company Name"
               variant="outlined"
               {...register('supplierName', { required: !noValidReceipt })}
               defaultValue={initialValues?.supplierName || ''}

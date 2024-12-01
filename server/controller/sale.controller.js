@@ -82,8 +82,8 @@ const createSale = async (req, res) => {
     const newSale = new Sale({
       seq,
       date,
-      clientName,
-      tin,
+      clientName: clientName?.trim() === '' ? 'N/A' : clientName,
+      tin: tin?.trim() === '' ? 'N/A' : tin,
       amount,
       netOfVAT: Number(calculatedNetOfVAT.toFixed(2)),
       outputVAT: Number(calculatedOutputVAT.toFixed(2)),

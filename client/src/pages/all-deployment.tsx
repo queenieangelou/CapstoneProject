@@ -227,7 +227,7 @@ const AllDeployments = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'seq', headerName: 'Seq', flex: 1 },
+    { field: 'seq', headerName: 'Seq', flex: 1, sortable: true },
     { field: 'date', headerName: 'Date', flex: 1 },
     { field: 'clientName', headerName: 'Client Name', flex: 1 },
     { field: 'vehicleModel', headerName: 'Vehicle Model', flex: 1 },
@@ -501,6 +501,7 @@ const AllDeployments = () => {
           onEdit={handleEdit}
           onDelete={(ids) => handleTableDelete(ids, rows)}
           onRestore={(ids) => handleTableRestore(ids, rows)}
+          initialSortModel={[{ field: 'seq', sort: 'desc' }]}
           />
       </Box>
       {/* Confirmation Dialog */}

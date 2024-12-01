@@ -1,3 +1,4 @@
+// server\mongodb\models\procurement.js
 import mongoose from 'mongoose';
 
 const ProcurementSchema = new mongoose.Schema({
