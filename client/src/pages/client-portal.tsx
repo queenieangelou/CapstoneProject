@@ -1,3 +1,4 @@
+//client\src\pages\client-portal.tsx
 import React, { useState } from 'react';
 import { 
   TextField,
@@ -21,6 +22,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import Header from 'components/client-portal/Header';
 import Footer from 'components/client-portal/Footer';
 
@@ -31,6 +33,7 @@ interface Part {
   quantityUsed: number;
 }
 
+// First, let's update the SearchResult interface to include estimated release time
 interface SearchResult {
   seq: number;
   date: string;
@@ -43,6 +46,7 @@ interface SearchResult {
   repairStatus: string;
   repairedDate: string | null;
   trackCode: string;
+  estimatedReleaseDate?: string; // New field
 }
 
 interface StatusChipProps {
@@ -97,6 +101,48 @@ const TimelinePoint = styled(Box)<TimelinePointProps>(({ theme, dotColor }) => (
   marginRight: theme.spacing(1),
 }));
 
+// Create a new component for displaying the estimated release date
+const EstimatedRelease: React.FC<{ 
+  arrivalDate: string; 
+  estimatedReleaseDate: string;
+}> = ({ arrivalDate, estimatedReleaseDate }) => {
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Alert 
+        severity="info" 
+        icon={<TimelineIcon />}
+        sx={{
+          '& .MuiAlert-message': {
+            width: '100%'
+          }
+        }}
+      >
+        <Box>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Estimated Timeline
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Chip
+              label={`Arrival: ${new Date(arrivalDate).toLocaleDateString()}`}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+            <ArrowForwardIcon sx={{ color: 'text.secondary' }} />
+            <Chip
+              label={`Estimated Release: ${new Date(estimatedReleaseDate).toLocaleDateString()}`}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          </Box>
+        </Box>
+      </Alert>
+    </Box>
+  );
+};
+
+// Update the SearchResult component to include the estimated release date
 const SearchResult = ({ searchResult }: { searchResult: SearchResult | null }) => {
   if (!searchResult) return null;
 
@@ -156,52 +202,61 @@ const SearchResult = ({ searchResult }: { searchResult: SearchResult | null }) =
             </Typography>
           </Grid>
 
-          <Stack spacing={2}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <TimelinePoint dotColor="#1976d2" />
-              <Typography variant="body2">
-                <strong>Arrival Date:</strong> {searchResult.arrivalDate}
-              </Typography>
-            </Box>
-            {searchResult.repairedDate && (
+          <Grid item xs={12} md={6}>
+            <Stack spacing={2}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <TimelinePoint dotColor="#2e7d32" />
+                <TimelinePoint dotColor="#1976d2" />
                 <Typography variant="body2">
-                  <strong>Repair Completed:</strong> {searchResult.repairedDate}
+                  <strong>Arrival Date:</strong> {searchResult.arrivalDate}
                 </Typography>
               </Box>
-            )}
-            {searchResult.releaseDate && (
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <TimelinePoint dotColor="#9c27b0" />
-                <Typography variant="body2">
-                  <strong>Release Date:</strong> {searchResult.releaseDate}
-                </Typography>
-              </Box>
-            )}
-          </Stack>
+              {searchResult.repairedDate && (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <TimelinePoint dotColor="#2e7d32" />
+                  <Typography variant="body2">
+                    <strong>Repair Completed:</strong> {searchResult.repairedDate}
+                  </Typography>
+                </Box>
+              )}
+              {searchResult.releaseDate && (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <TimelinePoint dotColor="#9c27b0" />
+                  <Typography variant="body2">
+                    <strong>Release Date:</strong> {searchResult.releaseDate}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </Grid>
 
-          {searchResult.parts && searchResult.parts.length > 0 && (
+          {searchResult.estimatedReleaseDate && !searchResult.releaseStatus && (
             <Grid item xs={12}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Parts Used
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {searchResult.parts.map((part, index) => (
-                  <Chip
-                    key={index}
-                    label={`${part.partName} - ${part.brandName} (${part.quantityUsed})`}
-                    variant="outlined"
-                    size="small"
-                  />
-                ))}
-              </Box>
+              <EstimatedRelease
+                arrivalDate={searchResult.arrivalDate}
+                estimatedReleaseDate={searchResult.estimatedReleaseDate}
+              />
             </Grid>
           )}
+
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Parts Used
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {searchResult.parts.map((part, index) => (
+                <Chip
+                  key={index}
+                  label={`${part.partName} - ${part.brandName} (${part.quantityUsed})`}
+                  variant="outlined"
+                  size="small"
+                />
+              ))}
+            </Box>
+          </Grid>
         </Grid>
       </CardContent>
 
-      <Divider/>
+      <Divider />
 
       {searchResult.repairStatus === 'Repaired' && !searchResult.releaseStatus && (
         <Box sx={{ px: 2, pb: 2 }}>
@@ -214,44 +269,80 @@ const SearchResult = ({ searchResult }: { searchResult: SearchResult | null }) =
   );
 };
 
+// Update the ClientPortal component to fetch turnaround estimates
 const ClientPortal: React.FC = () => {
   const [trackCode, setTrackCode] = useState('');
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      setSearchResult(null);
-  
-      const response = await fetch(`http://localhost:8080/api/v1/clientPortal/search?trackCode=${encodeURIComponent(trackCode)}`, {
+// Update the handleSearch function
+const handleSearch = async () => {
+  try {
+    setIsLoading(true);
+    setError(null);
+    setSearchResult(null);
+
+    const response = await fetch(
+      `http://localhost:8080/api/v1/clientPortal/search?trackCode=${encodeURIComponent(trackCode)}`,
+      {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setSearchResult(data.data);
-      } else {
-        setError(data.message || 'Error searching for vehicle');
-      }
-    } catch (error: any) {
-      console.error('Search error:', error);
-      setError(error.message || 'An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
+    );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  };
-  
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      try {
+        const turnaroundResponse = await fetch(
+          'http://localhost:8080/api/forecasting/turnaround',
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (turnaroundResponse.ok) {
+          const turnaroundData = await turnaroundResponse.json();
+          // Add null check and access avgTurnaroundTime safely
+          const avgTurnaroundTime = turnaroundData?.historical?.efficiencyMetrics?.avgTurnaroundTime || 72; // Default to 72 hours if not available
+          
+          const arrivalDate = new Date(data.data.arrivalDate);
+          const estimatedReleaseDate = new Date(arrivalDate.getTime() + (avgTurnaroundTime * 60 * 60 * 1000));
+          
+          setSearchResult({
+            ...data.data,
+            estimatedReleaseDate: estimatedReleaseDate.toISOString()
+          });
+        } else {
+          // If turnaround data fetch fails, still show vehicle data
+          setSearchResult(data.data);
+        }
+      } catch (turnaroundError) {
+        // If turnaround calculation fails, still show vehicle data
+        console.error('Turnaround calculation error:', turnaroundError);
+        setSearchResult(data.data);
+      }
+    } else {
+      setError(data.message || 'Error searching for vehicle');
+    }
+  } catch (error: any) {
+    console.error('Search error:', error);
+    setError(error.message || 'An unexpected error occurred');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && trackCode) {
       handleSearch();
