@@ -185,7 +185,6 @@ const UserManagement = () => {
           checkboxSelection
           disableSelectionOnClick
           autoHeight={false}
-          hideFooter={true}
           selectionModel={selectionModel}
           onSelectionModelChange={(newSelectionModel) =>
             setSelectionModel(newSelectionModel as string[])
@@ -197,6 +196,10 @@ const UserManagement = () => {
             height: containerHeight,
           '& .MuiDataGrid-main': {
             overflow: 'hidden'
+            },
+            '& ::-webkit-scrollbar': {
+              width: '10px',
+              height: '10px',
             },
           '& .MuiDataGrid-row:hover': {
             backgroundColor: 'rgba(0, 0, 0, 0.04)'

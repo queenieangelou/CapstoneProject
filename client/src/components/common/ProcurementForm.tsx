@@ -480,9 +480,11 @@ const ProcurementForm = ({
           label="Amount"
           variant="outlined"
           type="number"
+          required
           value={amount}
           onChange={handleAmountChange}
-          inputProps={{ step: "0.01" }}
+          inputProps={{ step: "0.01", required: true  }}
+          error={!!formErrors.supplierName}
         />
   
         {/* Non-VAT Checkbox */}

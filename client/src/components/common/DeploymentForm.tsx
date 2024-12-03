@@ -117,6 +117,8 @@ const DeploymentForm = ({ type, register, handleSubmit, formLoading, onFinishHan
     if (partsEntries.length > 1) {
       const newPartsEntries = partsEntries.filter((_, i) => i !== index);
       setPartsEntries(newPartsEntries);
+    } else if (partsEntries.length <= 1) {
+      setPartsEntries([{ partId: '', quantityUsed: 0 }]);
     }
   };
 

@@ -46,14 +46,33 @@ export const createUser = async (req, res) => {
 export const getUserInfoByID = async (req, res) => {
   try {
     const { id } = req.params;
-    const userProperties = await User.findById(id).populate('allProperties');
+    
+    // Remove the populate call since it's not needed for the auth check
+    const user = await User.findById(id);
 
-    if (userProperties) {
-      res.status(200).json(userProperties);
-    } else {
-      res.status(404).send('User not found');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+
+    // Return only the necessary fields for the authorization check
+    res.status(200).json({
+      _id: user._id,
+      isAllowed: user.isAllowed,
+      isAdmin: user.isAdmin,
+      email: user.email,
+      name: user.name
+    });
+
   } catch (err) {
-    res.status(500).json({ message: 'Failed to get user properties, please try again later' });
+    // Improve error handling with more specific messages
+    if (err.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+    
+    console.error('Error in getUserInfoByID:', err);
+    res.status(500).json({ 
+      message: 'Failed to get user properties, please try again later',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
