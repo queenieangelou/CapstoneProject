@@ -1,418 +1,462 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useList } from '@pankod/refine-core';
-import { Typography, Box, Stack, TextField, FormControl, InputLabel, MenuItem, Select } from '@pankod/refine-mui';
-import Chart from 'react-apexcharts';
+import { 
+  Box, 
+  Paper, 
+  Typography, 
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
+} from '@pankod/refine-mui';
+import ApexChart from '../components/common/ApexChart';
+import useDynamicHeight from 'hooks/useDynamicHeight';
+import LoadingDialog from 'components/common/LoadingDialog';
+import ErrorDialog from 'components/common/ErrorDialog';
 
-const Dashboard = () => {
-  // Date filter states
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+// Existing interfaces
+interface SaleItem {
+  date: string;
+  amount: number;
+  deleted?: boolean;
+}
 
-  // New Year and Month filter states
-  const [selectedYear, setSelectedYear] = useState('ALL');
-  const [selectedMonth, setSelectedMonth] = useState('ALL');
+interface ExpenseItem {
+  date: string;
+  amount: number;
+  deleted?: boolean;
+}
 
-  useEffect(() => {
-    if (startDate || endDate) {
-      // If date range is used, reset year and month
-      setSelectedYear('ALL');
-      setSelectedMonth('ALL');
-    }
-  }, [startDate, endDate]);
+interface ProcurementItem {
+  date: string;
+  amount: number;
+  deleted?: boolean;
+}
 
-  useEffect(() => {
-    if (selectedYear !== 'ALL' || selectedMonth !== 'ALL') {
-      // If year or month is used, reset date range
-      setStartDate('');
-      setEndDate('');
-    }
-  }, [selectedYear, selectedMonth]);
+interface DeploymentItem {
+  releaseStatus: boolean;
+  deleted?: boolean;
+}
 
-  // Fetch data from the resources
-  const { data: procurements } = useList({ resource: 'procurements' });
-  const { data: deployments } = useList({ resource: 'deployments' });
-  const { data: sales } = useList({ resource: 'sales' });
-  const { data: expenses } = useList({ resource: 'expenses' });
+interface PartItem {
+  partName: string;
+  qtyLeft: number;
+  deleted?: boolean;
+}
 
-  // Function to filter data based on selected date range, year, and month
-  const isWithinFilter = (dateString: string) => {
-    // If all filters are default, return true
-    if (!startDate && !endDate && selectedYear === 'ALL' && selectedMonth === 'ALL') return true;
+interface ChartData {
+  name: string;
+  data: number[];
+}
 
-    const date = new Date(dateString);
-
-    // Check date range filters
-    if (startDate || endDate) {
-      const start = startDate ? new Date(startDate) : null;
-      const end = endDate ? new Date(endDate) : null;
-      return (!start || date >= start) && (!end || date <= end);
-    }
-
-    // Check year and month filters
-    const yearCheck = selectedYear === 'ALL' || date.getFullYear().toString() === selectedYear;
-    const monthCheck = selectedMonth === 'ALL' || (date.getMonth() + 1).toString().padStart(2, '0') === selectedMonth;
-
-    return yearCheck && monthCheck;
-  };
-
-
-  // Generate years and months for dropdowns
-  const availableYears = useMemo(() => {
-    const years = new Set<string>();
-    [procurements, deployments, sales, expenses].forEach(dataset => {
-      if (dataset?.data) {
-        dataset.data.forEach(item => {
-          years.add(new Date(item.date).getFullYear().toString());
-        });
-      }
-    });
-    return ['ALL', ...Array.from(years).sort()];
-  }, [procurements, deployments, sales, expenses]);
-
-  const monthOptions = [
-    { value: 'ALL', label: 'ALL' },
-    { value: '01', label: 'January' },
-    { value: '02', label: 'February' },
-    { value: '03', label: 'March' },
-    { value: '04', label: 'April' },
-    { value: '05', label: 'May' },
-    { value: '06', label: 'June' },
-    { value: '07', label: 'July' },
-    { value: '08', label: 'August' },
-    { value: '09', label: 'September' },
-    { value: '10', label: 'October' },
-    { value: '11', label: 'November' },
-    { value: '12', label: 'December' },
-  ];
+const Home = () => {
+  const containerHeight = useDynamicHeight();
   
+  // Generate years and months arrays
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth(); // 0-11
+  const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
+  const months = [
+    'January', 'February', 'March',
+    'April', 'May', 'June',
+    'July', 'August', 'September',
+    'October', 'November', 'December'
+  ];
 
-  // Helper function to get month name
-  const getMonthName = (dateString: string) => {
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const [year, month] = dateString.split('-');
-    return monthNames[parseInt(month, 10) - 1];
+  // Initialize with current year and month
+  const [selectedYear, setSelectedYear] = useState(currentYear.toString());
+  const [selectedMonth, setSelectedMonth] = useState(months[currentMonth]);
+
+  // Existing data fetching
+  const { 
+    data: salesData, 
+    isLoading: salesLoading,
+    isError: salesError 
+  } = useList<SaleItem>({
+    resource: 'sales',
+    config: {
+      pagination: { pageSize: 1000 }
+    }
+  });
+
+  const { 
+    data: expensesData, 
+    isLoading: expensesLoading,
+    isError: expensesError 
+  } = useList<ExpenseItem>({
+    resource: 'expenses',
+    config: {
+      pagination: { pageSize: 1000 }
+    }
+  });
+
+  const { 
+    data: procurementData, 
+    isLoading: procurementLoading,
+    isError: procurementError 
+  } = useList<ProcurementItem>({
+    resource: 'procurements',
+    config: {
+      pagination: { pageSize: 1000 }
+    }
+  });
+
+  const { 
+    data: deploymentsData, 
+    isLoading: deploymentsLoading,
+    isError: deploymentsError 
+  } = useList<DeploymentItem>({
+    resource: 'deployments',
+    config: {
+      pagination: { pageSize: 1000 }
+    }
+  });
+
+  const { 
+    data: partsData, 
+    isLoading: partsLoading,
+    isError: partsError 
+  } = useList<PartItem>({
+    resource: 'parts',
+    config: {
+      pagination: { pageSize: 1000 }
+    }
+  });
+
+  // Initialize state
+  const [salesChartData, setSalesChartData] = useState<ChartData>({ name: '', data: [] });
+  const [salesCategories, setSalesCategories] = useState<string[]>([]);
+  const [expensesChartData, setExpensesChartData] = useState<ChartData>({ name: '', data: [] });
+  const [expensesCategories, setExpensesCategories] = useState<string[]>([]);
+  const [procurementChartData, setProcurementChartData] = useState<ChartData>({ name: '', data: [] });
+  const [procurementCategories, setProcurementCategories] = useState<string[]>([]);
+  const [deploymentsStatusData, setDeploymentsStatusData] = useState<number[]>([]);
+  const [partsQuantityData, setPartsQuantityData] = useState<number[]>([]);
+  const [partsLabels, setPartsLabels] = useState<string[]>([]);
+
+  // Helper function to filter data by year and month
+  const filterDataByDate = <T extends { date: string, deleted?: boolean }>(
+    data: T[],
+    year: string,
+    month: string
+  ): T[] => {
+    return data.filter(item => {
+      if (item.deleted) return false;
+
+      const itemDate = new Date(item.date);
+      const itemYear = itemDate.getFullYear().toString();
+      const itemMonth = months[itemDate.getMonth()];
+
+      return itemYear === year && itemMonth === month;
+    });
   };
 
-// Update these useMemo methods to use isWithinFilter
-const procurementData = useMemo(() => {
-  if (!procurements?.data) return [];
-  const filteredData = procurements.data.filter((item) => isWithinFilter(item.date));
-  return filteredData.reduce((acc, curr) => {
-    const month = getMonthName(curr.date);
-    if (!acc[month]) acc[month] = { month, totalAmount: 0, vatAmount: 0, nonVatAmount: 0 };
-    acc[month].totalAmount += Number(curr.amount) || 0;
-    acc[month].vatAmount += Number(curr.inputVAT) || 0;
-    acc[month].nonVatAmount += Number(curr.netOfVAT) || 0;
-    return acc;
-  }, {});
-}, [procurements, startDate, endDate, selectedYear, selectedMonth]);
-  // Calculate total procurements
-  const totalProcurements = Object.values(procurementData).reduce((sum, item) => sum + item.totalAmount, 0);
+  useEffect(() => {
+    if (salesData?.data) {
+      const filteredSales = filterDataByDate(salesData.data, selectedYear, selectedMonth);
+      const groupedSales = filteredSales.reduce((acc, sale) => {
+        const existingIndex = acc.findIndex(item => item.date === sale.date);
+        if (existingIndex > -1) {
+          acc[existingIndex].amount += sale.amount;
+        } else {
+          acc.push({ date: sale.date, amount: sale.amount });
+        }
+        return acc;
+      }, [] as SaleItem[]);
 
-  // Filter and process deployment data
-  const deploymentData = useMemo(() => {
-    if (!deployments?.data) return [];
-    const filteredData = deployments.data.filter((item) => isWithinFilter(item.date));
-    return filteredData.reduce((acc, curr) => {
-      const month = getMonthName(curr.date);
-      if (!acc[month]) acc[month] = { month, deployments: 0, releases: 0 };
-      acc[month].deployments += curr.deploymentStatus ? 1 : 0;
-      acc[month].releases += curr.releaseStatus ? 1 : 0;
-      return acc;
-    }, {});
-  }, [deployments, startDate, endDate, selectedYear, selectedMonth]);
+      setSalesChartData({
+        name: 'Total Sales Amount',
+        data: groupedSales.map(item => item.amount)
+      });
+      setSalesCategories(groupedSales.map(item => item.date));
+      console.log('Sales Data:', salesData.data); 
+    }
 
-  // Calculate total deployments
-  const totalDeployments = Object.values(deploymentData).reduce((sum, item) => sum + item.deployments, 0);
+    if (expensesData?.data) {
+      const filteredExpenses = filterDataByDate(expensesData.data, selectedYear, selectedMonth);
+      const groupedExpenses = filteredExpenses.reduce((acc, expense) => {
+        const existingIndex = acc.findIndex(item => item.date === expense.date);
+        if (existingIndex > -1) {
+          acc[existingIndex].amount += expense.amount;
+        } else {
+          acc.push({ date: expense.date, amount: expense.amount });
+        }
+        return acc;
+      }, [] as ExpenseItem[]);
 
-  // Filter and process sales data
-  const salesData = useMemo(() => {
-    if (!sales?.data) return [];
-    const filteredData = sales.data.filter((item) => isWithinFilter(item.date));
-    return filteredData.reduce((acc, curr) => {
-      const month = getMonthName(curr.date);
-      if (!acc[month]) acc[month] = { month, totalSales: 0, outputVAT: 0 };
-      acc[month].totalSales += Number(curr.amount) || 0;
-      acc[month].outputVAT += Number(curr.outputVAT) || 0;
-      return acc;
-    }, {});
-  }, [sales, startDate, endDate, selectedYear, selectedMonth]);
+      setExpensesChartData({
+        name: 'Total Expenses',
+        data: groupedExpenses.map(item => item.amount)
+      });
+      setExpensesCategories(groupedExpenses.map(item => item.date));
+      console.log('Expenses Data:', expensesData.data);
+    }
 
-  // Calculate total sales
-  const totalSales = Object.values(salesData).reduce((sum, item) => sum + item.totalSales, 0);
-  console.log('Raw Sales:', salesData);
-  // Filter and process expense data
-  const expenseData = useMemo(() => {
-    if (!expenses?.data) return [];
-    const filteredData = expenses.data.filter((item) => isWithinFilter(item.date));
-    return filteredData.reduce((acc, curr) => {
-      const category = curr.description || 'Other';
-      if (!acc[category]) acc[category] = { name: category, value: 0 };
-      acc[category].value += Number(curr.amount) || 0;
-      return acc;
-    }, {});
-  }, [expenses, startDate, endDate, selectedYear, selectedMonth]);
+    if (procurementData?.data) {
+      const filteredProcurements = filterDataByDate(procurementData.data, selectedYear, selectedMonth);
+      const groupedProcurement = filteredProcurements.reduce((acc, procurement) => {
+        const existingIndex = acc.findIndex(item => item.date === procurement.date);
+        if (existingIndex > -1) {
+          acc[existingIndex].amount += procurement.amount;
+        } else {
+          acc.push({ date: procurement.date, amount: procurement.amount });
+        }
+        return acc;
+      }, [] as ProcurementItem[]);
 
-  // Calculate total expenses
-  const totalExpenses = Object.values(expenseData).reduce((sum, item) => sum + item.value, 0);
-  console.log('Raw Expenses:', expenseData);
-  const renderMiniChart = (data: number[], color: string) => {
-    const series = [
-        {
-            name: 'Trend', // Add a name to match the ApexChartSeries format
-            data: data, // Ensure data is an array of numbers
-        },
-    ];
+      setProcurementChartData({
+        name: 'Total Procurement Amount',
+        data: groupedProcurement.map(item => item.amount)
+      });
+      setProcurementCategories(groupedProcurement.map(item => item.date));
+      console.log('Procurement Data:', procurementData.data);
+    }
 
+    if (deploymentsData?.data) {
+      const filteredDeployments = deploymentsData.data.filter(item => !item.deleted);
+      const deployedCount = filteredDeployments.filter(deployment => deployment.releaseStatus).length;
+      const pendingCount = filteredDeployments.filter(deployment => !deployment.releaseStatus).length;
+      setDeploymentsStatusData([deployedCount, pendingCount]);
+    }
+
+    if (partsData?.data) {
+      const filteredParts = partsData.data.filter(item => !item.deleted);
+      setPartsQuantityData(filteredParts.map(part => part.qtyLeft));
+      setPartsLabels(filteredParts.map(part => part.partName));
+    }
+  }, [salesData, expensesData, procurementData, deploymentsData, partsData, selectedYear, selectedMonth]);
+
+  const isLoading = salesLoading || expensesLoading || procurementLoading || deploymentsLoading || partsLoading;
+  const isError = salesError || expensesError || procurementError || deploymentsError || partsError;
+
+  if (isLoading) {
     return (
-        <Chart
-            type="line"
-            series={series}
-            options={{
-                chart: {
-                    type: 'line',
-                    toolbar: { show: false },
-                    sparkline: { enabled: true },
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 2,
-                },
-                colors: [color],
-                xaxis: {
-                    categories: Array.from({ length: data.length }, (_, i) => i.toString()), // Generate dummy x-axis categories
-                    labels: { show: false },
-                },
-                yaxis: { show: false },
-                tooltip: { enabled: false },
-            }}
-            height={50}
-            width="100%"
-        />
+      <LoadingDialog 
+        open={isLoading}
+        loadingMessage="Loading dashboard data..."
+      />
     );
-};
+  }
+
+  if (isError) {
+    return (
+      <ErrorDialog 
+        open={true}
+        errorMessage="Error loading dashboard data"
+      />
+    );
+  }
 
   return (
-    <Box>
-      <Typography fontSize={25} fontWeight={700}>
+    <Paper 
+      elevation={3} 
+      sx={{ 
+        height: containerHeight,
+        display: 'flex',
+        flexDirection: 'column',
+        m: 2,
+        overflow: 'hidden'
+      }}
+    >
+      <Typography 
+        variant="h4" 
+        sx={{ 
+          p: 2,
+          fontWeight: 600,
+        }}
+      >
         Dashboard
       </Typography>
 
-      {/* Date Filter Inputs */}
-      <Box display="flex" gap={2} mb={4}>
-      <TextField
-          size="small"
-          label="Start Date"
-          type="date"
-          value={startDate}
-          onChange={(e) => {
-            setStartDate(e.target.value);
-            // Optional: You could add additional logic here if needed
-          }}
-          InputLabelProps={{ shrink: true }}
-        />
-        <TextField
-          size="small"
-          label="End Date"
-          type="date"
-          value={endDate}
-          onChange={(e) => {
-            setEndDate(e.target.value);
-            // Optional: You could add additional logic here if needed
-          }}
-          InputLabelProps={{ shrink: true }}
-        />
-                {/* Year Dropdown */}
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Year</InputLabel>
-          <Select
-            value={selectedYear}
-            label="Year"
-            onChange={(e) => setSelectedYear(e.target.value)}
-          >
-            {availableYears.map((year) => (
-              <MenuItem key={year} value={year}>
-                {year}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+      {/* Filter controls */}
+      <Box sx={{ 
+        p: 2,
+        display: 'flex', 
+        flexDirection: {xs: 'column', md: 'row'},
+        gap: 2,
+        alignItems: {xs: 'stretch', md: 'center'},
+        justifyContent: 'space-between'
+      }}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          spacing={2} 
+          sx={{ flex: 1, alignItems: 'center' }}
+        >
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>Year</InputLabel>
+            <Select
+              value={selectedYear}
+              label="Year"
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              {years.map((year) => (
+                <MenuItem key={year} value={year}>{year}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-        {/* Month Dropdown */}
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Month</InputLabel>
-          <Select
-            value={selectedMonth}
-            label="Month"
-            onChange={(e) => setSelectedMonth(e.target.value)}
-          >
-            {monthOptions.map((month) => (
-              <MenuItem key={month.value} value={month.value}>
-                {month.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>Month</InputLabel>
+            <Select
+              value={selectedMonth}
+              label="Month"
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            >
+              {months.map((month) => (
+                <MenuItem key={month} value={month}>{month}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
       </Box>
 
-      {/* Summary Cards */}
-      <Box display="flex" gap={4} mb={4}>
-        {[
-            { label: 'Total Sales', value: totalSales, data: salesData, color: '#4CAF50' },
-            { label: 'Total Expenses', value: totalExpenses, data: expenseData, color: '#FF5722' },
-            { label: 'Total Procurements', value: totalProcurements, data: procurementData, color: '#3F51B5' },
-            { label: 'Total Deployments', value: totalDeployments, data: deploymentData, color: '#FFC107' },
-        ].map((item, index) => (
-            <Box key={index} p={4} borderRadius="15px" flex={1} minWidth="200px">
-                <Typography fontSize={18} fontWeight={600}>
-                    {item.label}
-                </Typography>
-                <Typography fontSize={24} fontWeight={700}>
-                    {item.value.toLocaleString()}
-                </Typography>
-                <Box mt={2}>
-                    {renderMiniChart(
-                        Object.values(item.data).map(i => Number(i.totalSales || i.totalAmount || i.value || i.deployments || 0)), 
-                        item.color
-                    )}
-                </Box>
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          px: 2,
+          pb: 2,
+          fontWeight: 500,
+        }}
+      >
+        {`${selectedMonth} ${selectedYear}`}
+      </Typography>
+
+      <Box sx={{ 
+        flex: 1,
+        width: '100%',
+        overflow: 'hidden',
+        display: 'grid',
+        gridTemplateColumns: { 
+          xs: '1fr', 
+          md: 'repeat(2, 1fr)' 
+        },
+        gap: 2,
+        p: 2,
+        pt: 0
+      }}>
+        {salesChartData.data.length > 0 && (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+            <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
+              Sales Analysis
+            </Typography>
+            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+              <ApexChart
+                type="line"
+                series={[salesChartData]}
+                options={{
+                  chart: { height: '100%' },
+                  xaxis: {
+                    categories: salesCategories,
+                    labels: {
+                      style: {
+                        fontSize: '12px',
+                      },
+                    },
+                  }
+                }}
+                colors={['#475BE8']}
+              />
             </Box>
-        ))}
-    </Box>
+          </Paper>
+        )}
 
-{/* Charts and Data Display */}
-<Box mt="20px" display="flex" flexWrap="wrap" gap={4}>
-  {/* Procurement Chart */}
-  <Box flex={1} minWidth="400px" p={4} borderRadius="15px">
-    <Typography fontSize={18} fontWeight={600}>
-      Procurement Overview
-    </Typography>
-    <Chart
-      type="bar"
-      series={[
-        { name: "Total Amount", data: Object.values(procurementData).map((item) => item.totalAmount)},
-        { name: "VAT Amount", data: Object.values(procurementData).map((item) => item.vatAmount) },
-        { name: "Non-VAT Amount", data: Object.values(procurementData).map((item) => item.nonVatAmount)}
-      ]}
-      options={{
-        chart: { type: 'bar' },
-        plotOptions: {
-          bar: {
-            dataLabels: {
-              position: 'center',
-            },
-          }
-        },
-        dataLabels: {
-          enabled: false,
-        },
-        xaxis: { categories: Object.keys(procurementData) },
-        yaxis: {
-          labels: {
-            formatter: (value) => Number(value).toFixed(2),
-          }
-        },
-        tooltip: {
-          y: {
-            formatter: (value) => Number(value).toFixed(2),
-          }
-        }
-      }}
-      height={300}
-    />
-  </Box>
+        {expensesChartData.data.length > 0 && (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+            <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
+              Expenses Analysis
+            </Typography>
+            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+              <ApexChart
+                type="bar"
+                series={[expensesChartData]}
+                options={{
+                  chart: { height: '100%' },
+                  xaxis: {
+                    categories: expensesCategories,
+                    labels: {
+                      style: {
+                        fontSize: '12px',
+                      },
+                    },
+                  }
+                }}
+                colors={['#FD8539']}
+              />
+            </Box>
+          </Paper>
+        )}
 
-  {/* Deployment Chart with ApexCharts */}
-  <Box flex={1} minWidth="400px" p={4} borderRadius="15px">
-    <Typography fontSize={18} fontWeight={600}>
-      Deployment Status
-    </Typography>
-    <Chart
-      type="line"
-      series={[
-        { name: "Deployments", data: Object.values(deploymentData).map((item) => item.deployments) },
-        { name: "Releases", data: Object.values(deploymentData).map((item) => item.releases) }
-      ]}
-      options={{
-        chart: { type: 'line' },
-        dataLabels: {
-          enabled: false,
-        },
-        xaxis: { categories: Object.keys(deploymentData) },
-        yaxis: {
-          labels: {
-            formatter: (value) => Number(value).toFixed(2),
-          }
-        },
-        tooltip: {
-          y: {
-            formatter: (value) => Number(value).toFixed(2),
-          }
-        }
-      }}
-      height={300}
-    />
-  </Box>
-  </Box>
-  <Stack mt="25px" width="100%" direction={{ xs: 'column', lg: 'row' }} gap={4}>
-  {/* Sales Performance with ApexCharts */}
-    <Box flex={2} p={4} borderRadius="15px">
-      <Typography fontSize={18} fontWeight={600}>
-        Sales Performance
-      </Typography>
-      <Chart
-        type="bar"
-        series={[
-          { name: "Total Sales", data: Object.values(salesData).map((item) => item.totalSales) },
-          { name: "Output VAT", data: Object.values(salesData).map((item) => item.outputVAT) }
-        ]}
-        options={{
-          chart: { type: 'bar' },
-          dataLabels: {
-            enabled: false,
-          },
-          xaxis: { categories: Object.keys(salesData) },
-          yaxis: {
-            labels: {
-              formatter: (value) => Number(value).toFixed(2),
-            }
-          },
-          tooltip: {
-            y: {
-              formatter: (value) => Number(value).toFixed(2),
-            }
-          }
-        }}
-        height={300}
-      />
-    </Box>
-  {/* Expense Distribution with ApexCharts */}
-    <Box flex={1} p={4} borderRadius="15px">
-      <Typography fontSize={18} fontWeight={600}>
-        Expense Distribution
-      </Typography>
-      <Chart
-        type="pie"
-        series={Object.values(expenseData).map((item) => item.value)}
-        options={{
-          labels: Object.keys(expenseData),
-          legend: { position: 'bottom' },
-          dataLabels: {
-            enabled: false,
-          },
-          tooltip: {
-            y: {
-              formatter: (value) => Number(value).toFixed(2),
-            }
-          }
-        }}
-        height={300}
-      />
-    </Box>
-        </Stack>
-    </Box>
+        {procurementChartData.data.length > 0 && (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+            <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
+              Procurement Analysis
+            </Typography>
+            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+              <ApexChart
+                type="area"
+                series={[procurementChartData]}
+                options={{
+                  chart: { height: '100%' },
+                  xaxis: {
+                    categories: procurementCategories,
+                    labels: {
+                      style: {
+                        fontSize: '12px',
+                      },
+                    },
+                  }
+                }}
+                colors={['#2ED480']}
+              />
+            </Box>
+          </Paper>
+        )}
+
+        {deploymentsStatusData.length > 0 && (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+            <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
+              Deployment Status
+            </Typography>
+            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+              <ApexChart
+                type="pie"
+                series={deploymentsStatusData}
+                options={{
+                  labels: ['Deployed', 'Pending'],
+                  legend: {
+                    position: 'bottom'
+                  }
+                }}
+                colors={['#475BE8', '#FD8539']}
+              />
+            </Box>
+          </Paper>
+        )}
+
+        {partsQuantityData.length > 0 && (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+            <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
+              Parts Inventory
+            </Typography>
+            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+              <ApexChart
+                type="donut"
+                series={partsQuantityData}
+                options={{
+                  labels: partsLabels,
+                  legend: {
+                    position: 'bottom'
+                  }
+                }}
+                colors={['#475BE8', '#FD8539', '#2ED480', '#FE6D8E']}
+              />
+            </Box>
+          </Paper>
+        )}
+      </Box>
+    </Paper>
   );
 };
 
-export default Dashboard;
+export default Home;
