@@ -288,10 +288,11 @@ const ExpenseForm = ({ type, register, handleSubmit, formLoading, onFinishHandle
         <TextField
           label="Amount"
           variant="outlined"
+          required
           type="number"
           value={amount}
           onChange={handleAmountChange}
-          inputProps={{ step: "0.01" }}
+          inputProps={{ step: "0.01", required: true }}
         />
 
         <FormControlLabel

@@ -4,9 +4,9 @@ import {
   InputLabel,
   OutlinedInput,
   Paper,
-  TextField,
   Typography
 } from '@pankod/refine-mui';
+
 import { FormPropsSale } from 'interfaces/common';
 import { useState } from 'react';
 import { Close, Publish } from '@mui/icons-material';
@@ -15,6 +15,7 @@ import CustomButton from './CustomButton';
 import useNextSequence from 'hooks/useNextSequence';
 import LoadingDialog from 'components/common/LoadingDialog';
 import ErrorDialog from 'components/common/ErrorDialog';
+import { TextField } from '@mui/material';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -179,6 +180,7 @@ const SaleForm = ({ type, register, handleSubmit, formLoading, onFinishHandler, 
         <TextField
           label="Amount"
           variant="outlined"
+          required
           type="number"
           value={amount}
           onChange={handleAmountChange}

@@ -11,6 +11,35 @@ interface ApexChartProps {
 }
 
 const ApexChart: React.FC<ApexChartProps> = ({ type, series, options = {}, colors }) => {
+    // Ensure series is valid
+    const safeSeries = React.useMemo(() => {
+      if (!series) return [];
+      
+      // For numeric series
+      if (Array.isArray(series)) {
+        return series.map(item => {
+          if (typeof item === 'number') {
+            return isNaN(item) ? 0 : item;
+          }
+          
+          // For object series with data
+          if (item && item.data) {
+            return {
+              ...item,
+              data: item.data.map((val: any) => {
+                const numVal = Number(val);
+                return isNaN(numVal) ? 0 : numVal;
+              })
+            };
+          }
+          
+          return item;
+        });
+      }
+      
+      return series;
+    }, [series]);
+
   const defaultOptions: ApexOptions = {
     chart: {
       type,
@@ -38,7 +67,7 @@ const ApexChart: React.FC<ApexChartProps> = ({ type, series, options = {}, color
   return (
     <Chart
       options={mergedOptions}
-      series={series}
+      series={safeSeries}
       type={type}
       height={350}
     />

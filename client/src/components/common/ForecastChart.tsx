@@ -3,6 +3,7 @@ import ReactApexCharts from 'react-apexcharts';
 import { Box, Typography, CircularProgress, Button } from '@pankod/refine-mui';
 import axios from 'axios';
 import { ApexOptions } from 'apexcharts';
+import useDynamicHeight from 'hooks/useDynamicHeight';
 
 interface ForecastData {
   historical: number[];
@@ -22,6 +23,7 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ endpoint, title }) => {
   const [data, setData] = useState<ForecastData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showChart, setShowChart] = useState(false); // State to manage chart visibility
+  const containerHeight = useDynamicHeight();
 
   useEffect(() => {
     const fetchForecast = async () => {
@@ -184,7 +186,7 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ endpoint, title }) => {
               <ReactApexCharts
                 options={getChartOptions(data)}
                 series={getSeries(data)}
-                height={350}
+                height={containerHeight}
                 width="100%"
               />
             </Box>

@@ -3,6 +3,8 @@ import ReactApexCharts from 'react-apexcharts';
 import { Box, Typography, CircularProgress, Button } from '@pankod/refine-mui';
 import axios from 'axios';
 import { ApexOptions } from 'apexcharts';
+import useDynamicHeight from 'hooks/useDynamicHeight';
+import { ColorModeContextProvider } from 'contexts';
 
 interface PartSummary {
   totalUsage: number;
@@ -41,6 +43,7 @@ const PartDemandForecastChart: React.FC<PartDemandForecastChartProps> = ({ endpo
   const [data, setData] = useState<PartDemandForecastData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showChart, setShowChart] = useState(false);
+  const containerHeight = useDynamicHeight();
 
   useEffect(() => {
     const fetchForecast = async () => {
@@ -83,6 +86,7 @@ const PartDemandForecastChart: React.FC<PartDemandForecastChartProps> = ({ endpo
         text: `Forecast for ${partName}`,
         align: 'left'
       },
+      
       xaxis: {
         categories: allCategories,
         title: {
@@ -92,7 +96,12 @@ const PartDemandForecastChart: React.FC<PartDemandForecastChartProps> = ({ endpo
       yaxis: {
         title: {
           text: 'Demand Quantity'
-        }
+        },
+        
+        labels: {
+          formatter: (value) => value !== undefined ? value.toFixed(2) : '',
+        },
+        tickAmount: 5, // Limit number of ticks
       },
       stroke: {
         curve: 'smooth',
@@ -144,15 +153,18 @@ const PartDemandForecastChart: React.FC<PartDemandForecastChartProps> = ({ endpo
 
   if (!showChart) {
     return (
-      <Box sx={{ p: 2 }}>
+      <Box className="p-4 bg-white rounded-lg shadow-md">
+        <Typography variant="h6" className="mb-4">
+        Part Demand Forecast
+        </Typography>
         <Button
-          fullWidth
-          color="primary"
-          variant="contained"
-          onClick={() => setShowChart(true)}
-        >
-          Show Forecast
-        </Button>
+        variant="contained"
+        color="primary"
+        onClick={() => setShowChart(!showChart)}
+        sx={{ marginBottom: 2 }}
+      >
+        {showChart ? 'Hide Forecast' : 'Show Forecast'}
+      </Button>
       </Box>
     );
   }
@@ -174,12 +186,40 @@ const PartDemandForecastChart: React.FC<PartDemandForecastChartProps> = ({ endpo
   }
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h5" sx={{ mb: 3 }}>{title}</Typography>
+
+    <Box>
+      <Typography variant="h6" className="mb-4">
+        {title}
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => setShowChart(!showChart)}
+        sx={{ marginBottom: 2 }}
+      >
+        {showChart ? 'Hide Forecast' : 'Show Forecast'}
+      </Button>
+      {showChart && (
+        <>
+          {loading ? (
+            <Box className="flex justify-center items-center h-64">
+              <CircularProgress />
+            </Box>
+          ) : data ? (
+
+<Box>
       {data.topParts.map((part) => {
         const summary = data.summaries[part.partName];
         const error = data.errors[part.partName];
         const forecastData = data.forecasts[part.partName];
+
+        if (loading) {
+          return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          );
+        }
 
         if (error) {
           return (
@@ -222,9 +262,17 @@ const PartDemandForecastChart: React.FC<PartDemandForecastChartProps> = ({ endpo
               height={350}
             />
           </Box>
+          
         );
       })}
+      </Box>
+                ) : (
+                  <Typography color="error">No data available</Typography>
+                )}
+              </>
+            )}
     </Box>
+        
   );
 };
 

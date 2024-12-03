@@ -53,7 +53,7 @@ export const Login: React.FC = () => {
   const { mutate: login } = useLogin();
 
   return (
-    <Box component="div" sx={{ backgroundColor: '#FCFCFC' }}>
+    <Box component="div" sx={{ background: 'linear-gradient(37deg, rgba(0,0,0,1) 10%, rgba(255,241,0,1) 80%)' }}>
       <Container component="main" maxWidth="xs" sx={{
         display: 'flex',
         flexDirection: 'column',

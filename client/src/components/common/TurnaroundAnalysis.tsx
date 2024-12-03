@@ -3,6 +3,7 @@ import ReactApexCharts from 'react-apexcharts';
 import { Box, Typography, CircularProgress, Button } from '@pankod/refine-mui';
 import axios from 'axios';
 import { ApexOptions } from 'apexcharts';
+import useDynamicHeight from 'hooks/useDynamicHeight';
 
 interface TurnaroundData {
   historical: {
@@ -53,6 +54,7 @@ const TurnaroundAnalysis: React.FC<TurnaroundAnalysisProps> = ({ endpoint, title
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showChart, setShowChart] = useState(false);
+  const containerHeight = useDynamicHeight();
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -97,7 +99,7 @@ const TurnaroundAnalysis: React.FC<TurnaroundAnalysisProps> = ({ endpoint, title
     return {
       chart: {
         type: 'line',
-        height: 350,
+        height: containerHeight,
         toolbar: {
           show: true,
           tools: {

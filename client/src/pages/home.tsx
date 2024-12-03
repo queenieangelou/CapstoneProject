@@ -195,22 +195,49 @@ const Home = () => {
 
     if (procurementData?.data) {
       const filteredProcurements = filterDataByDate(procurementData.data, selectedYear, selectedMonth);
-      const groupedProcurement = filteredProcurements.reduce((acc, procurement) => {
+      
+      // Sort procurements by date to ensure chronological order
+      const sortedProcurements = filteredProcurements.sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+    
+      const groupedProcurement = sortedProcurements.reduce((acc, procurement) => {
+        // Robust amount conversion
+        const amount = procurement.amount !== undefined 
+          ? Number(procurement.amount) 
+          : 0;
+    
+        if (isNaN(amount)) {
+          console.warn('Invalid procurement amount:', procurement);
+          return acc;
+        }
+    
         const existingIndex = acc.findIndex(item => item.date === procurement.date);
         if (existingIndex > -1) {
-          acc[existingIndex].amount += procurement.amount;
+          acc[existingIndex].amount += amount;
         } else {
-          acc.push({ date: procurement.date, amount: procurement.amount });
+          acc.push({ date: procurement.date, amount: amount });
         }
         return acc;
       }, [] as ProcurementItem[]);
-
+    
+      // Format dates for display
+      const formattedCategories = groupedProcurement.map(item => {
+        const date = new Date(item.date);
+        return date.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        });
+      });
+    
       setProcurementChartData({
         name: 'Total Procurement Amount',
-        data: groupedProcurement.map(item => item.amount)
+        data: groupedProcurement.map(item => {
+          const safeAmount = Number(item.amount) || 0;
+          return isNaN(safeAmount) ? 0 : safeAmount;
+        })
       });
-      setProcurementCategories(groupedProcurement.map(item => item.date));
-      console.log('Procurement Data:', procurementData.data);
+      setProcurementCategories(formattedCategories);
     }
 
     if (deploymentsData?.data) {
@@ -252,11 +279,10 @@ const Home = () => {
     <Paper 
       elevation={3} 
       sx={{ 
-        height: containerHeight,
         display: 'flex',
         flexDirection: 'column',
         m: 2,
-        overflow: 'hidden'
+
       }}
     >
       <Typography 
@@ -335,7 +361,7 @@ const Home = () => {
         p: 2,
         pt: 0
       }}>
-        {salesChartData.data.length > 0 && (
+        {salesChartData.data.length > 0 ? (
           <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
               Sales Analysis
@@ -359,9 +385,15 @@ const Home = () => {
               />
             </Box>
           </Paper>
+        ) : (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+            <Typography variant="h6" color="textSecondary">
+              No data available in {selectedMonth} {selectedYear}
+            </Typography>
+          </Paper>
         )}
 
-        {expensesChartData.data.length > 0 && (
+        {expensesChartData.data.length > 0 ? (
           <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
               Expenses Analysis
@@ -385,35 +417,71 @@ const Home = () => {
               />
             </Box>
           </Paper>
+        ) : (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+            <Typography variant="h6" color="textSecondary">
+              No data available in {selectedMonth} {selectedYear}
+            </Typography>
+          </Paper>
         )}
 
-        {procurementChartData.data.length > 0 && (
+        {procurementChartData.data.length > 0 ? (
           <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
               Procurement Analysis
             </Typography>
             <Box sx={{ flex: 1, overflow: 'hidden' }}>
               <ApexChart
-                type="area"
-                series={[procurementChartData]}
+                type="line"
+                series={[{
+                  name: procurementChartData.name,
+                  data: procurementChartData.data.map(val => {
+                    const numVal = Number(val);
+                    return isNaN(numVal) ? 0 : numVal;
+                  })
+                }]}
                 options={{
-                  chart: { height: '100%' },
+                  chart: { 
+                    height: '100%',
+                  },
                   xaxis: {
                     categories: procurementCategories,
                     labels: {
                       style: {
                         fontSize: '12px',
                       },
+                      rotate: -45,
+                      trim: true
                     },
+                    tickPlacement: 'between'
+                  },
+                  yaxis: {
+                    title: {
+                      text: 'Procurement Amount ($)'
+                    },
+                    labels: {
+                      formatter: (value) => `$${Number(value).toLocaleString()}`,
+                    },
+                    min: 0,
+                    forceNiceScale: true
+                  },
+                  dataLabels: {
+                    enabled: false
                   }
                 }}
                 colors={['#2ED480']}
               />
             </Box>
           </Paper>
+        ) : (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+            <Typography variant="h6" color="textSecondary">
+              No data available in {selectedMonth} {selectedYear}
+            </Typography>
+          </Paper>
         )}
 
-        {deploymentsStatusData.length > 0 && (
+        {deploymentsStatusData.length > 0 ? (
           <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
               Deployment Status
@@ -432,12 +500,18 @@ const Home = () => {
               />
             </Box>
           </Paper>
+        ) : (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+            <Typography variant="h6" color="textSecondary">
+              No data available in {selectedMonth} {selectedYear}
+            </Typography>
+          </Paper>
         )}
 
-        {partsQuantityData.length > 0 && (
+        {partsQuantityData.length > 0 ? (
           <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             <Typography fontSize={18} fontWeight={600} color="#11142D" sx={{ mb: 2 }}>
-              Parts Inventory
+              Parts Distribution
             </Typography>
             <Box sx={{ flex: 1, overflow: 'hidden' }}>
               <ApexChart
@@ -452,6 +526,12 @@ const Home = () => {
                 colors={['#475BE8', '#FD8539', '#2ED480', '#FE6D8E']}
               />
             </Box>
+          </Paper>
+        ) : (
+          <Paper elevation={2} sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+            <Typography variant="h6" color="textSecondary">
+              No data available in {selectedMonth} {selectedYear}
+            </Typography>
           </Paper>
         )}
       </Box>
