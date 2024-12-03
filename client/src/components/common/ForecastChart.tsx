@@ -1,9 +1,9 @@
 import { Box, Button, CircularProgress, Typography } from '@pankod/refine-mui';
 import { ApexOptions } from 'apexcharts';
 import axios from 'axios';
+import useDynamicHeight from 'hooks/useDynamicHeight';
 import React, { useEffect, useState } from 'react';
 import ReactApexCharts from 'react-apexcharts';
-import useDynamicHeight from 'hooks/useDynamicHeight';
 
 interface ForecastData {
   historical: number[];
@@ -29,7 +29,7 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ endpoint, title }) => {
     const fetchForecast = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`https://gammadautocarecenter.onrender.com${endpoint}`);
+        const response = await axios.get(`http://localhost:8080${endpoint}`);
         console.log('Fetched data:', response.data); // Debugging log
         setData(response.data);
         setLoading(false);

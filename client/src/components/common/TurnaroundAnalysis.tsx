@@ -1,9 +1,9 @@
 import { Box, Button, CircularProgress, Typography } from '@pankod/refine-mui';
 import { ApexOptions } from 'apexcharts';
 import axios from 'axios';
+import useDynamicHeight from 'hooks/useDynamicHeight';
 import React, { useEffect, useState } from 'react';
 import ReactApexCharts from 'react-apexcharts';
-import useDynamicHeight from 'hooks/useDynamicHeight';
 
 interface TurnaroundData {
   historical: {
@@ -61,7 +61,7 @@ const TurnaroundAnalysis: React.FC<TurnaroundAnalysisProps> = ({ endpoint, title
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get(`https://gammadautocarecenter.onrender.com${endpoint}`);
+        const response = await axios.get(`http://localhost:8080${endpoint}`);
         console.log('Fetched data:', response.data); // Debugging log
         
         // Access the nested data property

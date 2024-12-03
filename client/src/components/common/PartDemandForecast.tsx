@@ -1,10 +1,9 @@
 import { Box, Button, CircularProgress, Typography } from '@pankod/refine-mui';
 import { ApexOptions } from 'apexcharts';
 import axios from 'axios';
+import useDynamicHeight from 'hooks/useDynamicHeight';
 import React, { useEffect, useState } from 'react';
 import ReactApexCharts from 'react-apexcharts';
-import useDynamicHeight from 'hooks/useDynamicHeight';
-import { ColorModeContextProvider } from 'contexts';
 
 interface PartSummary {
   totalUsage: number;
@@ -49,7 +48,7 @@ const PartDemandForecastChart: React.FC<PartDemandForecastChartProps> = ({ endpo
     const fetchForecast = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`https://gammadautocarecenter.onrender.com${endpoint}`);
+        const response = await axios.get(`http://localhost:8080${endpoint}`);
         console.log('Fetched data:', response.data);
         setData(response.data);
         setLoading(false);
