@@ -1,15 +1,10 @@
 import React from 'react';
 import {
-  AccountCircleOutlined,
   AttachMoneyOutlined,
-  ChatBubbleOutline,
   FileOpenSharp,
   ManageAccounts,
   NoCrashOutlined,
-  PeopleAltOutlined,
-  StarOutlineRounded,
   Timeline,
-  VillaOutlined,
   WalletOutlined,
   WarehouseOutlined,
 } from '@mui/icons-material';
@@ -32,17 +27,11 @@ import { CredentialResponse } from 'interfaces/google';
 import { parseJwt } from 'utils/parse-jwt';
 
 import {
-  AgentProfile,
-  AllProperties,
   CreateProcurement,
-  CreateProperty,
   EditProcurement,
-  EditProperty,
   Home,
   Login,
-  MyProfile,
   ProcurementDetails,
-  PropertyDetails,
 } from 'pages';
 import AllProcurements from 'pages/all-procurements';
 import UserManagement from 'pages/user-management';
@@ -254,12 +243,6 @@ const App = () => {
         create: CreateSale,
         edit: EditSale,
         icon: <AttachMoneyOutlined/>,
-      },
-      {
-        name: 'my-profile',
-        options: { label: 'My Profile' },
-        list: MyProfile,
-        icon: <AccountCircleOutlined />,
       },
       {
         name: 'reports',
