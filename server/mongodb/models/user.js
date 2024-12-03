@@ -14,10 +14,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  allProperties: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Property',
-  }],
   isAllowed: {  // Add this field to the schema
     type: Boolean,
     default: false,  // Default value for new users
