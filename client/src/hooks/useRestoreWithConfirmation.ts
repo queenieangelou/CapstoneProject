@@ -1,7 +1,7 @@
 // client/src/hooks/useRestoreWithConfirmation.ts
-import { useState } from "react";
-import { useNotification, useInvalidate } from "@pankod/refine-core";
+import { useInvalidate, useNotification } from "@pankod/refine-core";
 import { useNavigate } from "@pankod/refine-react-router-v6";
+import { useState } from "react";
 
 interface RestoreConfirmationState {
   open: boolean;
@@ -75,7 +75,7 @@ const useRestoreWithConfirmation = ({
     try {
       const ids = restoreConfirmation.ids.join(',');
       const response = await fetch(
-        `http://localhost:8080/api/v1/${resource}/${ids}/restore`, 
+        `https://gammadautocarecenter.onrender.com/api/v1/${resource}/${ids}/restore`, 
         {
           method: 'PATCH',
           headers: {

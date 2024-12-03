@@ -1,30 +1,27 @@
 //client\src\pages\client-portal.tsx
-import React, { useState } from 'react';
-import { 
-  TextField,
-  Button,
-  Box,
-  Alert,
-  CircularProgress,
-  Paper,
-  Grid,
-  Typography,
-  Chip,
-  Card,
-  CardContent,
-  CardHeader,
-  Divider,
-  Stack,
-  styled,
-  Theme
-} from '@mui/material';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import SearchIcon from '@mui/icons-material/Search';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import Header from 'components/client-portal/Header';
+import {
+    Alert,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CardHeader,
+    Chip,
+    CircularProgress,
+    Divider,
+    Grid,
+    Stack,
+    styled,
+    TextField,
+    Typography
+} from '@mui/material';
 import Footer from 'components/client-portal/Footer';
+import Header from 'components/client-portal/Header';
+import React, { useState } from 'react';
 
 // Interfaces
 interface Part {
@@ -284,7 +281,7 @@ const handleSearch = async () => {
     setSearchResult(null);
 
     const response = await fetch(
-      `http://localhost:8080/api/v1/clientPortal/search?trackCode=${encodeURIComponent(trackCode)}`,
+      `https://gammadautocarecenter.onrender.com/api/v1/clientPortal/search?trackCode=${encodeURIComponent(trackCode)}`,
       {
         method: 'GET',
         headers: {
@@ -302,7 +299,7 @@ const handleSearch = async () => {
     if (data.success) {
       try {
         const turnaroundResponse = await fetch(
-          'http://localhost:8080/api/forecasting/turnaround',
+          'https://gammadautocarecenter.onrender.com/api/forecasting/turnaround',
           {
             method: 'GET',
             headers: {

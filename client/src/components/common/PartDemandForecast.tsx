@@ -1,8 +1,8 @@
+import { Box, Button, CircularProgress, Typography } from '@pankod/refine-mui';
+import { ApexOptions } from 'apexcharts';
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import ReactApexCharts from 'react-apexcharts';
-import { Box, Typography, CircularProgress, Button } from '@pankod/refine-mui';
-import axios from 'axios';
-import { ApexOptions } from 'apexcharts';
 
 interface PartSummary {
   totalUsage: number;
@@ -46,7 +46,7 @@ const PartDemandForecastChart: React.FC<PartDemandForecastChartProps> = ({ endpo
     const fetchForecast = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8080${endpoint}`);
+        const response = await axios.get(`https://gammadautocarecenter.onrender.com${endpoint}`);
         console.log('Fetched data:', response.data);
         setData(response.data);
         setLoading(false);

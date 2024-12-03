@@ -1,27 +1,27 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { 
-  Container, 
-  Paper, 
-  Typography, 
-  Button, 
-  Grid, 
-  Box, 
-  CircularProgress, 
-  Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow
+import {
+    Alert,
+    Box,
+    Button,
+    CircularProgress,
+    Container,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Paper,
+    Select,
+    SelectChangeEvent,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Typography
 } from '@mui/material';
 import { Stack } from '@pankod/refine-mui';
+import axios from 'axios';
+import React, { useState } from 'react';
 
 // Update interfaces to match the actual backend response
 interface SummarySectionData {
@@ -80,7 +80,7 @@ const ReportsPage: React.FC = () => {
             }
 
             // Make API call with optional parameters
-            const { data } = await axios.get<ReportData>('http://localhost:8080/api/v1/reports/generate', { params });
+            const { data } = await axios.get<ReportData>('https://gammadautocarecenter.onrender.com/api/v1/reports/generate', { params });
             setReport(data);
         } catch (err) {
             setError('Failed to generate report');

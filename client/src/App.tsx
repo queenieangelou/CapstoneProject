@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   AttachMoneyOutlined,
   FileOpenSharp,
@@ -20,6 +19,7 @@ import {
 import routerProvider from '@pankod/refine-react-router-v6';
 import dataProvider from '@pankod/refine-simple-rest';
 import axios, { AxiosRequestConfig } from 'axios';
+import React from 'react';
 
 import { Header, Layout, Sider, Title } from 'components/layout';
 import { ColorModeContextProvider } from 'contexts';
@@ -33,24 +33,24 @@ import {
   Login,
   ProcurementDetails,
 } from 'pages';
-import AllProcurements from 'pages/all-procurements';
-import UserManagement from 'pages/user-management';
-import { UnauthorizedPage } from 'pages/unauthorized';
-import SaleDetails from 'pages/sale-details';
-import AllSales from 'pages/all-sales';
-import CreateSale from 'pages/create-sale';
-import EditSale from 'pages/edit-sale';
 import AllDeployments from 'pages/all-deployment';
-import DeploymentDetails from 'pages/deployment-details';
-import CreateDeployment from 'pages/create-deployment';
-import EditDeployment from 'pages/edit-deployment';
-import ClientPortal from 'pages/client-portal';
 import AllExpenses from 'pages/all-expenses';
+import AllProcurements from 'pages/all-procurements';
+import AllSales from 'pages/all-sales';
+import ClientPortal from 'pages/client-portal';
+import CreateDeployment from 'pages/create-deployment';
 import CreateExpense from 'pages/create-expense';
+import CreateSale from 'pages/create-sale';
+import DeploymentDetails from 'pages/deployment-details';
+import EditDeployment from 'pages/edit-deployment';
 import EditExpense from 'pages/edit-expense';
+import EditSale from 'pages/edit-sale';
 import ExpenseDetails from 'pages/expense-details';
 import Forecast from 'pages/forecast';
 import ReportsPage from 'pages/reports';
+import SaleDetails from 'pages/sale-details';
+import { UnauthorizedPage } from 'pages/unauthorized';
+import UserManagement from 'pages/user-management';
 
 const axiosInstance = axios.create();
 axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
@@ -87,7 +87,7 @@ const App = () => {
       if (!user) return;
       
       const parsedUser = JSON.parse(user);
-      const response = await fetch(`http://localhost:8080/api/v1/users/${parsedUser.userid}`, {
+      const response = await fetch(`https://gammadautocarecenter.onrender.com/api/v1/users/${parsedUser.userid}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -137,7 +137,7 @@ const App = () => {
 
       // Save user to MongoDB
       if (profileObj) {
-        const response = await fetch('http://localhost:8080/api/v1/users', {
+        const response = await fetch('https://gammadautocarecenter.onrender.com/api/v1/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -270,7 +270,7 @@ const App = () => {
       <GlobalStyles styles={{ html: { WebkitFontSmoothing: 'auto' } }} />
       <RefineSnackbarProvider>
         <Refine
-          dataProvider={dataProvider('http://localhost:8080/api/v1')}
+          dataProvider={dataProvider('https://gammadautocarecenter.onrender.com/api/v1')}
           notificationProvider={notificationProvider}
           ReadyPage={ReadyPage}
           catchAll={<ErrorComponent />}
